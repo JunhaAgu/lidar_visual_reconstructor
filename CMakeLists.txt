@@ -37,7 +37,8 @@ catkin_package(
 	DEPENDS Eigen
   CATKIN_DEPENDS message_runtime roscpp message_filters
 )
-
+set(SRC ${SRC} 
+src/hcegcs.cpp)
 
 set(includeDirs ${includeDirs} ${CMAKE_CURRENT_BINARY_DIR})
 set(includeDirs ${includeDirs} include)
@@ -53,6 +54,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -pg -O2 -m64 -Ofast -flto -ms
 add_executable (vis_recon src/main_vis_recon.cpp ${SRC})
 target_link_libraries (vis_recon ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} ${Eigen_LIBRARIES})
 
-add_executable (communicator src/main_communicator.cpp ${SRC})
-target_link_libraries (communicator ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} ${Eigen_LIBRARIES})
+add_executable (gcs_node src/main_gcs.cpp ${SRC})
+target_link_libraries (gcs_node ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} ${Eigen_LIBRARIES})
 

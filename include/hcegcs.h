@@ -1,5 +1,5 @@
-#ifndef _COMMUNICATOR_H_
-#define _COMMUNICATOR_H_
+#ifndef _HCEGCS_H_
+#define _HCEGCS_H_
 #include <stdlib.h>
 #include <iostream>
 #include <vector>
@@ -33,39 +33,21 @@
 using namespace std;
 
 
-string dtos(double x){
-	stringstream s;
-	s << setprecision(6) << fixed << x;
-	return s.str();
-};
-
-string itos(double x){
-	stringstream s;
-	s << x;
-	return s.str();
-};
-
-class Communicator {
+class HCEGCS {
 
 // Public methods
 public:
-    Communicator(ros::NodeHandle& nh, int n_cams, int n_lidars, const string& save_dir);
-    ~Communicator();
+    HCEGCS(ros::NodeHandle& nh, int n_cams, int n_lidars, const string& save_dir);
+    ~HCEGCS();
 
     void streamingMode();
-    bool sendSingleQueryToAllSensors();
-    void saveAllData();
+    void snapshotMode();
+    void algorithmMode();
 
-    // related to camera settings.
-    void setExposureTime();
-    void setCameraGrayscaleGain();
+    const int getNumCameras() const {return n_cameras_; };
+    const int getNumLidars()  const {return n_lidars_; };
 
-    // pointer to data
-    cv::Mat& getBufImage(const int& id){ return *(buf_imgs_+id);};
-    pcl::PointCloud<pcl::PointXYZI>::Ptr& getBufLidar(const int& id){return *(buf_lidars_+id);};
 
-    inline int getNumCams()   {return n_cams_; };
-    inline int getNumLidars() {return n_lidars_; };
 
 // ROS-related variables
 private:
@@ -73,8 +55,8 @@ private:
     ros::NodeHandle nh_;
 
     // publishers
-    ros::Publisher pub_cmd_msg_;
-    std_msgs::Int32 cmd_msg_; // user command msg.
+    ros::Publisher pub_msg_command_;
+    std_msgs::Int32 msg_command_; // user command msg.
     
     // subscribers
     image_transport::ImageTransport it_;
@@ -83,8 +65,8 @@ private:
     vector<ros::Subscriber> subs_lidars_; // from Velodyne lidars
 
     // services for ground profile
-    ros::ServiceServer service_ground_;
-    ros::ServiceServer service_target_;
+    ros::ServiceServer server_ground_;
+    ros::ServiceServer server_target_;
 
     // topic names
     vector<string> topicnames_imgs_;
@@ -92,15 +74,16 @@ private:
     string topicname_timestamp_;
 
 
+
 // LiDAR and camera-related variables
 private: 
-    int n_cams_; // numbering rule(cams) 0,1) cabin left,right, 2,3) boom frontal,rear
+    int n_cameras_; // numbering rule(cams) 0,1) cabin left,right, 2,3) boom frontal,rear
     int n_lidars_;// numbering rule(lidars)- 0) cabin, 1) boom
 
-    // transmittion flags.
-    bool* flag_imgs_; // 'true' when image data is received.
+    // Transmittion flags.
+    bool* flag_imgs_;   // 'true' when image data is received.
     bool* flag_lidars_; // 'true' when lidar data is received.
-    bool  flag_mcu_; // 'true' when arduino data is received. 
+    bool  flag_mcu_;    // 'true' when arduino data is received. 
 
     // data container (buffer)
     cv::Mat* buf_imgs_; // Images from mvBlueCOUGAR-X cameras.
@@ -116,18 +99,24 @@ private:
     vector<int> buf_lidars_npoints;
 
 
+
 // Callback functions
 private:
     void callbackImage(const sensor_msgs::ImageConstPtr& msg, const int& id);
     void callbackLidar(const sensor_msgs::PointCloud2ConstPtr& msg_lidar, const int& id);
     void callbackTime(const sensor_msgs::TimeReference::ConstPtr& t_ref);
 
+
+
 // Private methods    
 private:
+    bool sendSingleQueryToAllSensors();
+    void saveAllData();
+
     void pointcloud2tobuffers(const sensor_msgs::PointCloud2ConstPtr& msg_lidar, const int& id);
     void saveLidarDataRingTime(const std::string& file_name, const int& id);
-    void clearCmdMsg(){cmd_msg_.data = 0; };
-    void initializeAllFlags();
+    void clearMsgCommand(){msg_command_.data = 0; };
+    void initAllFlags();
 
     string save_dir_;
     int current_seq_;
