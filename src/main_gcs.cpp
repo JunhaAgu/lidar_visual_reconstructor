@@ -56,12 +56,15 @@ int main(int argc, char **argv) {
             ros::spinOnce();
             int c = getch(); // call my own non-blocking input function
             if(c == 's') {
-                cout << "\n\n[Operation]: snapshot & save the current scene.\n";
+                cout << "\n\n Snapshot & save the current scene.\n";
+                gcs->snapshotMode();
+
                 cout << user_manual;
             }
             else if(c == 'r'){
                 cout << "\n\n RUN algorithms...\n";
                 // Do algorithm parts... GCS (Ground Control System)
+                // Each module should be a 'class' object.
 
                 cout << user_manual;
             }

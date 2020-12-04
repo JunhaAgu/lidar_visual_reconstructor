@@ -137,7 +137,23 @@ void HCEGCS::streamingMode(){
 };
 
 void HCEGCS::snapshotMode(){
+    // send single query to all sensors.
+    bool is_query_ok = sendSingleQueryToAllSensors();
+    
+    // Save all data
+    if(is_query_ok) saveAllData(); // save and purge the current data!
+    else cout << "   fail to save...\n";
+};
 
+void HCEGCS::runAlgorithms(){
+    // use current boom, arm, bucket, body angles
+    // use L (distance from boom rotating axis to boom lidar)
+    // use w (boom lidar real pose)
+    // 
+
+    // 1) Calculate all poses of sensors at the time.
+
+    // 2) request 
 };
 
 bool HCEGCS::sendSingleQueryToAllSensors()

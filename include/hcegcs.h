@@ -42,14 +42,14 @@ public:
 
     void streamingMode();
     void snapshotMode();
-    void algorithmMode();
+    void runAlgorithms();
 
     const int getNumCameras() const {return n_cameras_; };
     const int getNumLidars()  const {return n_lidars_; };
 
 
 
-// ROS-related variables
+// ROS topic subs., pub., services. related variables
 private:
     // node handler
     ros::NodeHandle nh_;
@@ -61,8 +61,8 @@ private:
     // subscribers
     image_transport::ImageTransport it_;
     vector<image_transport::Subscriber> subs_imgs_; // from mvBlueCOUGAR-X cameras
-    ros::Subscriber sub_timestamp_; // from arduino.
     vector<ros::Subscriber> subs_lidars_; // from Velodyne lidars
+    ros::Subscriber sub_timestamp_; // from arduino.
 
     // services for ground profile
     ros::ServiceServer server_ground_;
