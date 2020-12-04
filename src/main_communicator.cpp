@@ -25,30 +25,27 @@ const std::string currentDateTime(){
 int main(int argc, char **argv) {
     ros::init(argc, argv, "vis_recon");
     ros::NodeHandle nh("~");
-    string param_directory = "/home/larrkchlaptop/catkin_ws/src/camlidar_module/params/stereo_params.yaml";    
-    string save_directory;
-    bool snapshot_onoff = false;
-    ros::param::get("~parameter_directory", param_directory); 
+    ROS_INFO_STREAM("START: \"communicator\".\n");
+
+    bool snapshot_onoff = true;
 
     // user input manual.
     string user_manual;
     stringstream ss;
-    if(snapshot_onoff){
-        ss << "\n==============================================\n|" 
-        << "  Press a key..." 
-        << "\n|    s: query & save one scene" 
-        << "\n|  Select an input: \n";
-        user_manual = ss.str();
-        cout << user_manual;
-        ss.clear();
-        ss.flush();
 
-        ss << "\n |\n L\n";
-    }
+    ss << "\n==============================================\n|" 
+    << "  Press a key..." 
+    << "\n|    s: query & save one scene" 
+    << "\n|  Select an input: \n";
+    user_manual = ss.str();
+    cout << user_manual;
+    ss.clear();
+    ss.flush();
+
+    ss << "\n |\n L\n";
 
     while(ros::ok()){
         ros::spinOnce();
-
         int c = getch(); // call my own non-blocking input function
             if(c == 's') {
                 cout << "\n\n[Operation]: snapshot & save the current scene.\n";
@@ -61,7 +58,6 @@ int main(int argc, char **argv) {
     
     }
     
-
-    ROS_INFO_STREAM("End of the program.\n");
+    ROS_INFO_STREAM("TERMINATE: \"communicator\".\n");
     return -1;
 }
