@@ -4,10 +4,9 @@
 #include <string>
 #include <sstream>
 
-
+#include "lidar_visual_reconstructor.h"
 
 using namespace std;
-   
 int main(int argc, char **argv) {
     ros::init(argc, argv, "reconstruction_node");
     ros::NodeHandle nh("~");

@@ -6,3 +6,5 @@ float64[] z
 float64[] ring
 float64[] intensity
 float64[] time
+sensor_msgs/Image img0 # reference image
+sensor_msgs/Image img1 # second image

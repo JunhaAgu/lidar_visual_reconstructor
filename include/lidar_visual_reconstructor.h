@@ -1,0 +1,44 @@
+#ifndef _LIDAR_VISUAL_RECONSTRUCTOR_H_
+#define _LIDAR_VISUAL_RECONSTRUCTOR_H_
+
+
+#include <iostream>
+#include <vector>
+
+// ROS
+#include <ros/ros.h>
+
+// ROS eigen
+#include <Eigen/Dense>
+
+// ROS cv_bridge
+#include <cv_bridge/cv_bridge.h>
+#include <opencv2/core.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/highgui/highgui.hpp>
+
+
+// For subscribe
+#include <sensor_msgs/Image.h>
+#include <sensor_msgs/CameraInfo.h>
+#include <sensor_msgs/image_encodings.h> 
+#include <image_transport/image_transport.h>
+
+#include <sensor_msgs/PointCloud2.h>
+
+#include <pcl_conversions/pcl_conversions.h>
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
+
+// Custom messages and services
+#include "hce_autoexcavator/LidarImageDataStamped.h" // service
+
+
+using namespace std;
+class LidarVisualReconstructor {
+public:
+
+private:
+
+};
+#endif
