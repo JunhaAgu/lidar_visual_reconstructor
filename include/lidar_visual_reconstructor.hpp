@@ -39,13 +39,21 @@
 using namespace std;
 class LidarVisualReconstructor {
 public:
-    LidarVisualReconstructor();
+    LidarVisualReconstructor(ros::NodeHandle& nh);
     ~LidarVisualReconstructor();
 
     bool run(); // success or fail.
     
 private:
+    ros::NodeHandle nh_;
+    ros::ServiceClient client_lidarimagedata_;
+
+    hce_autoexcavator::LidarImageDataStamped srv_lidarimagedata_;
+
+
+private:
     FeatureTracker* tracker_;
+    // ConstraindDelaunayTriangulation* cdt_;
 
 };
 #endif

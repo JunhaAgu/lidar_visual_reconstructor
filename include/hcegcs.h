@@ -98,7 +98,7 @@ private:
 
     // data container (buffer)
     cv::Mat* buf_imgs_; // Images from mvBlueCOUGAR-X cameras.
-    double   buf_time_; // triggered time stamp from Arduino. (second)
+    double   buf_time_; // triggered time stamp from Arduino. [sec.]
     pcl::PointCloud<pcl::PointXYZI>::Ptr* buf_lidars_; // point clouds (w/ intensity) from Velodyne VLP16 
     
     vector<float*> buf_lidars_x;
@@ -113,12 +113,18 @@ private:
 
 // Callback functions
 private:
+    // request Profile points -> after 'planner's request, calculate and serve Profile Polynomial. 
+    bool serverCallbackProfilePolynomial(hce_autoexcavator::ProfilePolynomialStamped::Request &req,
+        hce_autoexcavator::ProfilePolynomialStamped::Response &res);
+
+    // After 'lidar_visual_reconstructor's request, acquire a snapshot and send data to the 'lidar_visual_reconstructor'
+    bool serverCallbackLidarImageData(hce_autoexcavator::LidarImageDataStamped::Request &req,
+        hce_autoexcavator::LidarImageDataStamped::Response &res); // to reconstructor.
+
+
     void callbackImage(const sensor_msgs::ImageConstPtr& msg, const int& id);
     void callbackLidar(const sensor_msgs::PointCloud2ConstPtr& msg_lidar, const int& id);
     void callbackTime(const sensor_msgs::TimeReference::ConstPtr& t_ref);
-
-    bool serverCallbackProfilePolynomial(hce_autoexcavator::ProfilePolynomialStamped::Request &req,
-        hce_autoexcavator::ProfilePolynomialStamped::Response &res);
 
 
 
