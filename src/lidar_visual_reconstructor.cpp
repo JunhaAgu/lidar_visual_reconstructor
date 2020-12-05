@@ -9,9 +9,36 @@ LidarVisualReconstructor::LidarVisualReconstructor(ros::NodeHandle& nh)
 LidarVisualReconstructor::~LidarVisualReconstructor(){
 
 };
+
+bool LidarVisualReconstructor::serverCallbackProfilePoints(hce_autoexcavator::ProfilePointsStamped::Request &req,
+        hce_autoexcavator::ProfilePointsStamped::Response &res)
+{   
+    // run algorithm.
+    this->run();
+
+    // Fill out response for 'GCS' node.
+
+};
+
+// 'run()' function is executed when 'GCS' requests profile 3D points.
+// Thus, this function should be in the 'callback' function for service.
 bool LidarVisualReconstructor::run(){
     if(client_lidarimagedata_.call(srv_lidarimagedata_)){
         ROS_INFO("Service is requested by 'lidar_visual_reconstructor' node.\n");
+
+        // 
+        
+        // Delaunay ... 
+
+        // KLT ...
+
+        // Densification ...
+
+        // Extract profile 3D points ... 
+
+        // Respond to 'GCS' node.
+        
+
         return true;
     }
     else{

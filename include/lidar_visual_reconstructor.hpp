@@ -31,7 +31,8 @@
 #include <pcl/point_types.h>
 
 // Custom messages and services
-#include "hce_autoexcavator/LidarImageDataStamped.h" // service client
+#include "hce_autoexcavator/LidarImageDataStamped.h" // client
+#include "hce_autoexcavator/ProfilePointsStamped.h" // server for 'GCS node'
 
 #include "feature_tracker.h"
 
@@ -50,6 +51,10 @@ private:
 
     hce_autoexcavator::LidarImageDataStamped srv_lidarimagedata_;
 
+// Callback function
+private:
+    bool serverCallbackProfilePoints(hce_autoexcavator::ProfilePointsStamped::Request &req,
+        hce_autoexcavator::ProfilePointsStamped::Response &res);
 
 private:
     FeatureTracker* tracker_;

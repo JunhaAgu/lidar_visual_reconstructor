@@ -146,14 +146,25 @@ void HCEGCS::snapshotMode(){
 };
 
 void HCEGCS::runAlgorithms(){
-    // use current boom, arm, bucket, body angles
+    // 1) use current boom, arm, bucket, body angles
     // use L (distance from boom rotating axis to boom lidar)
     // use w (boom lidar real pose)
-    // 
+    
 
-    // 1) Calculate all poses of sensors at the time.
+    // 2) Calculate all poses of sensors at the time.
 
-    // 2) request 
+    // 3) fire signal for running algorithm to 'planner' 
+    // Then, 'planner' requests profile poly. to 'GCS' (with specific order of poly.)
+    // Then, 'GCS' requests profile 3D points to 'Recon'.
+    // Then, 'Recon' requests lidar images data to 'GCS'.
+    // Then. 'GCS' acquires snapshot data and sends it to 'Recon'
+    // Then, 'Recon' calculate all 3D terrain and sends 3D profiles to 'GCS"
+    // Then, 'GCS' calculate profile polynomial coefficients, sends them to 'Planner'.
+
+    // Finally, 'Planner' iteratively calculates and publishs control inputs until end of a procedure.
+    // Simultaneously, 'GCS' subscribes control inputs and the 'callback' function publishes the control inputs to Arduino.
+    // 'GCS' responds to the 'planner's request, and then 
+
 };
 
 bool HCEGCS::sendSingleQueryToAllSensors()

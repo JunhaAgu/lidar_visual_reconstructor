@@ -65,6 +65,7 @@ int main(int argc, char **argv) {
                 cout << "\n\n RUN algorithms...\n";
                 // Do algorithm parts... GCS (Ground Control System)
                 // Each module should be a 'class' object.
+                gcs->runAlgorithms(); // To be updated.
 
                 cout << user_manual;
             }
