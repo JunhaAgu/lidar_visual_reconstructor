@@ -24,11 +24,14 @@ find_package(catkin REQUIRED COMPONENTS
 add_message_files(
   FILES
   LidarDataStamped.msg
+  ControlInputsStamped.msg
 )
 
 add_service_files(
   FILES
   ProfilePolynomialStamped.srv
+  ProfilePointsStamped.srv
+
 )
 
 generate_messages(
@@ -54,8 +57,8 @@ set(DCMAKE_build_type debug)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -pg -O2 -m64 -Ofast -flto -msse3 -march=native -mfpmath=sse")
 
 
-add_executable (3drecon_node src/main_3drecon.cpp ${SRC})
-target_link_libraries (3drecon_node ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} ${Eigen_LIBRARIES})
+add_executable (reconstruction_node src/main_reconstruction.cpp ${SRC})
+target_link_libraries (reconstruction_node ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} ${Eigen_LIBRARIES})
 
 add_executable (gcs_node src/main_gcs.cpp ${SRC})
 target_link_libraries (gcs_node ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} ${Eigen_LIBRARIES})

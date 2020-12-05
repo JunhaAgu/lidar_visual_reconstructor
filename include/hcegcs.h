@@ -38,9 +38,10 @@
 
 // Custom messages and services
 #include "hce_autoexcavator/LidarDataStamped.h" // msg
+#include "hce_autoexcavator/ControlInputsStamped.h" // msg
+
 #include "hce_autoexcavator/ProfilePolynomialStamped.h" // service (server to 'planner')
 #include "hce_autoexcavator/ProfilePointsStamped.h" // client of 'vis_recon'
-#include "hce_autoexcavator/ControlInputsStamped.h" // service (client of 'planner')
 
 using namespace std;
 
@@ -77,7 +78,6 @@ private:
     // services for ground profile
     ros::ServiceServer server_ground_;
     ros::ServiceServer server_target_;
-    ros::ServiceClient client_control_inputs_;
 
     // topic names
     vector<string> topicnames_imgs_;
@@ -117,7 +117,7 @@ private:
     void callbackLidar(const sensor_msgs::PointCloud2ConstPtr& msg_lidar, const int& id);
     void callbackTime(const sensor_msgs::TimeReference::ConstPtr& t_ref);
 
-    bool serverCallbackProfilePolynomial(hce_autoexcavator::ProfilePolynomialStamped::Request $ req,
+    bool serverCallbackProfilePolynomial(hce_autoexcavator::ProfilePolynomialStamped::Request &req,
         hce_autoexcavator::ProfilePolynomialStamped::Response &res);
 
 
