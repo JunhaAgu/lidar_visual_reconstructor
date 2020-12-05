@@ -54,7 +54,7 @@ set(DCMAKE_build_type debug)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -pg -O2 -m64 -Ofast -flto -msse3 -march=native -mfpmath=sse")
 
 
-add_executable (3drecon_node src/main_vis_recon.cpp ${SRC})
+add_executable (3drecon_node src/main_3drecon.cpp ${SRC})
 target_link_libraries (3drecon_node ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} ${Eigen_LIBRARIES})
 
 add_executable (gcs_node src/main_gcs.cpp ${SRC})
