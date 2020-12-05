@@ -39,7 +39,7 @@
 // Custom messages and services
 #include "hce_autoexcavator/ControlInputsStamped.h" // msg
 
-#include "hce_autoexcavator/LidarImageDataStamped.h" // service
+#include "hce_autoexcavator/LidarImageDataStamped.h" // service server
 #include "hce_autoexcavator/ProfilePolynomialStamped.h" // service (server to 'planner')
 #include "hce_autoexcavator/ProfilePointsStamped.h" // client of 'vis_recon'
 

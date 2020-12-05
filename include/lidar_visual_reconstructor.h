@@ -31,14 +31,21 @@
 #include <pcl/point_types.h>
 
 // Custom messages and services
-#include "hce_autoexcavator/LidarImageDataStamped.h" // service
+#include "hce_autoexcavator/LidarImageDataStamped.h" // service client
+
+#include "feature_tracker.h"
 
 
 using namespace std;
 class LidarVisualReconstructor {
 public:
+    LidarVisualReconstructor();
+    ~LidarVisualReconstructor();
 
+    bool run(); // success or fail.
+    
 private:
+    FeatureTracker* tracker_;
 
 };
 #endif
