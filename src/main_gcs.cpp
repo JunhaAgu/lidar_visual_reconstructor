@@ -74,7 +74,7 @@ int main(int argc, char **argv) {
             }
         }
     }
-    catch (std::exception& e){
+    catch (std::exception& e) {
         cout << "\n[Exception]: " << e.what();
         if(gcs != nullptr) delete gcs;
     }

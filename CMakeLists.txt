@@ -24,10 +24,14 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate messages in the 'msg' folder
 add_message_files(
   FILES
-  profile3d.msg
+  LidarDataStamped.msg
 )
 
-## Generate added messages and services with any dependencies listed here.
+add_service_files(
+  FILES
+  ProfilePolynomialStamped.srv
+)
+
 generate_messages(
   DEPENDENCIES
   std_msgs
@@ -38,7 +42,7 @@ catkin_package(
   CATKIN_DEPENDS message_runtime roscpp message_filters
 )
 set(SRC ${SRC} 
-src/hcegcs.cpp)
+  src/hcegcs.cpp)
 
 set(includeDirs ${includeDirs} ${CMAKE_CURRENT_BINARY_DIR})
 set(includeDirs ${includeDirs} include)

@@ -1,0 +1,4 @@
+# Environment polynomial profile
+Header header
+uint32 polynomial_order
+float64[] coefficients

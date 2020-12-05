@@ -30,6 +30,11 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
+// Custom messages and services
+#include "visual_reconstructor/LidarDataStamped.h" // msg
+#include "visual_reconstructor/ProfilePolynomialStamped.h" // services (client of 'vis_recon', server to 'planner')
+#include "visual_reconstructor/ControlInputsStamped.h" // service (client of 'planner')
+
 using namespace std;
 
 
@@ -67,6 +72,7 @@ private:
     // services for ground profile
     ros::ServiceServer server_ground_;
     ros::ServiceServer server_target_;
+    ros::ServiceClient client_control_inputs_;
 
     // topic names
     vector<string> topicnames_imgs_;
