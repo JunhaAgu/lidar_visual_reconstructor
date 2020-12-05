@@ -9,11 +9,11 @@
 using namespace std;
    
 int main(int argc, char **argv) {
-    ros::init(argc, argv, "vis_recon");
+    ros::init(argc, argv, "3drecon_node");
     ros::NodeHandle nh("~");
-    ROS_INFO_STREAM("START: \"vis_recon\".\n");
+    ROS_INFO_STREAM("START: \"3drecon_node\".\n");
     ros::spin();
 
-    ROS_INFO_STREAM("TERMINATE: \"vis_recon\".\n");
+    ROS_INFO_STREAM("TERMINATE: \"3drecon_node\".\n");
     return -1;
 }

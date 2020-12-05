@@ -1,7 +1,8 @@
 {
     "files.associations": {
         "*.tcc": "cpp",
-        "iostream": "cpp"
+        "iostream": "cpp",
+        "fstream": "cpp"
     },
     "python.autoComplete.extraPaths": [
         "/home/larrkchlaptop/catkin_ws/devel/lib/python2.7/dist-packages",

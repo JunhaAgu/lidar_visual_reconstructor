@@ -1,0 +1,7 @@
+# Environment polynomial profile 3D points
+# Represented in the body frame.
+Header header # header
+uint32 n_pts # the number of points
+float32[] x # x coordinates vector
+float32[] y # y coordinates vector
+float32[] z # z coordinates vector

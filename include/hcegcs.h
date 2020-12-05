@@ -1,28 +1,34 @@
 #ifndef _HCEGCS_H_
 #define _HCEGCS_H_
-#include <stdlib.h>
+
 #include <iostream>
 #include <vector>
+#include <stdlib.h>
+
+// File IO. for lidar pcd files
 #include <string>
 #include <sstream>
-#include <fstream> // for lidar pcd files
+#include <fstream> 
 
+// ROS
 #include <ros/ros.h>
+
+// ROS eigen
 #include <Eigen/Dense>
 
+// ROS cv_bridge
 #include <cv_bridge/cv_bridge.h>
-
 #include <opencv2/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
-// for subscribe
+// For subscribe
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/CameraInfo.h>
 #include <sensor_msgs/image_encodings.h> 
 #include <image_transport/image_transport.h>
 
-#include <std_msgs/Int32.h> // command msg
+#include <std_msgs/Int32.h> // command message to MCU
 #include <sensor_msgs/TimeReference.h> // arduino time
 #include <sensor_msgs/PointCloud2.h>
 
@@ -31,15 +37,14 @@
 #include <pcl/point_types.h>
 
 // Custom messages and services
-#include "visual_reconstructor/LidarDataStamped.h" // msg
-#include "visual_reconstructor/ProfilePolynomialStamped.h" // services (client of 'vis_recon', server to 'planner')
-#include "visual_reconstructor/ControlInputsStamped.h" // service (client of 'planner')
+#include "hce_autoexcavator/LidarDataStamped.h" // msg
+#include "hce_autoexcavator/ProfilePolynomialStamped.h" // service (server to 'planner')
+#include "hce_autoexcavator/ProfilePointsStamped.h" // client of 'vis_recon'
+#include "hce_autoexcavator/ControlInputsStamped.h" // service (client of 'planner')
 
 using namespace std;
 
-
 class HCEGCS {
-
 // Public methods
 public:
     HCEGCS(ros::NodeHandle& nh, int n_cams, int n_lidars, const string& save_dir);
@@ -111,6 +116,9 @@ private:
     void callbackImage(const sensor_msgs::ImageConstPtr& msg, const int& id);
     void callbackLidar(const sensor_msgs::PointCloud2ConstPtr& msg_lidar, const int& id);
     void callbackTime(const sensor_msgs::TimeReference::ConstPtr& t_ref);
+
+    bool serverCallbackProfilePolynomial(hce_autoexcavator::ProfilePolynomialStamped::Request $ req,
+        hce_autoexcavator::ProfilePolynomialStamped::Response &res);
 
 
 

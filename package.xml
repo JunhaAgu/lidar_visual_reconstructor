@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package>
-  <name>visual_reconstructor</name>
+  <name>hce_autoexcavator</name>
   <version>0.0.0</version>
-  <description>visual_reconstructor package</description>
+  <description>hce_autoexcavator package</description>
 
   <maintainer email="Changhyeon@gmail.com">ChanghyeonKim</maintainer>
 
