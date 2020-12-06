@@ -34,6 +34,8 @@
 #include "hce_autoexcavator/LidarImageDataStamped.h" // client
 #include "hce_autoexcavator/ProfilePointsStamped.h" // server for 'GCS node'
 
+#include "lidar_pcl.hpp"
+#include "frame.hpp"
 #include "feature_tracker.h"
 
 
@@ -56,9 +58,15 @@ private:
     bool serverCallbackProfilePoints(hce_autoexcavator::ProfilePointsStamped::Request &req,
         hce_autoexcavator::ProfilePointsStamped::Response &res);
 
+// Tracker
 private:
     FeatureTracker* tracker_;
     // ConstraindDelaunayTriangulation* cdt_;
+
+// pcl
+private:
+    LidarPcl* pcls0;
+    LidarPcl* pcls1;
 
 };
 #endif
