@@ -46,9 +46,13 @@ catkin_package(
 set(SRC ${SRC} 
   src/hcegcs.cpp
   src/lidar_visual_reconstructor.cpp
+  
   src/feature_tracker.cpp
   src/frame.cpp
-  src/camera.cpp)
+  src/camera.cpp
+  
+  src/cdt/adjacent_map.cpp
+  src/cdt/constrained_delaunay.cpp)
 
 set(includeDirs ${includeDirs} ${CMAKE_CURRENT_BINARY_DIR})
 set(includeDirs ${includeDirs} include)
