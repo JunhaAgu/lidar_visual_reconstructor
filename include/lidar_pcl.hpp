@@ -20,6 +20,7 @@ struct LidarPcl {
     float* psi;
 
     LidarPcl(int n_channels_) : n_channels(n_channels_) {
+        cout << "lidar pcl is generated.\n";
         count = 0;
         intensity = (float*)custom_aligned_malloc(sizeof(float)*300000);
         x = (float*)custom_aligned_malloc(sizeof(float)*300000);

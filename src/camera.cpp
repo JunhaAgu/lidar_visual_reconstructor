@@ -1,33 +1,37 @@
 #include "camera.hpp"
 using namespace std;
-Camera::Camera(int n_cols, int n_rows, float fx, float fy, float cx, float cy, float k1, float k2, float k3, float p1, float p2)
+Camera::Camera()
 {   
-    n_cols_ = n_cols;
-    n_rows_ = n_rows;
-    fx_ = fx;    fy_ = fy;    cx_ = cx;    cy_ = cy;
-    fxinv_ = 1.0f/fx_; fyinv_ = 1.0f/fy_;
-    k1_ = k1;    k2_ = k2;    k3_ = k3;
-    p1_ = p1;    p2_ = p2;
-    distortion_[0] = k1;
-    distortion_[1] = k2;
-    distortion_[2] = p1;
-    distortion_[3] = p2;
-    distortion_[4] = k3;
-
     // initialize all things
     K_        = Eigen::Matrix3f::Identity();
     Kinv_     = Eigen::Matrix3f::Identity();
-
-    K_ << fx_, 0.0f, cx_, 0.0f, fy_, cy_, 0.0f, 0.0f, 1.0f;
-    Kinv_ = K_.inverse();
-
-    cout << " K:\n";
-    cout << K_;
-    cout << " distortion: " << k1<<"," << k2 <<"," << k3<<"," <<p1 <<"," <<p2 <<"\n";
 };
 
 Camera::~Camera(){
     cout << "Camera is deleted.\n";
+};
+
+void Camera::initParams(int n_cols, int n_rows, const cv::Mat& cvK, const cv::Mat& cvD){
+    n_cols_ = n_cols; n_rows_ = n_rows;
+    fx_ = cvK.at<float>(0,0); fy_ = cvK.at<float>(1,1);    
+    cx_ = cvK.at<float>(0,2); cy_ = cvK.at<float>(1,2);
+    fxinv_ = 1.0f/fx_; fyinv_ = 1.0f/fy_;
+    k1_ = cvD.at<float>(0,0);    
+    k2_ = cvD.at<float>(0,1);   
+    p1_ = cvD.at<float>(0,2);    
+    p2_ = cvD.at<float>(0,3);
+    k3_ = cvD.at<float>(0,4);
+    distortion_[0] = k1_;
+    distortion_[1] = k2_;
+    distortion_[2] = p1_;
+    distortion_[3] = p2_;
+    distortion_[4] = k3_;
+
+    K_ << fx_, 0.0f, cx_, 0.0f, fy_, cy_, 0.0f, 0.0f, 1.0f;
+    Kinv_ = K_.inverse();
+
+    undist_map_x_ = cv::Mat::zeros(n_rows_, n_cols_, CV_32FC1);
+    undist_map_y_ = cv::Mat::zeros(n_rows_, n_cols_, CV_32FC1);
 };
 
 void Camera::generateUndistortMaps(){

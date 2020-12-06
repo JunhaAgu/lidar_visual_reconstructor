@@ -1,0 +1,49 @@
+%YAML:1.0
+cabin.cam0.height: 772
+cabin.cam0.width: 1032
+cabin.cam0.D: !!opencv-matrix
+  rows: 1
+  cols: 5
+  dt: f
+  data: [-0.1,-0.1, 0.0, 0.0, 0.0]
+cabin.cam0.K: !!opencv-matrix
+  rows: 3
+  cols: 3
+  dt: f
+  data: [525.0, 0.0, 320.0, 0.0, 525.0, 240.0, 0.0, 0.0, 1.0]
+cabin.cam1.height: 772
+cabin.cam1.width: 1032
+cabin.cam1.D: !!opencv-matrix
+  rows: 1
+  cols: 5
+  dt: f
+  data: [-0.1,-0.1, 0.0, 0.0, 0.0]
+cabin.cam1.K: !!opencv-matrix
+  rows: 3
+  cols: 3
+  dt: f
+  data: [525.0, 0.0, 320.0, 0.0, 525.0, 240.0, 0.0, 0.0, 1.0]
+boom.cam0.height: 772
+boom.cam0.width: 1032
+boom.cam0.D: !!opencv-matrix
+  rows: 1
+  cols: 5
+  dt: f
+  data: [-0.1,-0.1, 0.0, 0.0, 0.0]
+boom.cam0.K: !!opencv-matrix
+  rows: 3
+  cols: 3
+  dt: f
+  data: [525.0, 0.0, 320.0, 0.0, 525.0, 240.0, 0.0, 0.0, 1.0]
+boom.cam1.height: 772
+boom.cam1.width: 1032
+boom.cam1.D: !!opencv-matrix
+  rows: 1
+  cols: 5
+  dt: f
+  data: [-0.1,-0.1, 0.0, 0.0, 0.0]
+boom.cam1.K: !!opencv-matrix
+  rows: 3
+  cols: 3
+  dt: f
+  data: [525.0, 0.0, 320.0, 0.0, 525.0, 240.0, 0.0, 0.0, 1.0]

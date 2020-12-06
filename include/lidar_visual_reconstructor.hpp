@@ -3,6 +3,7 @@
 
 
 #include <iostream>
+#include <exception>
 #include <vector>
 
 // ROS
@@ -16,6 +17,7 @@
 #include <opencv2/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include <opencv2/core/eigen.hpp>
 
 
 // For subscribe
@@ -36,6 +38,7 @@
 
 #include "lidar_pcl.hpp"
 #include "frame.hpp"
+#include "camera.hpp"
 #include "feature_tracker.h"
 
 
@@ -44,6 +47,9 @@ class LidarVisualReconstructor {
 public:
     LidarVisualReconstructor(ros::NodeHandle& nh);
     ~LidarVisualReconstructor();
+
+    void loadCameraIntrinsics(string& dir);
+    void loadSensorExtrinsics(string& dir);
 
     bool run(); // success or fail.
     
@@ -65,8 +71,21 @@ private:
 
 // pcl
 private:
-    LidarPcl* pcls0;
-    LidarPcl* pcls1;
+    int n_lidars_;  // 2
+    vector<int> n_channels_;
+    vector<LidarPcl*> pcls_;
+
+// cams & frames
+private:
+    int n_cameras_; // 4
+    int MAX_LVL_PYR_;;
+    vector<Camera*> cams_;
+    vector<Frame*> frames_;
+
+// extrinsics
+private:
+    vector<Eigen::Matrix4f> T_cl0_;
+    vector<Eigen::Matrix4f> T_c0c1_;
 
 };
 #endif
