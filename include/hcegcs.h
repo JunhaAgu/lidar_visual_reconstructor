@@ -37,11 +37,11 @@
 #include <pcl/point_types.h>
 
 // Custom messages and services
-#include "hce_autoexcavator/ControlInputsStamped.h" // msg
+#include "hce_autoexcavator/controlInputsStamped.h" // msg
 
-#include "hce_autoexcavator/LidarImageDataStamped.h" // service server
-#include "hce_autoexcavator/ProfilePolynomialStamped.h" // service (server to 'planner')
-#include "hce_autoexcavator/ProfilePointsStamped.h" // client of 'vis_recon'
+#include "hce_autoexcavator/lidarImageDataStamped.h" // service server
+#include "hce_autoexcavator/profilePolynomialStamped.h" // service (server to 'planner')
+#include "hce_autoexcavator/profilePointsStamped.h" // client of 'vis_recon'
 
 using namespace std;
 
@@ -55,9 +55,10 @@ public:
     void snapshotMode();
     void runAlgorithms();
 
+    void setTestLidarImages(string dir);
+
     const int getNumCameras() const {return n_cameras_; };
     const int getNumLidars()  const {return n_lidars_; };
-
 
 
 // ROS topic subs., pub., services. related variables
@@ -78,6 +79,8 @@ private:
     // services for ground profile
     ros::ServiceServer server_ground_;
     ros::ServiceServer server_target_;
+    
+    ros::ServiceServer server_lidarimagedata_;
 
     // topic names
     vector<string> topicnames_imgs_;
@@ -97,8 +100,8 @@ private:
     bool  flag_mcu_;    // 'true' when arduino data is received. 
 
     // data container (buffer)
-    cv::Mat* buf_imgs_; // Images from mvBlueCOUGAR-X cameras.
-    double   buf_time_; // triggered time stamp from Arduino. [sec.]
+    vector<cv::Mat> buf_imgs_; // Images from mvBlueCOUGAR-X cameras.
+    double buf_time_; // triggered time stamp from Arduino. [sec.]
     pcl::PointCloud<pcl::PointXYZI>::Ptr* buf_lidars_; // point clouds (w/ intensity) from Velodyne VLP16 
     
     vector<float*> buf_lidars_x;
@@ -114,22 +117,21 @@ private:
 // Callback functions
 private:
     // request Profile points -> after 'planner's request, calculate and serve Profile Polynomial. 
-    bool serverCallbackProfilePolynomial(hce_autoexcavator::ProfilePolynomialStamped::Request &req,
-        hce_autoexcavator::ProfilePolynomialStamped::Response &res);
+    bool serverCallbackProfilePolynomial(hce_autoexcavator::profilePolynomialStamped::Request &req,
+        hce_autoexcavator::profilePolynomialStamped::Response &res);
 
     // After 'lidar_visual_reconstructor's request, acquire a snapshot and send data to the 'lidar_visual_reconstructor'
-    bool serverCallbackLidarImageData(hce_autoexcavator::LidarImageDataStamped::Request &req,
-        hce_autoexcavator::LidarImageDataStamped::Response &res); // to reconstructor.
-
+    bool serverCallbackLidarImageData(hce_autoexcavator::lidarImageDataStamped::Request &req,
+        hce_autoexcavator::lidarImageDataStamped::Response &res); // to reconstructor.
 
     void callbackImage(const sensor_msgs::ImageConstPtr& msg, const int& id);
     void callbackLidar(const sensor_msgs::PointCloud2ConstPtr& msg_lidar, const int& id);
     void callbackTime(const sensor_msgs::TimeReference::ConstPtr& t_ref);
 
-
+    
 
 // Private methods    
-private:
+private:    
     bool sendSingleQueryToAllSensors();
     void saveAllData();
 

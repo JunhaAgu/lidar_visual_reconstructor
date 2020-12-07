@@ -2,7 +2,16 @@
     "files.associations": {
         "*.tcc": "cpp",
         "iostream": "cpp",
-        "fstream": "cpp"
+        "fstream": "cpp",
+        "*.ipp": "cpp",
+        "array": "cpp",
+        "hash_map": "cpp",
+        "hash_set": "cpp",
+        "ostream": "cpp",
+        "iosfwd": "cpp",
+        "deque": "cpp",
+        "string": "cpp",
+        "vector": "cpp"
     },
     "python.autoComplete.extraPaths": [
         "/home/larrkchlaptop/catkin_ws/devel/lib/python2.7/dist-packages",

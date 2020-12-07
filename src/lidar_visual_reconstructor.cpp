@@ -30,18 +30,18 @@ LidarVisualReconstructor::LidarVisualReconstructor(ros::NodeHandle& nh)
     for(int i = 0; i < n_cameras_; ++i) frames_.push_back(new Frame(cams_[i], MAX_LVL_PYR_));
 
     // Initiate messages
-    
+
 
     // Initiate services
-    nh_.serviceClient<hce_autoexcavator::LidarImageDataStamped>("srv_lidar_image_data");
+    nh_.serviceClient<hce_autoexcavator::lidarImageDataStamped>("srv_lidar_image_data");
 
 };
 LidarVisualReconstructor::~LidarVisualReconstructor(){
 
 };
 
-bool LidarVisualReconstructor::serverCallbackProfilePoints(hce_autoexcavator::ProfilePointsStamped::Request &req,
-        hce_autoexcavator::ProfilePointsStamped::Response &res)
+bool LidarVisualReconstructor::serverCallbackProfilePoints(hce_autoexcavator::profilePointsStamped::Request &req,
+        hce_autoexcavator::profilePointsStamped::Response &res)
 {   
     // run algorithm.
     this->run();

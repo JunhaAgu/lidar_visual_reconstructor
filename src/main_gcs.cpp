@@ -29,13 +29,13 @@ int main(int argc, char **argv) {
     ros::NodeHandle nh("~");
     ROS_INFO_STREAM("START: \"communicator\".\n");
 
-    int n_cameras = 0;
-    int n_lidars = 0;
+    int n_cameras = 4;
+    int n_lidars  = 2;
 
     HCEGCS* gcs = nullptr;
 
     try {
-        gcs = new HCEGCS(nh, 0, 0, std::string(""));
+        gcs = new HCEGCS(nh, n_cameras, n_lidars, std::string(""));
         // user input manual.
         string user_manual;
         stringstream ss;
@@ -44,6 +44,7 @@ int main(int argc, char **argv) {
         << "  Select..." 
         << "\n|      [s]  Query and save a snapshot." 
         << "\n|      [r]  Run All HCE algorithms" 
+        << "\n|      [t]  Get test dataset" 
         << "\n| Select an input: \n";
         user_manual = ss.str();
         cout << user_manual;
@@ -65,8 +66,15 @@ int main(int argc, char **argv) {
                 cout << "\n\n RUN algorithms...\n";
                 // Do algorithm parts... GCS (Ground Control System)
                 // Each module should be a 'class' object.
+                
                 gcs->runAlgorithms(); // To be updated.
 
+                cout << user_manual;
+            }
+            else if(c == 't') {
+                cout << "\n\n Get test data...\n";
+                string dir_testdata = "/home/larrkchlaptop/catkin_ws/src/lidar_visual_reconstructor/test_data/up_20";
+                gcs->setTestLidarImages(dir_testdata);
                 cout << user_manual;
             }
             else if(c != 0) {

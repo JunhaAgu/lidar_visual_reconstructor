@@ -1,4 +1,8 @@
 # Environment polynomial profile
+Header header # header
+uint32 n_polyorder
+
+---
 Header header
 uint32 polynomial_order
 float64[] coefficients

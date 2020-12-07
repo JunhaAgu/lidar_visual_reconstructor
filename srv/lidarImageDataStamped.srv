@@ -1,0 +1,22 @@
+Header header
+uint32 request_type
+
+---
+Header header
+uint32 n_pts0
+float64[] x0
+float64[] y0
+float64[] z0
+float64[] ring0
+float64[] intensity0
+float64[] time0
+uint32 n_pts1
+float64[] x1
+float64[] y1
+float64[] z1
+float64[] ring1
+float64[] intensity1
+float64[] time1
+sensor_msgs/Image img0 # reference image
+sensor_msgs/Image img1 # second image
+bool succeeded

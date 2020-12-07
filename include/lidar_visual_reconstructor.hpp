@@ -33,8 +33,8 @@
 #include <pcl/point_types.h>
 
 // Custom messages and services
-#include "hce_autoexcavator/LidarImageDataStamped.h" // client
-#include "hce_autoexcavator/ProfilePointsStamped.h" // server for 'GCS node'
+#include "hce_autoexcavator/lidarImageDataStamped.h" // client
+#include "hce_autoexcavator/profilePointsStamped.h" // server for 'GCS node'
 
 #include "lidar_pcl.hpp"
 #include "frame.hpp"
@@ -56,8 +56,8 @@ public:
 
 // Callback functions
 private:
-    bool serverCallbackProfilePoints(hce_autoexcavator::ProfilePointsStamped::Request &req,
-        hce_autoexcavator::ProfilePointsStamped::Response &res);
+    bool serverCallbackProfilePoints(hce_autoexcavator::profilePointsStamped::Request &req,
+        hce_autoexcavator::profilePointsStamped::Response &res);
 
 // Algorithms
 private:
@@ -70,7 +70,7 @@ private:
     ros::NodeHandle nh_;
     ros::ServiceClient client_lidarimagedata_;
 
-    hce_autoexcavator::LidarImageDataStamped srv_lidarimagedata_; // from 'GCS'
+    hce_autoexcavator::lidarImageDataStamped srv_lidarimagedata_; // from 'GCS'
     
 // Tracker
 private:

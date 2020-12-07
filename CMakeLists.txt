@@ -22,14 +22,14 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate messages in the 'msg' folder
 add_message_files(
   FILES
-  ControlInputsStamped.msg
+  controlInputsStamped.msg
 )
 
 add_service_files(
   FILES
-  ProfilePolynomialStamped.srv
-  ProfilePointsStamped.srv
-  LidarImageDataStamped.srv
+  profilePolynomialStamped.srv
+  profilePointsStamped.srv
+  lidarImageDataStamped.srv
 )
 
 generate_messages(
@@ -51,6 +51,7 @@ set(SRC ${SRC}
   src/frame.cpp
   src/camera.cpp
   src/image_procesing.cpp
+  src/timer.cpp
 
   src/cdt/adjacent_map.cpp
   src/cdt/constrained_delaunay.cpp
@@ -63,7 +64,7 @@ include_directories( ${includeDirs} )
 include_directories( ${catkin_INCLUDE_DIRS} )
 include_directories( ${Eigen_INCLUDE_DIRS} )
 
-set(DCMAKE_build_type debug)
+set(DCMAKE_build_type Debug)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -pg -O2 -m64 -Ofast -flto -msse3 -march=native -mfpmath=sse")
 
 
@@ -73,3 +74,4 @@ target_link_libraries (reconstruction_node ${catkin_LIBRARIES} ${OpenCV_LIBRARIE
 
 add_executable (gcs_node src/main_gcs.cpp ${SRC})
 target_link_libraries (gcs_node ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} ${Eigen_LIBRARIES})
+add_dependencies(gcs_node lidarImageDataStamped_gencpp)
