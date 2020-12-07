@@ -41,6 +41,8 @@
 #include "camera.hpp"
 #include "feature_tracker.h"
 
+#include "util/sophus_lie.hpp"
+
 
 using namespace std;
 class LidarVisualReconstructor {
@@ -93,8 +95,11 @@ private:
 
 // extrinsics
 private:
-    vector<Eigen::Matrix4f> T_cl0_;
-    vector<Eigen::Matrix4f> T_c0c1_;
+    vector<Eigen::Matrix4f> T_cl0_;  // from yaml (TODO: calibrator.)
+    vector<Eigen::Matrix4f> T_c0c1_; // from yaml (TODO: calibrator.)
+    Eigen::Matrix4f T_l0l1_; // from GCS
+    Eigen::Matrix3f R_l0l1_; // from GCS
+    Eigen::Vector3f t_l0l1_; // from GCS
 
 };
 #endif

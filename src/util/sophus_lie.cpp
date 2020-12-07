@@ -219,6 +219,47 @@ void sophuslie::SE3Log(const Eigen::MatrixXd& T_, Eigen::MatrixXd& xi_)
 	// std::cout << xi_ << std::endl;
 };
 
+void sophuslie::SE3Log(const Eigen::Matrix4f& T, Eigen::Matrix<float,6,1>& xi)
+{
+	float theta = 0.0;
+	float A, B;
+	Eigen::Matrix3f wx, R;
+	Eigen::Matrix3f lnR, Vin;
+	Eigen::Vector3f t, w, v;
+
+	R = T.block<3, 3>(0, 0);
+	t = T.block<3, 1>(0, 3);
+
+
+	theta = acos((R.trace() - 1.0)*0.5);
+
+	if (theta < 1e-7) {
+		Vin = Eigen::Matrix3f::Identity();
+		w << 0, 0, 0;
+	}
+	else {
+		lnR = (theta / (2 * sin(theta)))*(R - R.transpose());
+		w << -lnR(1, 2), lnR(0, 2), -lnR(0, 1);
+		wx << 0, -w(2), w(1),
+			w(2), 0, -w(0),
+			-w(1), w(0), 0;
+
+		A = sin(theta) / theta;
+		B = (1 - cosf(theta)) / (theta*theta);
+		Vin = Eigen::Matrix3f::Identity() - 0.5*wx + (1 / (theta*theta))*(1 - A / (2 * B))*(wx*wx);
+	}
+
+	v = Vin*t;
+	xi(0) = v(0);
+	xi(1) = v(1);
+	xi(2) = v(2);
+	xi(3) = w(0);
+	xi(4) = w(1);
+	xi(5) = w(2);
+	// for debug
+	// std::cout << xi_ << std::endl;
+}
+
 
 void sophuslie::a2r(const float& r, const float& p, const float& y, Eigen::Matrix3f& R) {// r,p,y are defined on the radian domain.
 	Eigen::Matrix3f Rx, Ry, Rz;

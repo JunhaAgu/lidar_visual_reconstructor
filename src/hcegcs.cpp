@@ -167,7 +167,7 @@ void HCEGCS::runAlgorithms(){
 
 };
 
-void HCEGCS::setTestLidarImages(string dir){
+void HCEGCS::setTestLidarImages(string dir, float theta){
     // dir =/home/larrkchlaptop/catkin_ws/src/lidar_visual_reconstructor/test_data
     // plane: cam0 cam1 lidar0 lidar1 (cabin cam0, cabin cam1)
     // up: cam0 cam1 lidar0 lidar1 (cabin cam0, cabin cam1)
@@ -265,6 +265,11 @@ void HCEGCS::setTestLidarImages(string dir){
     buf_lidars_npoints[id_sub_lidar] = cnt;
     cout << " read done :" << cnt <<" \n";
 
+
+    // theta simulated.
+    theta_ = theta;
+
+    cout << "simulated boom angle: " << theta_/3.141592*180.0f <<" [deg]\n";
     cout << " Load test files : done!\n";
 };
 
@@ -515,6 +520,16 @@ bool HCEGCS::serverCallbackRelativeLidarPose(hce_autoexcavator::relativeLidarPos
     res.header.stamp = ros::Time::now();
     res.header.seq   = -1;
     res.header.frame_id = -1;
+    
+    // TODO: get theta!
+    Eigen::Matrix3f R_l0l1;    Eigen::Vector3f t_l0l1;
+    Eigen::Matrix4f T_l0l1;
+    calcRelativeLidarPose(theta_, R_l0l1, t_l0l1);
+    T_l0l1 << R_l0l1, t_l0l1, 0, 0, 0, 1;
+    cout << " T_l0l1:\n" 
+    << T_l0l1 << "\n";
+    Eigen::Matrix<float,6,1> xi_l0l1;
+    sophuslie::SE3Log(T_l0l1, xi_l0l1);
 
     res.tx = 0.0f;
     res.ty = 0.0f;
@@ -522,4 +537,12 @@ bool HCEGCS::serverCallbackRelativeLidarPose(hce_autoexcavator::relativeLidarPos
     res.wx = 0.0f;
     res.wy = 0.0f;
     res.wz = 0.0f;
+};
+
+
+void HCEGCS::calcRelativeLidarPose(const float& theta, Eigen::Matrix3f& R_l0l1, Eigen::Vector3f& t_l0l1){
+    // TODO: exact calculation!!!!!
+
+    R_l0l1 = Eigen::Matrix3f::Identity();
+    t_l0l1 << 0,0,0;
 };

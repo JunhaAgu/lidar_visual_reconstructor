@@ -46,6 +46,9 @@
 
 #include "hce_autoexcavator/profilePolynomialStamped.h" // service (server to 'planner')
 
+// custom libraries
+#include "util/sophus_lie.hpp" // Lie group & Lie algebra.
+
 using namespace std;
 
 class HCEGCS {
@@ -58,10 +61,52 @@ public:
     void snapshotMode();
     void runAlgorithms();
 
-    void setTestLidarImages(string dir);
+    void setTestLidarImages(string dir, float theta);
 
     const int getNumCameras() const {return n_cameras_; };
     const int getNumLidars()  const {return n_lidars_; };
+
+
+
+// Callback functions
+private:
+    // request Profile points -> after 'planner's request, calculate and serve Profile Polynomial. 
+    bool serverCallbackProfilePolynomial(hce_autoexcavator::profilePolynomialStamped::Request &req,
+        hce_autoexcavator::profilePolynomialStamped::Response &res);
+
+    // After 'lidar_visual_reconstructor's request, acquire a snapshot and send data to the 'lidar_visual_reconstructor'
+    bool serverCallbackLidarImageData(hce_autoexcavator::lidarImageDataStamped::Request &req,
+        hce_autoexcavator::lidarImageDataStamped::Response &res); // to reconstructor.
+    bool serverCallbackRelativeLidarPose(hce_autoexcavator::relativeLidarPoseStamped::Request &req,
+        hce_autoexcavator::relativeLidarPoseStamped::Response &res); // to reconstructor.
+
+    void callbackImage(const sensor_msgs::ImageConstPtr& msg, const int& id);
+    void callbackLidar(const sensor_msgs::PointCloud2ConstPtr& msg_lidar, const int& id);
+    void callbackTime(const sensor_msgs::TimeReference::ConstPtr& t_ref);
+
+    
+
+// Private methods (related to data transmissions)
+private:    
+    bool sendSingleQueryToAllSensors(); // TODO: get IMU. Here, theta is also obtained from MCU.
+    void saveAllData(); // TODO: save IMU angles, cylinder states
+
+    void pointcloud2tobuffers(const sensor_msgs::PointCloud2ConstPtr& msg_lidar, const int& id);
+    void saveLidarDataRingTime(const std::string& file_name, const int& id);
+    void clearMsgCommand(){msg_command_.data = 0; };
+    void initAllFlags();
+
+
+
+// Private methods (related to calibration calculations)
+private:
+    void calcRelativeLidarPose(const float& theta, Eigen::Matrix3f& R_l0l1, Eigen::Vector3f& t_l0l1);
+    float theta_; // current boom angle.
+    Eigen::Vector3f w_; // TODO: boom ref to boom lidar. (so3) 
+    Eigen::Matrix3f R_MrM; // TODO: boom ref to boom lidar. (SE(3) with rotation only motion.)
+    Eigen::Matrix4f T_bf_; // TODO: body to cabin lidar.
+    Eigen::Matrix4f T_gb_; // TODO: ground reference frame to body frame.
+
 
 
 // ROS topic subs., pub., services. related variables
@@ -117,34 +162,7 @@ private:
 
 
 
-// Callback functions
 private:
-    // request Profile points -> after 'planner's request, calculate and serve Profile Polynomial. 
-    bool serverCallbackProfilePolynomial(hce_autoexcavator::profilePolynomialStamped::Request &req,
-        hce_autoexcavator::profilePolynomialStamped::Response &res);
-
-    // After 'lidar_visual_reconstructor's request, acquire a snapshot and send data to the 'lidar_visual_reconstructor'
-    bool serverCallbackLidarImageData(hce_autoexcavator::lidarImageDataStamped::Request &req,
-        hce_autoexcavator::lidarImageDataStamped::Response &res); // to reconstructor.
-    bool serverCallbackRelativeLidarPose(hce_autoexcavator::relativeLidarPoseStamped::Request &req,
-        hce_autoexcavator::relativeLidarPoseStamped::Response &res); // to reconstructor.
-
-    void callbackImage(const sensor_msgs::ImageConstPtr& msg, const int& id);
-    void callbackLidar(const sensor_msgs::PointCloud2ConstPtr& msg_lidar, const int& id);
-    void callbackTime(const sensor_msgs::TimeReference::ConstPtr& t_ref);
-
-    
-
-// Private methods    
-private:    
-    bool sendSingleQueryToAllSensors();
-    void saveAllData();
-
-    void pointcloud2tobuffers(const sensor_msgs::PointCloud2ConstPtr& msg_lidar, const int& id);
-    void saveLidarDataRingTime(const std::string& file_name, const int& id);
-    void clearMsgCommand(){msg_command_.data = 0; };
-    void initAllFlags();
-
     string save_dir_;
     int current_seq_;
 };

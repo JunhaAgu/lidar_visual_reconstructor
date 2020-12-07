@@ -74,7 +74,9 @@ int main(int argc, char **argv) {
             else if(c == 't') {
                 cout << "\n\n Get test data...\n";
                 string dir_testdata = "/home/larrkchlaptop/catkin_ws/src/lidar_visual_reconstructor/test_data/up_20";
-                gcs->setTestLidarImages(dir_testdata);
+                
+                float theta_ = 20.0f; // 20 degrees for up 20.
+                gcs->setTestLidarImages(dir_testdata,theta_/3.141592*180.0f);
                 cout << user_manual;
             }
             else if(c != 0) {
