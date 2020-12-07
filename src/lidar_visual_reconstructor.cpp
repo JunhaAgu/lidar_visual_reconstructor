@@ -11,11 +11,8 @@ LidarVisualReconstructor::LidarVisualReconstructor(ros::NodeHandle& nh)
     n_channels_.push_back(16);
     n_channels_.push_back(16);
     
-    for(int i = 0; i < n_lidars_; ++i) pcls_.push_back(new LidarPcl(n_channels_[i]));
-    for(int i = 0; i < n_cameras_; ++i){
-        cams_.push_back(new Camera());
-        frames_.push_back(new Frame(MAX_LVL_PYR_));
-    } 
+    for(int i = 0; i < n_lidars_; ++i)  pcls_.push_back(new LidarPcl(n_channels_[i]));
+    for(int i = 0; i < n_cameras_; ++i) cams_.push_back(new Camera());
 
     // load camera intrinsics
     string dir_cam_intrinsics = "/home/larrkchlaptop/catkin_ws/src/lidar_visual_reconstructor/params/camera_intrinsics.yaml";
@@ -25,14 +22,15 @@ LidarVisualReconstructor::LidarVisualReconstructor(ros::NodeHandle& nh)
     string dir_sensor_extrinsics = "/home/larrkchlaptop/catkin_ws/src/lidar_visual_reconstructor/params/sensor_extrinsics.yaml";
     loadSensorExtrinsics(dir_sensor_extrinsics);
 
-
     // By using initialized camera params, calculate all camera undistortion maps
     for(auto iter = cams_.begin(); iter != cams_.end(); ++iter)
         (*iter)->generateUndistortMaps();
-        
+
+    // fill out frames.
+    for(int i = 0; i < n_cameras_; ++i) frames_.push_back(new Frame(cams_[i], MAX_LVL_PYR_));
 
     // Initiate messages
-
+    
 
     // Initiate services
     nh_.serviceClient<hce_autoexcavator::LidarImageDataStamped>("srv_lidar_image_data");

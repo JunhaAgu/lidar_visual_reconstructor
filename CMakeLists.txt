@@ -50,9 +50,11 @@ set(SRC ${SRC}
   src/feature_tracker.cpp
   src/frame.cpp
   src/camera.cpp
-  
+  src/image_procesing.cpp
+
   src/cdt/adjacent_map.cpp
-  src/cdt/constrained_delaunay.cpp)
+  src/cdt/constrained_delaunay.cpp
+)
 
 set(includeDirs ${includeDirs} ${CMAKE_CURRENT_BINARY_DIR})
 set(includeDirs ${includeDirs} include)

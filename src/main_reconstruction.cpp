@@ -19,7 +19,8 @@ int main(int argc, char **argv) {
         recon = new LidarVisualReconstructor(nh);
 
         while(ros::ok()){
-            //recon->run(); // FOR TEST
+            recon->run(); // FOR TEST
+            ros::Duration(0.5).sleep();
         }
     }
     catch(std::exception& e){

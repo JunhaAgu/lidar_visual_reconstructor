@@ -14,28 +14,41 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
+#include "camera.hpp"
+
 using namespace std;
 
 class Frame {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    Frame(int max_lvl_pyr);
+    Frame(Camera* cam, int max_lvl_pyr);
     ~Frame();
 
-    void calcGradient(const cv::Mat& img, const cv::Mat& img_f);
+    void constructFrame(const cv::Mat& img_input);
+
+    cv::Mat img() const {return img_raw_;};
+    vector<cv::Mat> img_pyr() const {return img_pyr_;};
+    vector<cv::Mat> du() const {return du_pyr_;};
+    vector<cv::Mat> dv() const {return dv_pyr_;};
 
 
 private:
-    cv::Mat du_s; // CV_16S, sobel result, maximum resolution.
-    cv::Mat dv_s; // CV_16S, sobel result, maximum resolution.
-
-    vector<cv::Mat> img_pyr; // CV_32F
-    vector<cv::Mat> du_pyr;  // CV_32F
-    vector<cv::Mat> dv_pyr;  // CV_32F
-
-    int MAX_PYR_LVL;
+    void calcGradient();
 
 
+private:
+    cv::Mat img_raw_; // CV_8UC1
+    cv::Mat img_raw_f_; // CV_32FC1
+    cv::Mat du_s_; // CV_16S, sobel result, maximum resolution.
+    cv::Mat dv_s_; // CV_16S, sobel result, maximum resolution.
+
+    vector<cv::Mat> img_pyr_; // CV_32F
+    vector<cv::Mat> du_pyr_;  // CV_32F
+    vector<cv::Mat> dv_pyr_;  // CV_32F
+
+    int MAX_PYR_LVL_;
+
+    Camera* cam_;
 };
 
 #endif

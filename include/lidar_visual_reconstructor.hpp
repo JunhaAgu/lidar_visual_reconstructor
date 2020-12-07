@@ -53,17 +53,25 @@ public:
 
     bool run(); // success or fail.
     
-private:
-    ros::NodeHandle nh_;
-    ros::ServiceClient client_lidarimagedata_;
 
-    hce_autoexcavator::LidarImageDataStamped srv_lidarimagedata_;
-
-// Callback function
+// Callback functions
 private:
     bool serverCallbackProfilePoints(hce_autoexcavator::ProfilePointsStamped::Request &req,
         hce_autoexcavator::ProfilePointsStamped::Response &res);
 
+// Algorithms
+private:
+    
+
+
+
+
+private:
+    ros::NodeHandle nh_;
+    ros::ServiceClient client_lidarimagedata_;
+
+    hce_autoexcavator::LidarImageDataStamped srv_lidarimagedata_; // from 'GCS'
+    
 // Tracker
 private:
     FeatureTracker* tracker_;
@@ -78,9 +86,10 @@ private:
 // cams & frames
 private:
     int n_cameras_; // 4
-    int MAX_LVL_PYR_;;
     vector<Camera*> cams_;
     vector<Frame*> frames_;
+
+    int MAX_LVL_PYR_;;
 
 // extrinsics
 private:
