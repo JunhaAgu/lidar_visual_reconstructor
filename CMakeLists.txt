@@ -30,6 +30,7 @@ add_service_files(
   profilePolynomialStamped.srv
   profilePointsStamped.srv
   lidarImageDataStamped.srv
+  relativeLidarPoseStamped.srv
 )
 
 generate_messages(
@@ -50,8 +51,10 @@ set(SRC ${SRC}
   src/feature_tracker.cpp
   src/frame.cpp
   src/camera.cpp
-  src/image_procesing.cpp
-  src/timer.cpp
+
+  src/util/image_procesing.cpp
+  src/util/timer.cpp
+  src/util/sophus_lie.cpp
 
   src/cdt/adjacent_map.cpp
   src/cdt/constrained_delaunay.cpp

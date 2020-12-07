@@ -1,5 +1,4 @@
 #include "frame.hpp"
-#include "image_processing.hpp"
 
 Frame::Frame(Camera* cam, int max_lvl_pyr)
 : MAX_PYR_LVL_(max_lvl_pyr){

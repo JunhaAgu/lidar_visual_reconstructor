@@ -15,6 +15,7 @@
 #include <opencv2/highgui/highgui.hpp>
 
 #include "camera.hpp"
+#include "util/image_processing.hpp"
 
 using namespace std;
 

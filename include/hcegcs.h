@@ -40,9 +40,11 @@
 // Custom messages and services
 #include "hce_autoexcavator/controlInputsStamped.h" // msg
 
-#include "hce_autoexcavator/lidarImageDataStamped.h" // service server
+#include "hce_autoexcavator/lidarImageDataStamped.h" // service server to recon
+#include "hce_autoexcavator/relativeLidarPoseStamped.h" // service server to recon 
+#include "hce_autoexcavator/profilePointsStamped.h" // service client from recon
+
 #include "hce_autoexcavator/profilePolynomialStamped.h" // service (server to 'planner')
-#include "hce_autoexcavator/profilePointsStamped.h" // client of 'vis_recon'
 
 using namespace std;
 
@@ -124,6 +126,8 @@ private:
     // After 'lidar_visual_reconstructor's request, acquire a snapshot and send data to the 'lidar_visual_reconstructor'
     bool serverCallbackLidarImageData(hce_autoexcavator::lidarImageDataStamped::Request &req,
         hce_autoexcavator::lidarImageDataStamped::Response &res); // to reconstructor.
+    bool serverCallbackRelativeLidarPose(hce_autoexcavator::relativeLidarPoseStamped::Request &req,
+        hce_autoexcavator::relativeLidarPoseStamped::Response &res); // to reconstructor.
 
     void callbackImage(const sensor_msgs::ImageConstPtr& msg, const int& id);
     void callbackLidar(const sensor_msgs::PointCloud2ConstPtr& msg_lidar, const int& id);

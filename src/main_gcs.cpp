@@ -6,7 +6,7 @@
 #include <exception>
 
 // keyboard input tool
-#include "keyinput.h"
+#include "util/keyinput.h"
 #include "hcegcs.h"
 
 

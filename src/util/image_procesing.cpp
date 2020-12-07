@@ -1,4 +1,4 @@
-#include "image_processing.hpp"
+#include "util/image_processing.hpp"
 using namespace std;
 
 namespace improc {

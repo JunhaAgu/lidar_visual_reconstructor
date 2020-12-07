@@ -446,17 +446,35 @@ void HCEGCS::saveAllData(){
 bool HCEGCS::serverCallbackLidarImageData(hce_autoexcavator::lidarImageDataStamped::Request &req,
         hce_autoexcavator::lidarImageDataStamped::Response &res)
 {
-    cout << "A request is received!! request type: " << req.request_type<< "\n";
+    cout << "Service server [LidarImageData] is received!! request type: " << req.request_type<< "\n";
     if(buf_lidars_npoints[0] > 0){
-        for(int j = 0; j < n_lidars_; ++j){
-            for(int i = 0; i < buf_lidars_npoints[j]; ++i){
-               //res.x.push_back(*(buf_lidars_x[j]+i));               
-            }
+        res.n_pts0 = buf_lidars_npoints[0];
+        for(int i = 0; i < buf_lidars_npoints[0]; ++i){
+            res.x0.push_back(*(buf_lidars_x[0]+i));
+            res.y0.push_back(*(buf_lidars_y[0]+i));
+            res.z0.push_back(*(buf_lidars_z[0]+i));
+            res.ring0.push_back(*(buf_lidars_ring[0]+i));
+            res.intensity0.push_back(*(buf_lidars_intensity[0]+i));
+            res.time0.push_back(*(buf_lidars_time[0]+i));
         }
-        
     }
     else{
-        ROS_WARN("Lidar data is not ready!\n");
+        ROS_WARN("Lidar 0 data is not ready!\n");
+        return false;
+    }
+    if(buf_lidars_npoints[1] > 0){
+        res.n_pts1 = buf_lidars_npoints[1];
+        for(int i = 0; i < buf_lidars_npoints[1]; ++i){
+            res.x1.push_back(*(buf_lidars_x[1]+i));
+            res.y1.push_back(*(buf_lidars_y[1]+i));
+            res.z1.push_back(*(buf_lidars_z[1]+i));
+            res.ring1.push_back(*(buf_lidars_ring[1]+i));
+            res.intensity1.push_back(*(buf_lidars_intensity[1]+i));
+            res.time1.push_back(*(buf_lidars_time[1]+i));
+        }
+    }
+    else{
+        ROS_WARN("Lidar 1 data is not ready!\n");
         return false;
     }
     if(buf_imgs_[0].rows > 0){
@@ -487,4 +505,21 @@ bool HCEGCS::serverCallbackLidarImageData(hce_autoexcavator::lidarImageDataStamp
     }
     
     return true;
-}
+};
+
+
+bool HCEGCS::serverCallbackRelativeLidarPose(hce_autoexcavator::relativeLidarPoseStamped::Request &req,
+        hce_autoexcavator::relativeLidarPoseStamped::Response &res)
+{
+    cout << "Service server [relativeLidarPose] is received!!\n";
+    res.header.stamp = ros::Time::now();
+    res.header.seq   = -1;
+    res.header.frame_id = -1;
+
+    res.tx = 0.0f;
+    res.ty = 0.0f;
+    res.tz = 0.0f;
+    res.wx = 0.0f;
+    res.wy = 0.0f;
+    res.wz = 0.0f;
+};
