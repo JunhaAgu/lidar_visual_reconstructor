@@ -127,8 +127,21 @@ bool LidarVisualReconstructor::run(){
     srv_lidarimagedata_.request.request_type = 123;
 
     if(client_lidarimagedata_.call(srv_lidarimagedata_)){
-        ROS_INFO("Service is requested by 'lidar_visual_reconstructor' node.\n");
-
+        ROS_INFO("Service is successfully requested by 'lidar_visual_reconstructor' node.\n");
+        cv_bridge::CvImagePtr cv_ptr;
+        cv_ptr = cv_bridge::toCvCopy(srv_lidarimagedata_.response.img0,
+            sensor_msgs::image_encodings::MONO8);
+        frames_[0]->constructFrame(cv_ptr->image);
+        cv_ptr = cv_bridge::toCvCopy(srv_lidarimagedata_.response.img1,
+            sensor_msgs::image_encodings::MONO8);
+        frames_[1]->constructFrame(cv_ptr->image);
+        
+        cv::namedWindow("0 image", CV_WINDOW_AUTOSIZE);
+        cv::namedWindow("1 image", CV_WINDOW_AUTOSIZE);
+        cv::imshow("0 image", frames_[0]->img());
+        cv::imshow("1 image", frames_[1]->img());
+        cv::waitKey(1000); // both imshow s are independently affected by waitKey.
+        // If there are two windows, total waiting time becomes 1000*2 = 2000 ms.
         // 
         
         // Delaunay ... 

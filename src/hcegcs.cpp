@@ -450,16 +450,41 @@ bool HCEGCS::serverCallbackLidarImageData(hce_autoexcavator::lidarImageDataStamp
     if(buf_lidars_npoints[0] > 0){
         for(int j = 0; j < n_lidars_; ++j){
             for(int i = 0; i < buf_lidars_npoints[j]; ++i){
-               //res.x.push_back(*(buf_lidars_x[j]+i));
-
-               
+               //res.x.push_back(*(buf_lidars_x[j]+i));               
             }
-
         }
-        return true;
+        
     }
     else{
         ROS_WARN("Lidar data is not ready!\n");
         return false;
     }
+    if(buf_imgs_[0].rows > 0){
+        sensor_msgs::fillImage(res.img0, sensor_msgs::image_encodings::MONO8,
+                buf_imgs_[0].rows, buf_imgs_[0].cols, buf_imgs_[0].step, buf_imgs_[0].data);    
+    }
+    else{
+        ROS_WARN("Image data is not ready!\n");
+        return false;
+    }
+    int i = 0;
+    if(buf_imgs_[i].rows > 0){
+        sensor_msgs::fillImage(res.img0, sensor_msgs::image_encodings::MONO8,
+                buf_imgs_[i].rows, buf_imgs_[i].cols, buf_imgs_[i].step, buf_imgs_[i].data);    
+    }
+    else{
+        ROS_WARN("Image data is not ready!\n");
+        return false;
+    }
+    i = 1;
+    if(buf_imgs_[i].rows > 0){
+        sensor_msgs::fillImage(res.img1, sensor_msgs::image_encodings::MONO8,
+                buf_imgs_[i].rows, buf_imgs_[i].cols, buf_imgs_[i].step, buf_imgs_[i].data);    
+    }
+    else{
+        ROS_WARN("Image data is not ready!\n");
+        return false;
+    }
+    
+    return true;
 }

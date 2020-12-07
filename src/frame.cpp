@@ -41,6 +41,7 @@ void Frame::constructFrame(const cv::Mat& img_input){
     img_raw_.convertTo(img_raw_f_, CV_32FC1);
 
     improc::imagePyramid(img_raw_f_, img_pyr_);
+    cout << "frame is successfully constructed.\n";
 
 };
 
