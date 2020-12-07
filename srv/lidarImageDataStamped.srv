@@ -4,6 +4,7 @@ uint32 request_type
 ---
 Header header
 uint32 n_pts0
+uint32 n_channels0
 float64[] x0
 float64[] y0
 float64[] z0
@@ -11,6 +12,7 @@ float64[] ring0
 float64[] intensity0
 float64[] time0
 uint32 n_pts1
+uint32 n_channels1
 float64[] x1
 float64[] y1
 float64[] z1

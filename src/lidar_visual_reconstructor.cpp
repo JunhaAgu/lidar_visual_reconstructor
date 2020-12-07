@@ -3,6 +3,7 @@
 LidarVisualReconstructor::LidarVisualReconstructor(ros::NodeHandle& nh)
 : nh_(nh)
 {
+    // TODO: get params from yaml or launch.
     MAX_LVL_PYR_ = 4;
 
     n_lidars_  = 2;
@@ -144,8 +145,6 @@ bool LidarVisualReconstructor::run(){
         sophuslie::se3Exp(xi_l0l1, T_l0l1);
         
         cout << " recon node T_l0l1: \n" << T_l0l1 << "\n";
-
-        return true;
     }
     else{
         ROS_ERROR("Failed to call service 'GCS:relative lidar pose' by 'Recon node'.\n");
@@ -155,8 +154,8 @@ bool LidarVisualReconstructor::run(){
     // Request 2) Image and lidar data
     srv_lidarimagedata_.request.header.stamp = ros::Time::now();
     srv_lidarimagedata_.request.header.seq = -1;
-    srv_lidarimagedata_.request.header.frame_id = 100;
-    srv_lidarimagedata_.request.request_type = 123;
+    srv_lidarimagedata_.request.header.frame_id = "Origin: recon_node";
+    srv_lidarimagedata_.request.request_type = 0;
 
     if(client_lidarimagedata_.call(srv_lidarimagedata_)){
         ROS_INFO("'GCS:lidar image data': OK. by 'Recon node'.\n");
@@ -174,6 +173,36 @@ bool LidarVisualReconstructor::run(){
         cv::imshow("1 image", frames_[1]->img());
         cv::waitKey(1000); // both imshow s are independently affected by waitKey.
         // If there are two windows, total waiting time becomes 1000*2 = 2000 ms.
+        
+        // fill out LidarPcl.
+        hce_autoexcavator::lidarImageDataStamped::Response& res_lidarimage = srv_lidarimagedata_.response;
+        if(pcls_[0]->n_channels != res_lidarimage.n_channels0) throw std::runtime_error("Not matched dimension (recon node)\n");
+        if(pcls_[1]->n_channels != res_lidarimage.n_channels1) throw std::runtime_error("Not matched dimension (recon node)\n");
+        
+        pcls_[0]->count = res_lidarimage.n_pts0;
+        for(int i = 0; i < pcls_[0]->count; ++i){
+            *(pcls_[0]->x+i) = res_lidarimage.x0[i];
+            *(pcls_[0]->y+i) = res_lidarimage.y0[i];
+            *(pcls_[0]->z+i) = res_lidarimage.z0[i];
+            *(pcls_[0]->ring+i) = res_lidarimage.ring0[i];
+            *(pcls_[0]->time+i) = res_lidarimage.time0[i];
+            *(pcls_[0]->intensity+i) = res_lidarimage.intensity0[i];
+        }
+       
+        pcls_[1]->count = res_lidarimage.n_pts1;
+        for(int i = 0; i < pcls_[1]->count; ++i){
+            *(pcls_[1]->x+i) = res_lidarimage.x1[i];
+            *(pcls_[1]->y+i) = res_lidarimage.y1[i];
+            *(pcls_[1]->z+i) = res_lidarimage.z1[i];
+            *(pcls_[1]->ring+i) = res_lidarimage.ring1[i];
+            *(pcls_[1]->time+i) = res_lidarimage.time1[i];
+            *(pcls_[1]->intensity+i) = res_lidarimage.intensity1[i];
+        }
+
+        // TODO: find valid data within specific area (user-definable)        
+
+        // TODO: Calculate psi theta, and sort index_rings!
+        
         // 
         
         // Delaunay ... 

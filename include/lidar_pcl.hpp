@@ -28,9 +28,11 @@ struct LidarPcl {
         z = (float*)custom_aligned_malloc(sizeof(float)*300000);
         time = (float*)custom_aligned_malloc(sizeof(float)*300000);
         ring = (int*)custom_aligned_malloc(sizeof(int)*300000);
+        
+
         theta = (float*)custom_aligned_malloc(sizeof(float)*300000);
         psi = (float*)custom_aligned_malloc(sizeof(float)*300000);
-        index_rings.resize(n_channels);        
+        index_rings = vector<vector<int>>(n_channels, vector<int>(0));
     };
     ~LidarPcl(){
         if(intensity != nullptr) custom_aligned_free((void*)intensity);

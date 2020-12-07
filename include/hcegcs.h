@@ -162,6 +162,7 @@ private:
     vector<unsigned short*> buf_lidars_ring;
     vector<float*> buf_lidars_time;
     vector<int> buf_lidars_npoints;
+    vector<int> buf_lidars_n_channels;
 
 
 

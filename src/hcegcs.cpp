@@ -53,6 +53,7 @@ HCEGCS::HCEGCS(ros::NodeHandle& nh,
             buf_lidars_ring.push_back(new unsigned short[100000]);
             buf_lidars_time.push_back(new float[100000]);
             buf_lidars_npoints.push_back(0);
+            buf_lidars_n_channels.push_back(16);
 
             string name_temp = "/lidar" + itos(i) + "/velodyne_points";
             topicnames_lidars_.push_back(name_temp);
@@ -458,6 +459,7 @@ bool HCEGCS::serverCallbackLidarImageData(hce_autoexcavator::lidarImageDataStamp
     cout << "Service server [LidarImageData] is received!! request type: " << req.request_type<< "\n";
     if(buf_lidars_npoints[0] > 0){
         res.n_pts0 = buf_lidars_npoints[0];
+        res.n_channels0 = buf_lidars_n_channels[0];
         for(int i = 0; i < buf_lidars_npoints[0]; ++i){
             res.x0.push_back(*(buf_lidars_x[0]+i));
             res.y0.push_back(*(buf_lidars_y[0]+i));
@@ -473,6 +475,7 @@ bool HCEGCS::serverCallbackLidarImageData(hce_autoexcavator::lidarImageDataStamp
     }
     if(buf_lidars_npoints[1] > 0){
         res.n_pts1 = buf_lidars_npoints[1];
+        res.n_channels1 = buf_lidars_n_channels[1];
         for(int i = 0; i < buf_lidars_npoints[1]; ++i){
             res.x1.push_back(*(buf_lidars_x[1]+i));
             res.y1.push_back(*(buf_lidars_y[1]+i));
@@ -544,7 +547,6 @@ bool HCEGCS::serverCallbackRelativeLidarPose(hce_autoexcavator::relativeLidarPos
 
 
 void HCEGCS::calcRelativeLidarPose(const float& theta, Eigen::Matrix3f& R_l0l1, Eigen::Vector3f& t_l0l1){
-    // TODO: exact calculation!!!!!
     // This code is from the "calibration_kinematics" algorithm in MATLAB by Changhyeon Kim.
     Eigen::Matrix4f T_BMr_i;
     float c = cos(theta);
@@ -559,16 +561,8 @@ void HCEGCS::calcRelativeLidarPose(const float& theta, Eigen::Matrix3f& R_l0l1, 
     xi_MrM << 0, 0, 0, w_MrM_;    
 
     sophuslie::se3Exp(xi_MrM, T_MrM_);
-    cout <<"MrM:\n" << T_MrM_ << endl;
-
     sophuslie::se3Exp(xi_BF_, T_BF_);
-    cout << "T_bf:\n" << T_BF_ << endl;
-
     T_l0l1_ = T_BF_.inverse()*T_BMr_i*T_MrM_;
-
-    cout <<"T_l0l1 in GCS:\n" <<
-    T_l0l1_<<endl;
-
 
     // final resulting pose.
     R_l0l1 = T_l0l1_.block<3,3>(0,0);
