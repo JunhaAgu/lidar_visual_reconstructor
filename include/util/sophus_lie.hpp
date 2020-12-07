@@ -13,6 +13,7 @@
 namespace sophuslie {
 	void se3Exp(const Eigen::Matrix<float,6,1>& xi, Eigen::Matrix4d& T);
 	void se3Exp(const Eigen::MatrixXd& xi_, Eigen::MatrixXd& T_);
+	void se3Exp(const Eigen::Matrix<float,6,1>& xi_, Eigen::Matrix4f& T_);
 	void SE3Log(const Eigen::MatrixXf& T, Eigen::MatrixXf& xi);
 	void SE3Log(const Eigen::MatrixXd& T_, Eigen::MatrixXd& xi_);
 	void SE3Log(const Eigen::Matrix4f& T, Eigen::Matrix<float,6,1>& xi);

@@ -33,7 +33,9 @@
 #include <pcl/point_types.h>
 
 // Custom messages and services
-#include "hce_autoexcavator/lidarImageDataStamped.h" // client
+#include "hce_autoexcavator/lidarImageDataStamped.h"    // client
+#include "hce_autoexcavator/relativeLidarPoseStamped.h" // client
+
 #include "hce_autoexcavator/profilePointsStamped.h" // server for 'GCS node'
 
 #include "lidar_pcl.hpp"
@@ -71,9 +73,12 @@ private:
 private:
     ros::NodeHandle nh_;
     ros::ServiceClient client_lidarimagedata_;
+    ros::ServiceClient client_relativelidarpose_;
 
     hce_autoexcavator::lidarImageDataStamped srv_lidarimagedata_; // from 'GCS'
-    
+    hce_autoexcavator::relativeLidarPoseStamped srv_relativelidarpose_; // from 'GCS'
+
+
 // Tracker
 private:
     FeatureTracker* tracker_;
@@ -97,7 +102,7 @@ private:
 private:
     vector<Eigen::Matrix4f> T_cl0_;  // from yaml (TODO: calibrator.)
     vector<Eigen::Matrix4f> T_c0c1_; // from yaml (TODO: calibrator.)
-    Eigen::Matrix4f T_l0l1_; // from GCS
+    Eigen::Matrix4f T_l0l1_; // from GCS (relative lidar pose srv)
     Eigen::Matrix3f R_l0l1_; // from GCS
     Eigen::Vector3f t_l0l1_; // from GCS
 

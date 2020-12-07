@@ -129,6 +129,7 @@ private:
     ros::ServiceServer server_target_;
     
     ros::ServiceServer server_lidarimagedata_;
+    ros::ServiceServer server_relativelidarpose_;
 
     // topic names
     vector<string> topicnames_imgs_;

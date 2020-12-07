@@ -66,7 +66,8 @@ HCEGCS::HCEGCS(ros::NodeHandle& nh,
     sub_timestamp_ = nh_.subscribe("/trigger_time", 1, &HCEGCS::callbackTime, this);
 
     // initialize servers
-    server_lidarimagedata_ = nh_.advertiseService("srv_lidar_image_data",&HCEGCS::serverCallbackLidarImageData,this);
+    server_lidarimagedata_    = nh_.advertiseService("srv_lidar_image_data",&HCEGCS::serverCallbackLidarImageData,this);
+    server_relativelidarpose_ = nh_.advertiseService("srv_relative_lidar_pose",&HCEGCS::serverCallbackRelativeLidarPose,this);
 
     // generate save folder
     std::string folder_create_command;
@@ -526,17 +527,16 @@ bool HCEGCS::serverCallbackRelativeLidarPose(hce_autoexcavator::relativeLidarPos
     Eigen::Matrix4f T_l0l1;
     calcRelativeLidarPose(theta_, R_l0l1, t_l0l1);
     T_l0l1 << R_l0l1, t_l0l1, 0, 0, 0, 1;
-    cout << " T_l0l1:\n" 
-    << T_l0l1 << "\n";
+    cout << " T_l0l1:\n" << T_l0l1 << "\n";
     Eigen::Matrix<float,6,1> xi_l0l1;
     sophuslie::SE3Log(T_l0l1, xi_l0l1);
 
-    res.tx = 0.0f;
-    res.ty = 0.0f;
-    res.tz = 0.0f;
-    res.wx = 0.0f;
-    res.wy = 0.0f;
-    res.wz = 0.0f;
+    res.vx = xi_l0l1(0); // v (translational elements)
+    res.vy = xi_l0l1(1);
+    res.vz = xi_l0l1(2);
+    res.wx = xi_l0l1(3); // w (rotation part)
+    res.wy = xi_l0l1(4);
+    res.wz = xi_l0l1(5);
 };
 
 

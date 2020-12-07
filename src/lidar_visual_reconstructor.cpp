@@ -33,11 +33,17 @@ LidarVisualReconstructor::LidarVisualReconstructor(ros::NodeHandle& nh)
 
 
     // Initiate services
-    client_lidarimagedata_ = nh_.serviceClient<hce_autoexcavator::lidarImageDataStamped>("/gcs_node/srv_lidar_image_data");
+    client_lidarimagedata_    = nh_.serviceClient<hce_autoexcavator::lidarImageDataStamped>("/gcs_node/srv_lidar_image_data");
+    client_relativelidarpose_ = nh_.serviceClient<hce_autoexcavator::relativeLidarPoseStamped>("/gcs_node/srv_relative_lidar_pose");
 };
 
 LidarVisualReconstructor::~LidarVisualReconstructor(){
-
+    for(auto iter = pcls_.begin(); iter != pcls_.end(); ++iter)
+        if(*iter != nullptr) delete *iter;
+    for(auto iter = cams_.begin(); iter != cams_.end(); ++iter)
+        if(*iter != nullptr) delete *iter;
+    for(auto iter = frames_.begin(); iter != frames_.end(); ++iter)
+        if(*iter != nullptr) delete *iter;
 };
 
 bool LidarVisualReconstructor::serverCallbackProfilePoints(hce_autoexcavator::profilePointsStamped::Request &req,
@@ -121,13 +127,39 @@ void LidarVisualReconstructor::loadSensorExtrinsics(string& dir){
 // 'run()' function is executed when 'GCS' requests profile 3D points.
 // Thus, this function should be in the 'callback' function for service.
 bool LidarVisualReconstructor::run(){
+    // Request 1) real-time relative lidar pose data (induced by boom angle)
+    srv_relativelidarpose_.request.header.stamp = ros::Time::now();
+    if(client_relativelidarpose_.call(srv_relativelidarpose_)){
+        ROS_INFO("'GCS:relative lidar pose': OK. by 'Recon node'.\n");
+
+        Eigen::Matrix<float,6,1> xi_l0l1;
+        Eigen::Matrix4f T_l0l1;
+        xi_l0l1(0) = srv_relativelidarpose_.response.vx;
+        xi_l0l1(1) = srv_relativelidarpose_.response.vy;
+        xi_l0l1(2) = srv_relativelidarpose_.response.vz;
+        xi_l0l1(3) = srv_relativelidarpose_.response.wx;
+        xi_l0l1(4) = srv_relativelidarpose_.response.wy;
+        xi_l0l1(5) = srv_relativelidarpose_.response.wz;
+
+        sophuslie::se3Exp(xi_l0l1, T_l0l1);
+        
+        cout << " recon node T_l0l1: \n" << T_l0l1 << "\n";
+
+        return true;
+    }
+    else{
+        ROS_ERROR("Failed to call service 'GCS:relative lidar pose' by 'Recon node'.\n");
+        return false;
+    }
+
+    // Request 2) Image and lidar data
     srv_lidarimagedata_.request.header.stamp = ros::Time::now();
     srv_lidarimagedata_.request.header.seq = -1;
     srv_lidarimagedata_.request.header.frame_id = 100;
     srv_lidarimagedata_.request.request_type = 123;
 
     if(client_lidarimagedata_.call(srv_lidarimagedata_)){
-        ROS_INFO("Service is successfully requested by 'lidar_visual_reconstructor' node.\n");
+        ROS_INFO("'GCS:lidar image data': OK. by 'Recon node'.\n");
         cv_bridge::CvImagePtr cv_ptr;
         cv_ptr = cv_bridge::toCvCopy(srv_lidarimagedata_.response.img0,
             sensor_msgs::image_encodings::MONO8);
@@ -158,7 +190,7 @@ bool LidarVisualReconstructor::run(){
         return true;
     }
     else{
-        ROS_ERROR("Failed to call service by 'lidar_visual_reconstructor' node.\n");
+        ROS_ERROR("Failed to call service 'GCS:lidar image data' by 'Recon node'.\n");
         return false;
     }
 };

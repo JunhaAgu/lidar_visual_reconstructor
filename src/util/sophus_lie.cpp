@@ -136,6 +136,63 @@ void sophuslie::se3Exp(const Eigen::MatrixXd& xi_, Eigen::MatrixXd& T_)
 	//usleep(10000000);
 };
 
+void sophuslie::se3Exp(const Eigen::Matrix<float,6,1>& xi_, Eigen::Matrix4f& T_){
+	
+	// initialize variables
+	float theta = 0.0;
+	Eigen::Vector3f v, w;
+	Eigen::Matrix3f wx, R, V;
+	Eigen::Vector3f t;
+
+	v(0) = xi_(0);
+	v(1) = xi_(1);
+	v(2) = xi_(2);
+
+	w(0) = xi_(3);
+	w(1) = xi_(4);
+	w(2) = xi_(5);
+
+	theta = std::sqrt(w.transpose() * w);
+	wx << 0, -w(2), w(1),
+		w(2), 0, -w(0),
+		-w(1), w(0), 0;
+
+	if (theta < 1e-7) {
+		R = Eigen::Matrix3f::Identity() + wx + 0.5 * wx * wx;
+		V = Eigen::Matrix3f::Identity() + 0.5 * wx + wx * wx / 3.0f;
+	}
+	else {
+		R = Eigen::Matrix3f::Identity() + (sin(theta) / theta) * wx + ((1 - cos(theta)) / (theta*theta)) * (wx*wx);
+		V = Eigen::Matrix3f::Identity() + ((1 - cos(theta)) / (theta*theta)) * wx + ((theta - sin(theta)) / (theta*theta*theta)) * (wx*wx);
+	}
+	t = V * v;
+
+	// assign rigid body transformation matrix (in SE(3))
+	T_ = Eigen::Matrix4f::Zero();
+	T_(0, 0) = R(0, 0);
+	T_(0, 1) = R(0, 1);
+	T_(0, 2) = R(0, 2);
+
+	T_(1, 0) = R(1, 0);
+	T_(1, 1) = R(1, 1);
+	T_(1, 2) = R(1, 2);
+
+	T_(2, 0) = R(2, 0);
+	T_(2, 1) = R(2, 1);
+	T_(2, 2) = R(2, 2);
+
+	T_(0, 3) = t(0);
+	T_(1, 3) = t(1);
+	T_(2, 3) = t(2);
+
+	T_(3, 3) = 1.0f;
+
+	// for debug
+	// std::cout << R << std::endl;
+	// std::cout << t << std::endl;
+	//usleep(10000000);
+};
+
 void sophuslie::SE3Log(const Eigen::MatrixXf& T_, Eigen::MatrixXf& xi_)
 {
 	float theta = 0.0f;
