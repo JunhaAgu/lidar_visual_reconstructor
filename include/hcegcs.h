@@ -61,7 +61,7 @@ public:
     void snapshotMode();
     void runAlgorithms();
 
-    void setTestLidarImages(string dir, float theta);
+    void setTestLidarImages(string dir, float theta, float L, Eigen::Vector3f& w, Eigen::Matrix<float,6,1>& xi_bf);
 
     const int getNumCameras() const {return n_cameras_; };
     const int getNumLidars()  const {return n_lidars_; };
@@ -101,12 +101,14 @@ private:
 // Private methods (related to calibration calculations)
 private:
     void calcRelativeLidarPose(const float& theta, Eigen::Matrix3f& R_l0l1, Eigen::Vector3f& t_l0l1);
-    float theta_; // current boom angle.
-    Eigen::Vector3f w_; // TODO: boom ref to boom lidar. (so3) 
-    Eigen::Matrix3f R_MrM; // TODO: boom ref to boom lidar. (SE(3) with rotation only motion.)
-    Eigen::Matrix4f T_bf_; // TODO: body to cabin lidar.
-    Eigen::Matrix4f T_gb_; // TODO: ground reference frame to body frame.
-
+    float theta_; // [rad], current boom angle. (NEED to be fed in real-time  !!!!)
+    float L_boom_; // [m], length from the boom axis to the center of the boom lidar.
+    Eigen::Vector3f w_MrM_;      // TODO: boom ref to boom lidar. (so3) 
+    Eigen::Matrix<float,6,1> xi_BF_;
+    Eigen::Matrix4f T_MrM_;  // TODO: boom ref to boom lidar. (SE(3) with rotation only motion.)
+    Eigen::Matrix4f T_BF_;   // TODO: body to cabin lidar.
+    Eigen::Matrix4f T_GB_;   // TODO: ground reference frame to body frame. (NEED to be fed in real-time  !!!!)
+    Eigen::Matrix4f T_l0l1_; // current relative pose between Lidar0 (cabin) and Lidar1 (boom), which can be obtained by theta.
 
 
 // ROS topic subs., pub., services. related variables

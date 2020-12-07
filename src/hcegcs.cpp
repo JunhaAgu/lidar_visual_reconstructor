@@ -168,7 +168,7 @@ void HCEGCS::runAlgorithms(){
 
 };
 
-void HCEGCS::setTestLidarImages(string dir, float theta){
+void HCEGCS::setTestLidarImages(string dir, float theta, float L, Eigen::Vector3f& w, Eigen::Matrix<float,6,1>& xi_bf){
     // dir =/home/larrkchlaptop/catkin_ws/src/lidar_visual_reconstructor/test_data
     // plane: cam0 cam1 lidar0 lidar1 (cabin cam0, cabin cam1)
     // up: cam0 cam1 lidar0 lidar1 (cabin cam0, cabin cam1)
@@ -267,8 +267,11 @@ void HCEGCS::setTestLidarImages(string dir, float theta){
     cout << " read done :" << cnt <<" \n";
 
 
-    // theta simulated.
-    theta_ = theta;
+    // l0l1 simulated.
+    w_MrM_  = w;
+    xi_BF_  = xi_bf;
+    theta_  = theta;
+    L_boom_ = L; // [m]
 
     cout << "simulated boom angle: " << theta_/3.141592*180.0f <<" [deg]\n";
     cout << " Load test files : done!\n";
@@ -525,7 +528,7 @@ bool HCEGCS::serverCallbackRelativeLidarPose(hce_autoexcavator::relativeLidarPos
     // TODO: get theta!
     Eigen::Matrix3f R_l0l1;    Eigen::Vector3f t_l0l1;
     Eigen::Matrix4f T_l0l1;
-    calcRelativeLidarPose(theta_, R_l0l1, t_l0l1);
+    calcRelativeLidarPose(this->theta_, R_l0l1, t_l0l1);
     T_l0l1 << R_l0l1, t_l0l1, 0, 0, 0, 1;
     cout << " T_l0l1:\n" << T_l0l1 << "\n";
     Eigen::Matrix<float,6,1> xi_l0l1;
@@ -542,7 +545,32 @@ bool HCEGCS::serverCallbackRelativeLidarPose(hce_autoexcavator::relativeLidarPos
 
 void HCEGCS::calcRelativeLidarPose(const float& theta, Eigen::Matrix3f& R_l0l1, Eigen::Vector3f& t_l0l1){
     // TODO: exact calculation!!!!!
+    // This code is from the "calibration_kinematics" algorithm in MATLAB by Changhyeon Kim.
+    Eigen::Matrix4f T_BMr_i;
+    float c = cos(theta);
+    float s = sin(theta);
+    T_BMr_i <<
+        c,0,s,L_boom_*c,
+        0,1,0,0,
+        -s,0,c,-L_boom_*s,
+        0,0,0,1;
 
-    R_l0l1 = Eigen::Matrix3f::Identity();
-    t_l0l1 << 0,0,0;
+    Eigen::Matrix<float,6,1> xi_MrM;
+    xi_MrM << 0, 0, 0, w_MrM_;    
+
+    sophuslie::se3Exp(xi_MrM, T_MrM_);
+    cout <<"MrM:\n" << T_MrM_ << endl;
+
+    sophuslie::se3Exp(xi_BF_, T_BF_);
+    cout << "T_bf:\n" << T_BF_ << endl;
+
+    T_l0l1_ = T_BF_.inverse()*T_BMr_i*T_MrM_;
+
+    cout <<"T_l0l1 in GCS:\n" <<
+    T_l0l1_<<endl;
+
+
+    // final resulting pose.
+    R_l0l1 = T_l0l1_.block<3,3>(0,0);
+    t_l0l1 = T_l0l1_.block<3,1>(0,3);
 };

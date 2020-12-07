@@ -75,8 +75,13 @@ int main(int argc, char **argv) {
                 cout << "\n\n Get test data...\n";
                 string dir_testdata = "/home/larrkchlaptop/catkin_ws/src/lidar_visual_reconstructor/test_data/up_20";
                 
-                float theta_ = 20.0f; // 20 degrees for up 20.
-                gcs->setTestLidarImages(dir_testdata,theta_/3.141592*180.0f);
+                float theta  = 20.0f; // 20 degrees for up 20.
+                float L_boom = 4.661836021f; // [m]
+                Eigen::Vector3f w;
+                w << -1.12196576,1.371003368,1.439545800;
+                Eigen::Matrix<float,6,1> xi_bf;
+                xi_bf << 0.855383628, 0.834228799, 1.503234857, -1.57548926, 0.318537783, -0.08536957;
+                gcs->setTestLidarImages(dir_testdata, theta*3.141592f/180.0f, L_boom, w, xi_bf);
                 cout << user_manual;
             }
             else if(c != 0) {

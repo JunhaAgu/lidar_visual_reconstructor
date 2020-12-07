@@ -21,7 +21,7 @@ void sophuslie::r2a(const Eigen::Matrix3f& R, float& r, float& p, float& y)
 };
 
 
-void sophuslie::se3Exp(const Eigen::Matrix<float, 6, 1>& xi_, Eigen::Matrix4d& T_)
+void sophuslie::se3Exp(const Eigen::Matrix<double, 6, 1>& xi_, Eigen::Matrix4d& T_)
 {
 	// initialize variables
 	double theta = 0.0f;
