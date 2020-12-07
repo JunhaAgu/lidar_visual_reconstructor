@@ -66,7 +66,7 @@ HCEGCS::HCEGCS(ros::NodeHandle& nh,
     sub_timestamp_ = nh_.subscribe("/trigger_time", 1, &HCEGCS::callbackTime, this);
 
     // initialize servers
-    server_lidarimagedata_ = nh_.advertiseService("lidar_image_data",&HCEGCS::serverCallbackLidarImageData,this);
+    server_lidarimagedata_ = nh_.advertiseService("srv_lidar_image_data",&HCEGCS::serverCallbackLidarImageData,this);
 
     // generate save folder
     std::string folder_create_command;
@@ -446,11 +446,12 @@ void HCEGCS::saveAllData(){
 bool HCEGCS::serverCallbackLidarImageData(hce_autoexcavator::lidarImageDataStamped::Request &req,
         hce_autoexcavator::lidarImageDataStamped::Response &res)
 {
+    cout << "A request is received!! request type: " << req.request_type<< "\n";
     if(buf_lidars_npoints[0] > 0){
         for(int j = 0; j < n_lidars_; ++j){
             for(int i = 0; i < buf_lidars_npoints[j]; ++i){
                //res.x.push_back(*(buf_lidars_x[j]+i));
-               
+
                
             }
 

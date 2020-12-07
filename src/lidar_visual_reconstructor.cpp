@@ -33,9 +33,9 @@ LidarVisualReconstructor::LidarVisualReconstructor(ros::NodeHandle& nh)
 
 
     // Initiate services
-    nh_.serviceClient<hce_autoexcavator::lidarImageDataStamped>("srv_lidar_image_data");
-
+    client_lidarimagedata_ = nh_.serviceClient<hce_autoexcavator::lidarImageDataStamped>("/gcs_node/srv_lidar_image_data");
 };
+
 LidarVisualReconstructor::~LidarVisualReconstructor(){
 
 };
@@ -121,6 +121,11 @@ void LidarVisualReconstructor::loadSensorExtrinsics(string& dir){
 // 'run()' function is executed when 'GCS' requests profile 3D points.
 // Thus, this function should be in the 'callback' function for service.
 bool LidarVisualReconstructor::run(){
+    srv_lidarimagedata_.request.header.stamp = ros::Time::now();
+    srv_lidarimagedata_.request.header.seq = -1;
+    srv_lidarimagedata_.request.header.frame_id = 100;
+    srv_lidarimagedata_.request.request_type = 123;
+
     if(client_lidarimagedata_.call(srv_lidarimagedata_)){
         ROS_INFO("Service is requested by 'lidar_visual_reconstructor' node.\n");
 
