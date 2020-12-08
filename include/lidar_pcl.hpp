@@ -1,16 +1,36 @@
 #ifndef _LIDARPCL_H_
 #define _LIDARPCL_H_
 
+
+#include <iostream>
+#include <vector>
+#include <algorithm> // std::sort ,std::stable_sort
+#include <numeric> // std::iota
+#include "custom_memory.hpp"
+
+
 #define PI 3.141592653589793238
 #define D2R PI/180.0
 #define R2D 180.0/PI
 
-#include <iostream>
-#include <vector>
-#include "custom_memory.hpp"
-
 
 using namespace std;
+
+// stackoverflow, "c-sorting-and-keeping-track-of-indexes"
+template <typename T>
+vector<int> sortIndexes(const vector<T>& v){
+    // initialize original index locations
+    vector<int> idx(v.size());
+    std::iota(idx.begin(), idx.end(), 0);
+
+    // sort indexes based on comparing values in v
+    // using std::stable_sort instead of std::sort
+    // to avoid unnecessary index re-orderings
+    // when v contains elements of equal values
+    std::stable_sort(idx.begin(), idx.end(), [&v](int i1, int i2) {return v[i1] <= v[i2];});
+    return idx;
+};
+
 
 struct LidarPcl {
     int count;
@@ -61,7 +81,7 @@ struct LidarPcl {
         if(psi != nullptr)   custom_aligned_free((void*)psi);
         if(rho != nullptr)   custom_aligned_free((void*)rho);
         if(theta != nullptr) custom_aligned_free((void*)theta);
-        if(mask != nullptr) custom_aligned_free((void*)mask);
+        if(mask != nullptr)  custom_aligned_free((void*)mask);
     };
 
     void deleteMaskInvalid(){ // stack valid element from front.
@@ -101,12 +121,15 @@ struct LidarPcl {
         int* itr_ring = ring;
         int* itr_ring_end = ring + count;
         int cnt = 0;
-        for(; itr_ring < itr_ring_end; ++itr_ring, ++cnt)
-            index_rings[*itr_ring].push_back(cnt);
-#ifdef _VERBOSE_
+        for(; itr_ring < itr_ring_end; ++itr_ring){
+            index_rings[*itr_ring].push_back(cnt++);
+        }
+
+        cout << " cnt : " << cnt << endl;
+//#ifdef _VERBOSE_
     for(int ch = 0; ch < n_channels; ++ch)
         cout << " ch["<<ch<<"] # elem: "<<index_rings[ch].size() <<"\n";
-#endif
+//#endif
     };
 
     void generateThetaPsi(){
@@ -122,9 +145,9 @@ struct LidarPcl {
         float* itr_rho = rho;
 
         for(; itr_x < itr_x_end; ++itr_x, ++itr_y, ++itr_z, ++itr_th, ++itr_psi, ++itr_rho){
-            float& x_ = *itr_x;
-            float& y_ = *itr_y;
-            float& z_ = *itr_z;
+            float x_ = *itr_x;
+            float y_ = *itr_y;
+            float z_ = *itr_z;
 
             *itr_rho = sqrt(x_*x_ + y_*y_ + z_*z_);
             *itr_th  = std::asin(z_/(*itr_rho));
@@ -149,6 +172,60 @@ struct LidarPcl {
     for(; itr_th < theta + count; ++itr_th, ++itr_psi, ++itr_rho)
         cout << "rho theta psi: " << *itr_rho << "," << *itr_th << "," << *itr_psi <<"\n";
 #endif
+    };
+
+    void sortRingIndexByPsi(){
+        vector<float> data_tmp;
+        data_tmp.reserve(3000);
+        vector<int> index_org;
+        index_org.reserve(3000);
+        vector<int> subindex_sorted;
+        for(int c = 0; c < n_channels; ++c){
+            data_tmp.resize(0);
+            index_org.resize(0);
+            for(auto itr = index_rings[c].begin(); itr != index_rings[c].end(); ++itr){
+                data_tmp.push_back(*(psi+(*itr)));
+                index_org.push_back(*itr);
+            }
+            subindex_sorted = sortIndexes(data_tmp); // ordering!
+            for(int i =0; i < index_rings[c].size(); ++i)
+                index_rings[c][i] = index_org[subindex_sorted[i]];
+        }
+    };
+
+    void reorderingIndexAtJumping(){
+        vector<int> index_copy;
+        index_copy.reserve(3000);
+        for(int ch = 0; ch < n_channels; ++ch){
+            int n_pts_ch = index_rings[ch].size();
+            int idx_jump = -1;
+            for(int i= 0; i < n_pts_ch-1; ++i){
+                float diff = *(psi + index_rings[ch][i+1]) - *(psi + index_rings[ch][i]);
+                if(diff > 2){ // 2 radians
+                    idx_jump = i;
+                    break;
+                }
+            }
+            if(idx_jump == -1) continue;
+            // change index!
+            index_copy.resize(0);
+            for(auto itr = index_rings[ch].begin(); itr != index_rings[ch].end(); ++itr)
+                index_copy.push_back(*itr);
+#ifdef _VERBOSE_
+    cout << "ch [" << ch <<"] jump [" << idx_jump << "]\n";
+#endif
+            /*std::stable_partition(index_rings[ch].begin(),index_rings[ch].end(),
+                [&idx_jump](int i)->bool {return i > idx_jump;});*/
+            
+            for(int i = 0; i < n_pts_ch-idx_jump; ++i)
+                index_rings[ch][i] = index_copy[i+idx_jump+1];
+            for(int i = n_pts_ch-idx_jump; i < n_pts_ch; ++i)
+                index_rings[ch][i] = index_copy[i-n_pts_ch+idx_jump];
+#ifdef _VERBOSE_
+    for(auto itr = index_rings[ch].begin(); itr != index_rings[ch].end(); ++itr)
+        cout << "ch["<<ch<<"] idx: "<<*itr<<"\n";
+#endif
+        }
     };
 };
 
