@@ -348,6 +348,10 @@ bool LidarVisualReconstructor::run(){
         // find valid data within specific area (user-definable)        
         limitRanges();
 
+        // gather ring index into 'index_rings'
+        pcls_[0]->gatherRingIndex();
+        pcls_[1]->gatherRingIndex();
+        
         // TODO: Calculate psi theta, and sort index_rings!
         
         // 

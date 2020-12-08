@@ -21,7 +21,9 @@ struct LidarPcl {
     bool* mask;
 
     LidarPcl(int n_channels_) : n_channels(n_channels_) {
-        cout << "lidar pcl is generated.\n";
+#ifdef _VERBOSE_
+    cout << "lidar pcl is generated.\n";
+#endif
         count = 0;
         intensity = (float*)custom_aligned_malloc(sizeof(float)*300000);
         x    = (float*)custom_aligned_malloc(sizeof(float)*300000);
@@ -80,6 +82,22 @@ struct LidarPcl {
             }
         }
         count = cnt_valid;
+    };
+
+    void gatherRingIndex(){
+        // pre allocate memories
+        for(int ch = 0; ch < n_channels; ++ch)
+            index_rings[ch].reserve(4000);
+
+        int* itr_ring = ring;
+        int* itr_ring_end = ring + count;
+        int cnt = 0;
+        for(; itr_ring < itr_ring_end; ++itr_ring, ++cnt)
+            index_rings[*itr_ring].push_back(cnt);
+#ifdef _VERBOSE_
+    for(int ch = 0; ch < n_channels; ++ch)
+        cout << " ch["<<ch<<"] # elem: "<<index_rings[ch].size() <<"\n";
+#endif
     };
 };
 
