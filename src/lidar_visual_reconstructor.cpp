@@ -9,10 +9,11 @@ LidarVisualReconstructor::LidarVisualReconstructor(ros::NodeHandle& nh)
     n_lidars_  = 2;
     n_cameras_ = 4;
 
-    n_channels_.push_back(16);
-    n_channels_.push_back(16);
+    vector<int> n_channels;
+    n_channels.push_back(16);
+    n_channels.push_back(16);
     
-    for(int i = 0; i < n_lidars_; ++i)  pcls_.push_back(new LidarPcl(n_channels_[i]));
+    for(int i = 0; i <  n_lidars_; ++i) pcls_.push_back(new LidarPcl(n_channels[i]));
     for(int i = 0; i < n_cameras_; ++i) cams_.push_back(new Camera());
 
     // load camera intrinsics
@@ -96,6 +97,147 @@ void LidarVisualReconstructor::loadCameraIntrinsics(string& dir){
     cams_[3]->initParams(cols_tmp, rows_tmp, cvK_tmp, cvD_tmp);
 };
 
+void LidarVisualReconstructor::limitRanges(){
+    // manipulate mask!
+    //
+    float x_lims0[2] = {0, 50}; 
+    float y_lims0[2] = {-10,10};
+    float z_lims0[2] = {-5,3};
+    float x_lims1[2] = {0,10};
+    float y_lims1[2] = {-50,20};
+    float z_lims1[2] = {-5,5};
+
+    // 1) Simple range limits
+    // 1-1) for lidar0 
+    int cnt = 0;
+    bool* mask_ptr = pcls_[0]->mask;
+    for(int i = 0; i < pcls_[0]->count; ++i, ++mask_ptr){
+        *mask_ptr = *mask_ptr &&
+        *(pcls_[0]->x + i) > x_lims0[0] && *(pcls_[0]->x + i) < x_lims0[1] &&
+        *(pcls_[0]->y + i) > y_lims0[0] && *(pcls_[0]->y + i) < y_lims0[1] &&
+        *(pcls_[0]->z + i) > z_lims0[0] && *(pcls_[0]->z + i) < z_lims0[1];
+        if(*mask_ptr) ++cnt;
+    }
+    cout << " valid 0 : "<< cnt << "\n";
+    // 1-2) for lidar1
+    cnt = 0;
+    mask_ptr = pcls_[1]->mask;
+    for(int i = 0; i < pcls_[1]->count; ++i, ++mask_ptr){
+        *mask_ptr = *mask_ptr &&
+        *(pcls_[1]->x + i) > x_lims1[0] && *(pcls_[1]->x + i) < x_lims1[1] &&
+        *(pcls_[1]->y + i) > y_lims1[0] && *(pcls_[1]->y + i) < y_lims1[1] &&
+        *(pcls_[1]->z + i) > z_lims1[0] && *(pcls_[1]->z + i) < z_lims1[1];
+        if(*mask_ptr) ++cnt;
+    }
+    cout << " valid 1 : "<< cnt << "\n";
+
+    // 2) Warp all points of LiDARs to cam0 frame.
+    // And, in image test is also executed! 
+    float x_lims_cam[2] = {-5,5}; 
+    float y_lims_cam[2] = {-5,5};
+    float z_lims_cam[2] = {0.2, 40};
+    int n_cols = cams_[0]->cols();
+    int n_rows = cams_[0]->rows();
+    float invz = -1;
+    Eigen::Vector3f X_tmp, X_warp; 
+    Eigen::Vector2f pts_tmp;
+
+
+    mask_ptr = pcls_[0]->mask;
+    cnt = 0;
+    for(int i = 0; i < pcls_[0]->count; ++i, ++mask_ptr){
+        X_tmp(0) = *(pcls_[0]->x + i);
+        X_tmp(1) = *(pcls_[0]->y + i);
+        X_tmp(2) = *(pcls_[0]->z + i);
+        
+        X_warp = T_cl0_[0].block<3,3>(0,0)*X_tmp + T_cl0_[0].block<3,1>(0,3);
+
+        invz = 1.0f/X_warp(2);
+        pts_tmp(0) = cams_[0]->fx()*X_warp(0)*invz + cams_[0]->cx();
+        pts_tmp(1) = cams_[0]->fy()*X_warp(1)*invz + cams_[0]->cy();
+        
+        *mask_ptr = *mask_ptr &&
+        pts_tmp(0) > 0 && pts_tmp(0) < n_cols &&
+        pts_tmp(1) > 0 && pts_tmp(1) < n_rows &&
+        X_warp(0) > x_lims_cam[0] && X_warp(0) < x_lims_cam[1] &&
+        X_warp(1) > y_lims_cam[0] && X_warp(1) < y_lims_cam[1] &&
+        X_warp(2) > z_lims_cam[0] && X_warp(2) < z_lims_cam[1];
+        if(*mask_ptr) ++cnt;
+    } 
+    cout << " valid 0 : "<< cnt << "\n";
+
+    mask_ptr = pcls_[1]->mask;
+    cnt = 0;
+    for(int i = 0; i < pcls_[1]->count; ++i, ++mask_ptr) {
+        X_tmp(0) = *(pcls_[1]->x + i);
+        X_tmp(1) = *(pcls_[1]->y + i);
+        X_tmp(2) = *(pcls_[1]->z + i);
+        
+        X_warp = T_cl0_[0].block<3,3>(0,0)*(T_l0l1_.block<3,3>(0,0)*X_tmp + T_l0l1_.block<3,1>(0,3))+ T_cl0_[0].block<3,1>(0,3);
+        invz = 1.0f/X_warp(2);
+        pts_tmp(0) = cams_[0]->fx()*X_warp(0)*invz + cams_[0]->cx();
+        pts_tmp(1) = cams_[0]->fy()*X_warp(1)*invz + cams_[0]->cy();
+        
+        *mask_ptr = *mask_ptr &&
+        pts_tmp(0) > 0 && pts_tmp(0) < n_cols &&
+        pts_tmp(1) > 0 && pts_tmp(1) < n_rows &&
+        X_warp(0) > x_lims_cam[0] && X_warp(0) < x_lims_cam[1] &&
+        X_warp(1) > y_lims_cam[0] && X_warp(1) < y_lims_cam[1] &&
+        X_warp(2) > z_lims_cam[0] && X_warp(2) < z_lims_cam[1];
+        if(*mask_ptr) ++cnt;
+    }
+    cout << " valid 1 : "<< cnt << "\n";
+
+    if(1){
+        cv::Scalar orange(0, 165, 255), blue(255, 0, 0), magenta(255, 0, 255);
+
+        cv::Mat img_8u;
+        frames_[0]->img().convertTo(img_8u, CV_8UC3);
+        mask_ptr = pcls_[0]->mask;
+        for(int i = 0; i < pcls_[0]->count; ++i, ++mask_ptr){
+            if(*mask_ptr){
+                X_tmp(0) = *(pcls_[0]->x + i);
+                X_tmp(1) = *(pcls_[0]->y + i);
+                X_tmp(2) = *(pcls_[0]->z + i);
+                
+                X_warp = T_cl0_[0].block<3,3>(0,0)*X_tmp + T_cl0_[0].block<3,1>(0,3);
+
+                float invz = 1.0f/X_warp(2);
+                pts_tmp(0) = cams_[0]->fx()*X_warp(0)*invz + cams_[0]->cx();
+                pts_tmp(1) = cams_[0]->fy()*X_warp(1    )*invz + cams_[0]->cy();
+                cv::Point pt(pts_tmp(0),pts_tmp(1));
+                cv::circle(img_8u, pt, 1, magenta);
+            }
+        }
+        mask_ptr = pcls_[1]->mask;
+        for(int i = 0; i < pcls_[1]->count; ++i,++mask_ptr){
+            if(*mask_ptr){
+                X_tmp(0) = *(pcls_[1]->x + i);
+                X_tmp(1) = *(pcls_[1]->y + i);
+                X_tmp(2) = *(pcls_[1]->z + i);
+
+                X_warp = T_cl0_[0].block<3,3>(0,0)*(T_l0l1_.block<3,3>(0,0)*X_tmp + T_l0l1_.block<3,1>(0,3))+ T_cl0_[0].block<3,1>(0,3);
+
+                float invz = 1.0f/X_warp(2);
+                pts_tmp(0) = cams_[0]->fx()*X_warp(0)*invz + cams_[0]->cx();
+                pts_tmp(1) = cams_[0]->fy()*X_warp(1)*invz + cams_[0]->cy();
+                cv::Point pt(pts_tmp(0),pts_tmp(1));
+                cv::circle(img_8u, pt, 1, magenta);
+            }
+        }
+
+        cv::namedWindow("limitRanges", CV_WINDOW_AUTOSIZE);
+        cv::imshow("limitRanges", img_8u);
+        cv::waitKey(0);
+    } //end if
+    
+    // delete invalid points (mask == 0)
+    pcls_[0]->deleteMaskInvalid();
+    pcls_[1]->deleteMaskInvalid();
+    
+};
+
+
 void LidarVisualReconstructor::loadSensorExtrinsics(string& dir){
     // load yaml file
     cv::FileStorage fs(dir, cv::FileStorage::READ);
@@ -134,7 +276,6 @@ bool LidarVisualReconstructor::run(){
         ROS_INFO("'GCS:relative lidar pose': OK. by 'Recon node'.\n");
 
         Eigen::Matrix<float,6,1> xi_l0l1;
-        Eigen::Matrix4f T_l0l1;
         xi_l0l1(0) = srv_relativelidarpose_.response.vx;
         xi_l0l1(1) = srv_relativelidarpose_.response.vy;
         xi_l0l1(2) = srv_relativelidarpose_.response.vz;
@@ -142,9 +283,9 @@ bool LidarVisualReconstructor::run(){
         xi_l0l1(4) = srv_relativelidarpose_.response.wy;
         xi_l0l1(5) = srv_relativelidarpose_.response.wz;
 
-        sophuslie::se3Exp(xi_l0l1, T_l0l1);
+        sophuslie::se3Exp(xi_l0l1, T_l0l1_);
         
-        cout << " recon node T_l0l1: \n" << T_l0l1 << "\n";
+        cout << " recon node T_l0l1: \n" << T_l0l1_ << "\n";
     }
     else{
         ROS_ERROR("Failed to call service 'GCS:relative lidar pose' by 'Recon node'.\n");
@@ -153,9 +294,9 @@ bool LidarVisualReconstructor::run(){
 
     // Request 2) Image and lidar data
     srv_lidarimagedata_.request.header.stamp = ros::Time::now();
-    srv_lidarimagedata_.request.header.seq = -1;
+    srv_lidarimagedata_.request.header.seq   = -1;
     srv_lidarimagedata_.request.header.frame_id = "Origin: recon_node";
-    srv_lidarimagedata_.request.request_type = 0;
+    srv_lidarimagedata_.request.request_type    = 0;
 
     if(client_lidarimagedata_.call(srv_lidarimagedata_)){
         ROS_INFO("'GCS:lidar image data': OK. by 'Recon node'.\n");
@@ -167,13 +308,15 @@ bool LidarVisualReconstructor::run(){
             sensor_msgs::image_encodings::MONO8);
         frames_[1]->constructFrame(cv_ptr->image);
         
-        cv::namedWindow("0 image", CV_WINDOW_AUTOSIZE);
-        cv::namedWindow("1 image", CV_WINDOW_AUTOSIZE);
-        cv::imshow("0 image", frames_[0]->img());
-        cv::imshow("1 image", frames_[1]->img());
-        cv::waitKey(1000); // both imshow s are independently affected by waitKey.
-        // If there are two windows, total waiting time becomes 1000*2 = 2000 ms.
-        
+        if(0) {
+            cv::namedWindow("0 image", CV_WINDOW_AUTOSIZE);
+            cv::namedWindow("1 image", CV_WINDOW_AUTOSIZE);
+            cv::imshow("0 image", frames_[0]->img_raw());
+            cv::imshow("1 image", frames_[1]->img_raw());
+            cv::waitKey(1000); // both imshow s are independently affected by waitKey.
+            // If there are two windows, total waiting time becomes 1000*2 = 2000 ms.
+        }
+       
         // fill out LidarPcl.
         hce_autoexcavator::lidarImageDataStamped::Response& res_lidarimage = srv_lidarimagedata_.response;
         if(pcls_[0]->n_channels != res_lidarimage.n_channels0) throw std::runtime_error("Not matched dimension (recon node)\n");
@@ -187,8 +330,9 @@ bool LidarVisualReconstructor::run(){
             *(pcls_[0]->ring+i) = res_lidarimage.ring0[i];
             *(pcls_[0]->time+i) = res_lidarimage.time0[i];
             *(pcls_[0]->intensity+i) = res_lidarimage.intensity0[i];
+            *(pcls_[0]->mask+i) = true;
         }
-       
+        
         pcls_[1]->count = res_lidarimage.n_pts1;
         for(int i = 0; i < pcls_[1]->count; ++i){
             *(pcls_[1]->x+i) = res_lidarimage.x1[i];
@@ -197,9 +341,12 @@ bool LidarVisualReconstructor::run(){
             *(pcls_[1]->ring+i) = res_lidarimage.ring1[i];
             *(pcls_[1]->time+i) = res_lidarimage.time1[i];
             *(pcls_[1]->intensity+i) = res_lidarimage.intensity1[i];
+            *(pcls_[1]->mask+i) = true;
         }
 
-        // TODO: find valid data within specific area (user-definable)        
+        
+        // find valid data within specific area (user-definable)        
+        limitRanges();
 
         // TODO: Calculate psi theta, and sort index_rings!
         

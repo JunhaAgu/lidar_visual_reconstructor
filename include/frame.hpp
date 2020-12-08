@@ -27,7 +27,8 @@ public:
 
     void constructFrame(const cv::Mat& img_input);
 
-    cv::Mat img() const {return img_raw_;};
+    cv::Mat img_raw() const {return img_raw_;};
+    cv::Mat img() const {return img_undist_;};
     vector<cv::Mat> img_pyr() const {return img_pyr_;};
     vector<cv::Mat> du() const {return du_pyr_;};
     vector<cv::Mat> dv() const {return dv_pyr_;};
@@ -39,7 +40,9 @@ private:
 
 private:
     cv::Mat img_raw_; // CV_8UC1
+    cv::Mat img_undist_; // CV_8UC1
     cv::Mat img_raw_f_; // CV_32FC1
+    cv::Mat img_undist_f_; // CV_32FC1
     cv::Mat du_s_; // CV_16S, sobel result, maximum resolution.
     cv::Mat dv_s_; // CV_16S, sobel result, maximum resolution.
 

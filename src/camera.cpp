@@ -37,8 +37,8 @@ void Camera::initParams(int n_cols, int n_rows, const cv::Mat& cvK, const cv::Ma
 void Camera::generateUndistortMaps(){
     float* map_x_ptr = nullptr;
     float* map_y_ptr = nullptr;
-    float x, y, r, r2, r4, r6, r_radial, x_dist, y_dist;
-    
+    float x, y, r, r2, r4, r6, r_radial, x_dist, y_dist, xy2, xx, yy;
+
     for(int v = 0; v < n_rows_; ++v){
         map_x_ptr = undist_map_x_.ptr<float>(v);
         map_y_ptr = undist_map_y_.ptr<float>(v);
@@ -46,13 +46,15 @@ void Camera::generateUndistortMaps(){
 
         for(int u = 0; u < n_cols_; ++u){
             x = (u - cx_) * fxinv_;
-            r = sqrtf(x*x + y*y);
-            r2 = r*r;
+            xy2 = 2*x*y;
+            xx = x*x; yy = y*y;
+            r2 = xx + yy;
             r4 = r2*r2;
             r6 = r4*r2;
-            r_radial = 1.0f + k1_*r2 + k2_*r4 + k3_*r6;
-            x_dist = x*r_radial * 2 * p1_ * x * y + p2_*(r2 + 2*x*x);
-            y_dist = y*r_radial + p1_*(r2 + 2* y*y) + 2*p2_*x*y;
+            r = sqrtf(r2);
+            r_radial = 1.0f + k1_*r2 + k2_*r4;// + k3_*r6;
+            x_dist = x*r_radial + p1_*xy2          + p2_*(r2 + 2*xx);
+            y_dist = y*r_radial + p1_*(r2 + 2*yy) + p2_*xy2;
 
             *(map_x_ptr + u) = cx_ + x_dist*fx_;
             *(map_y_ptr + u) = cy_ + y_dist*fy_;

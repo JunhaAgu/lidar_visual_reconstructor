@@ -56,7 +56,10 @@ public:
     void loadSensorExtrinsics(string& dir);
 
     bool run(); // success or fail.
+
+public:
     
+
 
 // Callback functions
 private:
@@ -65,7 +68,8 @@ private:
 
 // Algorithms
 private:
-    
+    void limitRanges();
+
 
 
 
@@ -87,7 +91,6 @@ private:
 // pcl
 private:
     int n_lidars_;  // 2
-    vector<int> n_channels_;
     vector<LidarPcl*> pcls_;
 
 // cams & frames
@@ -100,8 +103,8 @@ private:
 
 // extrinsics
 private:
-    vector<Eigen::Matrix4f> T_cl0_;  // from yaml (TODO: calibrator.)
-    vector<Eigen::Matrix4f> T_c0c1_; // from yaml (TODO: calibrator.)
+    vector<Eigen::Matrix4f> T_cl0_;  // 0 cabin, 1 boom from yaml (TODO: calibrator.)
+    vector<Eigen::Matrix4f> T_c0c1_; // 0 cabin, 1 boom  from yaml (TODO: calibrator.)
     Eigen::Matrix4f T_l0l1_; // from GCS (relative lidar pose srv)
     Eigen::Matrix3f R_l0l1_; // from GCS
     Eigen::Vector3f t_l0l1_; // from GCS
