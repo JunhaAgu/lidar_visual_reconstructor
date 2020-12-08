@@ -194,6 +194,9 @@ struct LidarPcl {
     };
 
     void reorderingIndexAtJumping(){
+        //string filePath = "/home/larrkchlaptop/res.txt";
+        //ofstream writeFile(filePath.data());
+
         vector<int> index_copy;
         index_copy.reserve(3000);
         for(int ch = 0; ch < n_channels; ++ch){
@@ -211,21 +214,23 @@ struct LidarPcl {
             index_copy.resize(0);
             for(auto itr = index_rings[ch].begin(); itr != index_rings[ch].end(); ++itr)
                 index_copy.push_back(*itr);
+
 #ifdef _VERBOSE_
     cout << "ch [" << ch <<"] jump [" << idx_jump << "]\n";
 #endif
             /*std::stable_partition(index_rings[ch].begin(),index_rings[ch].end(),
                 [&idx_jump](int i)->bool {return i > idx_jump;});*/
             
-            for(int i = 0; i < n_pts_ch-idx_jump; ++i)
+            for(int i = 0; i < n_pts_ch-idx_jump-1; ++i)
                 index_rings[ch][i] = index_copy[i+idx_jump+1];
-            for(int i = n_pts_ch-idx_jump; i < n_pts_ch; ++i)
-                index_rings[ch][i] = index_copy[i-n_pts_ch+idx_jump];
-#ifdef _VERBOSE_
-    for(auto itr = index_rings[ch].begin(); itr != index_rings[ch].end(); ++itr)
-        cout << "ch["<<ch<<"] idx: "<<*itr<<"\n";
-#endif
+            for(int i = n_pts_ch-idx_jump-1; i < n_pts_ch; ++i)
+                index_rings[ch][i] = index_copy[i-n_pts_ch+idx_jump+1];
+           // for(auto itr = index_rings[ch].begin(); itr != index_rings[ch].end(); ++itr)
+           //     writeFile << ch<<", "<<*itr<<", " << *(psi+*itr)
+           //     <<", " << *(x+*itr) << ", " << *(y+*itr) << ", " <<*(z+*itr) 
+           //     <<"\n";   
         }
+        //writeFile.close();
     };
 };
 

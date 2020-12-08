@@ -321,7 +321,7 @@ bool LidarVisualReconstructor::run(){
         hce_autoexcavator::lidarImageDataStamped::Response& res_lidarimage = srv_lidarimagedata_.response;
         if(pcls_[0]->n_channels != res_lidarimage.n_channels0) throw std::runtime_error("Not matched dimension (recon node)\n");
         if(pcls_[1]->n_channels != res_lidarimage.n_channels1) throw std::runtime_error("Not matched dimension (recon node)\n");
-        
+        cout << "n_pts0: "<< res_lidarimage.n_pts0<<"!!!!!!!!!!!!!!!!!!\n";
         pcls_[0]->count = res_lidarimage.n_pts0;
         for(int i = 0; i < pcls_[0]->count; ++i){
             *(pcls_[0]->x+i) = res_lidarimage.x0[i];
@@ -364,6 +364,159 @@ bool LidarVisualReconstructor::run(){
         pcls_[0]->reorderingIndexAtJumping();
         pcls_[1]->reorderingIndexAtJumping();
 
+        // Find intersections
+        int MAX_ITER_DIVISION = 50; // TODO: global parameter.
+
+        int n_ch_0 = pcls_[0]->n_channels;
+        int n_ch_1 = pcls_[1]->n_channels;
+        float dtheta_step = 2.0f; // 2.0 degrees
+        cv::Mat idxs_cross_0 = cv::Mat::zeros(n_ch_0,n_ch_1,CV_32SC1); // int
+        cv::Mat idxs_cross_1 = cv::Mat::zeros(n_ch_0,n_ch_1,CV_32SC1); // int
+
+        Eigen::Vector3f X0_near, X0_mid, X0_far;
+        Eigen::Vector3f X1_near, X1_mid, X1_far;
+        Eigen::Vector3f X_temp;
+        float sign_near, sign_mid, sign_far;
+
+        Eigen::Vector3f X0_m1, X0_p1;
+        Eigen::Vector3f X1_m1, X1_p1;
+        float err_m1, err_mid, err_p1;
+
+        for(int ch0 = 0; ch0 < n_ch_0; ++ch0) {
+            float CC0 = std::tan((-15.0f+(float)ch0*dtheta_step)*D2R);
+            for(int ch1 = 0; ch1 < n_ch_1; ++ch1) {
+                int i_near = 0; 
+                int i_far = pcls_[1]->index_rings[ch1].size() - 1;
+                X_temp(0) = *(pcls_[1]->x + pcls_[1]->index_rings[ch1][i_near]); 
+                X_temp(1) = *(pcls_[1]->y + pcls_[1]->index_rings[ch1][i_near]);
+                X_temp(2) = *(pcls_[1]->z + pcls_[1]->index_rings[ch1][i_near]);
+                X1_near = T_l0l1_.block<3,3>(0,0)*X_temp + T_l0l1_.block<3,1>(0,3);
+
+                X_temp(0) = *(pcls_[1]->x + pcls_[1]->index_rings[ch1][i_far]);
+                X_temp(1) = *(pcls_[1]->y + pcls_[1]->index_rings[ch1][i_far]);
+                X_temp(2) = *(pcls_[1]->z + pcls_[1]->index_rings[ch1][i_far]);
+                X1_far  = T_l0l1_.block<3,3>(0,0)*X_temp + T_l0l1_.block<3,1>(0,3);
+
+                sign_near = X1_near(2) - CC0*sqrtf(X1_near(0)*X1_near(0) + X1_near(1)*X1_near(1));
+                sign_far  = X1_far(2)  - CC0*sqrtf(X1_far(0)*X1_far(0)   + X1_far(1)*X1_far(1));
+                cout << "sign near far: "<< sign_near <<"," << sign_far<<endl; // WEIRD!!!
+
+                if(sign_near * sign_far > 0){
+                    idxs_cross_1.at<int>(ch0,ch1) = -1;
+                    cout << "ch0 ch1: " << ch0+1 <<" " << ch1 +1 << " continue;\n";
+                    continue;
+                }
+                else{
+                    for(int iter = 0; iter < MAX_ITER_DIVISION; ++iter){
+                        int idx_mid = (int)std::floor((float)(i_near + i_far)/2.0f);
+                        //cout << "near mid far: "<<i_near <<","<<idx_mid<<","<<i_far<<endl;
+                        X_temp(0) = *(pcls_[1]->x + pcls_[1]->index_rings[ch1][idx_mid]);
+                        X_temp(1) = *(pcls_[1]->y + pcls_[1]->index_rings[ch1][idx_mid]);
+                        X_temp(2) = *(pcls_[1]->z + pcls_[1]->index_rings[ch1][idx_mid]);
+                        X1_mid = T_l0l1_.block<3,3>(0,0)*X_temp + T_l0l1_.block<3,1>(0,3);
+
+                        // test!
+                        sign_mid = X1_mid(2) - CC0*sqrt(X1_mid(0)*X1_mid(0) + X1_mid(1)*X1_mid(1));
+                        if(sign_mid * sign_near > 0) i_near = idx_mid;
+                        else i_far = idx_mid;
+
+                        if(abs(i_near - i_far) < 2){
+                            // find nearest point.
+                            X_temp(0) = *(pcls_[1]->x + pcls_[1]->index_rings[ch1][idx_mid-1]);
+                            X_temp(1) = *(pcls_[1]->y + pcls_[1]->index_rings[ch1][idx_mid-1]);
+                            X_temp(2) = *(pcls_[1]->z + pcls_[1]->index_rings[ch1][idx_mid-1]);
+                            X1_m1 = T_l0l1_.block<3,3>(0,0)*X_temp + T_l0l1_.block<3,1>(0,3);
+                            err_m1 = abs(X1_m1(2) - CC0*sqrt(X1_m1(0)*X1_m1(0) + X1_m1(1)*X1_m1(1)));
+
+                            err_mid = abs(sign_mid);
+                            X_temp(0) = *(pcls_[1]->x + pcls_[1]->index_rings[ch1][idx_mid+1]);
+                            X_temp(1) = *(pcls_[1]->y + pcls_[1]->index_rings[ch1][idx_mid+1]);
+                            X_temp(2) = *(pcls_[1]->z + pcls_[1]->index_rings[ch1][idx_mid+1]);
+                            X1_p1 = T_l0l1_.block<3,3>(0,0)*X_temp + T_l0l1_.block<3,1>(0,3);
+                            err_p1 = abs(X1_p1(2) - CC0*sqrt(X1_p1(0)*X1_p1(0) + X1_p1(1)*X1_p1(1)));
+                            if(err_mid < err_p1){
+                                if(err_mid < err_m1) idxs_cross_1.at<int>(ch0,ch1) = idx_mid; // mid
+                                else idxs_cross_1.at<int>(ch0,ch1) = idx_mid - 1; // m1
+                            }
+                            else{
+                                if(err_p1 < err_m1) idxs_cross_1.at<int>(ch0,ch1) = idx_mid+1; // p1
+                                else idxs_cross_1.at<int>(ch0,ch1) = idx_mid - 1; // m1
+                            }
+                            break;
+                        }
+                    }
+                }
+
+            }
+        } // end for lidar1
+
+        Eigen::Matrix4f T_l1l0_ = T_l0l1_.inverse();
+
+        for(int ch1 = 0; ch1 < n_ch_1; ++ch1) {
+            float CC1 = std::tan((-15.0f+(float)ch1*dtheta_step)*D2R);
+            for(int ch0 = 0; ch0 < n_ch_0; ++ch0) {
+                int i_near = 0; 
+                int i_far = pcls_[0]->index_rings[ch0].size() - 1;
+                X_temp << *(pcls_[0]->x + pcls_[0]->index_rings[ch0][i_near]),
+                          *(pcls_[0]->y + pcls_[0]->index_rings[ch0][i_near]),
+                          *(pcls_[0]->z + pcls_[0]->index_rings[ch0][i_near]);
+                X0_near = T_l1l0_.block<3,3>(0,0)*X_temp + T_l1l0_.block<3,1>(0,3);
+
+                X_temp << *(pcls_[0]->x + pcls_[0]->index_rings[ch0][i_far]),
+                          *(pcls_[0]->y + pcls_[0]->index_rings[ch0][i_far]),
+                          *(pcls_[0]->z + pcls_[0]->index_rings[ch0][i_far]);
+                X0_far  = T_l1l0_.block<3,3>(0,0)*X_temp + T_l1l0_.block<3,1>(0,3);
+
+                sign_near = X0_near(2) - CC1*sqrt(X0_near(0)*X0_near(0) + X0_near(1)*X0_near(1));
+                sign_far  = X0_far(2)  - CC1*sqrt(X0_far(0)*X0_far(0)   + X0_far(1)*X0_far(1));
+
+                if(sign_near * sign_far > 0){
+                    idxs_cross_0.at<int>(ch0,ch1) = -1;
+                    continue;
+                }
+                else{
+                    for(int iter = 0; iter < MAX_ITER_DIVISION; ++iter){
+                        int idx_mid = (int)std::floor((float)(i_near + i_far)/2.0f);
+                        X_temp << *(pcls_[0]->x + pcls_[0]->index_rings[ch0][idx_mid]),
+                                  *(pcls_[0]->y + pcls_[0]->index_rings[ch0][idx_mid]),
+                                  *(pcls_[0]->z + pcls_[0]->index_rings[ch0][idx_mid]);
+                        X0_mid = T_l1l0_.block<3,3>(0,0)*X_temp +T_l1l0_.block<3,1>(0,3);
+                        // test!
+                        sign_mid = X0_mid(2) - CC1*sqrt(X0_mid(0)*X0_mid(0) + X0_mid(1)*X0_mid(1));
+                        if(sign_mid * sign_near > 0) i_near = idx_mid;
+                        else i_far = idx_mid;
+
+                        if(abs(i_near - i_far) < 2){
+                            // find nearest point.
+                            X_temp << *(pcls_[0]->x + pcls_[0]->index_rings[ch0][idx_mid-1]),
+                                    *(pcls_[0]->y + pcls_[0]->index_rings[ch0][idx_mid-1]),
+                                    *(pcls_[0]->z + pcls_[0]->index_rings[ch0][idx_mid-1]);
+                            X0_m1 = T_l1l0_.block<3,3>(0,0)*X_temp + T_l1l0_.block<3,1>(0,3);
+                            err_m1 = abs(X0_m1(2) - CC1*sqrt(X0_m1(0)*X0_m1(0) + X0_m1(1)*X0_m1(1)));
+
+                            err_mid = abs(sign_mid);
+
+                            X_temp << *(pcls_[0]->x + pcls_[0]->index_rings[ch0][idx_mid+1]),
+                                      *(pcls_[0]->y + pcls_[0]->index_rings[ch0][idx_mid+1]),
+                                      *(pcls_[0]->z + pcls_[0]->index_rings[ch0][idx_mid+1]);
+                            X0_p1 = T_l1l0_.block<3,3>(0,0)*X_temp + T_l1l0_.block<3,1>(0,3);
+                            err_p1 = abs(X0_p1(2) - CC1*sqrt(X0_p1(0)*X0_p1(0) + X0_p1(1)*X0_p1(1)));
+                            if(err_mid < err_p1)
+                                if(err_mid < err_m1) idxs_cross_0.at<int>(ch0,ch1) = idx_mid; // mid
+                                else idxs_cross_0.at<int>(ch0,ch1) = idx_mid - 1; // m1
+                            else
+                                if(err_p1 < err_m1) idxs_cross_0.at<int>(ch0,ch1) = idx_mid+1; // p1
+                                else idxs_cross_0.at<int>(ch0,ch1) = idx_mid - 1; // m1
+
+                            break;
+                        }
+                    }
+                }
+            }
+        } // end for lidar0
+
+        cout << "idxs_cross0:\n" << idxs_cross_0<<"\n\n";
+        cout << "idxs_cross1:\n" << idxs_cross_1<<"\n\n";
 
         
         // Delaunay ... 
