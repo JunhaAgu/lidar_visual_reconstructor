@@ -352,9 +352,11 @@ bool LidarVisualReconstructor::run(){
         pcls_[0]->gatherRingIndex();
         pcls_[1]->gatherRingIndex();
         
-        // TODO: Calculate psi theta, and sort index_rings!
+        // Calculate psi theta rho
+        pcls_[0]->generateThetaPsi();
+        pcls_[1]->generateThetaPsi();
         
-        // 
+        // Sort index_rings!
         
         // Delaunay ... 
 

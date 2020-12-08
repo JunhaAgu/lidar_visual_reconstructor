@@ -1,8 +1,14 @@
 #ifndef _LIDARPCL_H_
 #define _LIDARPCL_H_
+
+#define PI 3.141592653589793238
+#define D2R PI/180.0
+#define R2D 180.0/PI
+
 #include <iostream>
 #include <vector>
 #include "custom_memory.hpp"
+
 
 using namespace std;
 
@@ -18,6 +24,7 @@ struct LidarPcl {
     vector<vector<int>> index_rings;
     float* theta;
     float* psi;
+    float* rho;
     bool* mask;
 
     LidarPcl(int n_channels_) : n_channels(n_channels_) {
@@ -35,6 +42,7 @@ struct LidarPcl {
 
         theta = (float*)custom_aligned_malloc(sizeof(float)*300000);
         psi   = (float*)custom_aligned_malloc(sizeof(float)*300000);
+        rho   = (float*)custom_aligned_malloc(sizeof(float)*300000);
         mask  = (bool*) custom_aligned_malloc(sizeof(bool) *300000);
         
         // initialize with 'true'
@@ -51,6 +59,7 @@ struct LidarPcl {
         if(time != nullptr)  custom_aligned_free((void*)time);
         if(ring != nullptr)  custom_aligned_free((void*)ring);
         if(psi != nullptr)   custom_aligned_free((void*)psi);
+        if(rho != nullptr)   custom_aligned_free((void*)rho);
         if(theta != nullptr) custom_aligned_free((void*)theta);
         if(mask != nullptr) custom_aligned_free((void*)mask);
     };
@@ -97,6 +106,48 @@ struct LidarPcl {
 #ifdef _VERBOSE_
     for(int ch = 0; ch < n_channels; ++ch)
         cout << " ch["<<ch<<"] # elem: "<<index_rings[ch].size() <<"\n";
+#endif
+    };
+
+    void generateThetaPsi(){
+        float twopi = 2.0f*PI;
+
+        int n_pts = count;
+        float* itr_x_end = x + count;
+        float* itr_x = x;
+        float* itr_y = y;
+        float* itr_z = z;
+        float* itr_th  = theta;
+        float* itr_psi = psi;
+        float* itr_rho = rho;
+
+        for(; itr_x < itr_x_end; ++itr_x, ++itr_y, ++itr_z, ++itr_th, ++itr_psi, ++itr_rho){
+            float& x_ = *itr_x;
+            float& y_ = *itr_y;
+            float& z_ = *itr_z;
+
+            *itr_rho = sqrt(x_*x_ + y_*y_ + z_*z_);
+            *itr_th  = std::asin(z_/(*itr_rho));
+            float invrhocos = 1.0f/((*itr_rho) * std::cos(*itr_th));
+
+            float cospsi = (*itr_x)*invrhocos;
+            float sinpsi = (*itr_y)*invrhocos; 
+            if(cospsi >= 0.0){
+                if(sinpsi >= 0.0) *itr_psi = std::acos(cospsi);// 1 quadrant
+                else *itr_psi = twopi-std::acos(cospsi); // 4 quadrant
+            }
+            else{
+                if(sinpsi >= 0.0) *itr_psi = PI-std::acos(-cospsi); // 2 quadrant
+                else *itr_psi = PI+std::acos(-cospsi); // 3 quadrant;
+            }
+            if(*itr_psi >= twopi) *itr_psi -= twopi;
+        }
+#ifdef _VERBOSE_
+    itr_th  = theta;
+    itr_psi = psi;
+    itr_rho = rho;
+    for(; itr_th < theta + count; ++itr_th, ++itr_psi, ++itr_rho)
+        cout << "rho theta psi: " << *itr_rho << "," << *itr_th << "," << *itr_psi <<"\n";
 #endif
     };
 };
