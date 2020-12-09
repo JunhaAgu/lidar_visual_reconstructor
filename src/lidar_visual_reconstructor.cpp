@@ -139,8 +139,8 @@ void LidarVisualReconstructor::limitRanges(){
     int n_cols = cams_[0]->cols();
     int n_rows = cams_[0]->rows();
     float invz = -1;
-    Eigen::Vector3f X_tmp, X_warp; 
-    Eigen::Vector2f pts_tmp;
+    EVec3f X_tmp, X_warp; 
+    EVec2f pts_tmp;
 
 
     mask_ptr = pcls_[0]->mask;
@@ -241,7 +241,7 @@ void LidarVisualReconstructor::limitRanges(){
 void LidarVisualReconstructor::loadSensorExtrinsics(string& dir){
     // load yaml file
     cv::FileStorage fs(dir, cv::FileStorage::READ);
-    if(!fs.isOpened()) throw std::runtime_error("extrinsic file cannot be found!\n");
+    if(!fs.isOpened()) throw std::runtime_error("extrinsic file cannoEVec2fbe found!\n");
     cout << "extrinsic file is loaded...\n";
 
     // fill out params.
@@ -249,8 +249,8 @@ void LidarVisualReconstructor::loadSensorExtrinsics(string& dir){
     // 1: boom
     cv::Mat T_cl0_tmp;
     cv::Mat T_c0c1_tmp;
-    Eigen::Matrix4f T_cl0_eigen_tmp;
-    Eigen::Matrix4f T_c0c1_eigen_tmp; 
+    EMat4f T_cl0_eigen_tmp;
+    EMat4f T_c0c1_eigen_tmp; 
     fs["cabin.T_cl0"] >> T_cl0_tmp;
     fs["cabin.T_c0c1"] >> T_c0c1_tmp;
 
@@ -321,7 +321,7 @@ bool LidarVisualReconstructor::run(){
         hce_autoexcavator::lidarImageDataStamped::Response& res_lidarimage = srv_lidarimagedata_.response;
         if(pcls_[0]->n_channels != res_lidarimage.n_channels0) throw std::runtime_error("Not matched dimension (recon node)\n");
         if(pcls_[1]->n_channels != res_lidarimage.n_channels1) throw std::runtime_error("Not matched dimension (recon node)\n");
-        cout << "n_pts0: "<< res_lidarimage.n_pts0<<"!!!!!!!!!!!!!!!!!!\n";
+        
         pcls_[0]->count = res_lidarimage.n_pts0;
         for(int i = 0; i < pcls_[0]->count; ++i){
             *(pcls_[0]->x+i) = res_lidarimage.x0[i];
@@ -373,13 +373,13 @@ bool LidarVisualReconstructor::run(){
         cv::Mat idxs_cross_0 = cv::Mat::zeros(n_ch_0,n_ch_1,CV_32SC1); // int
         cv::Mat idxs_cross_1 = cv::Mat::zeros(n_ch_0,n_ch_1,CV_32SC1); // int
 
-        Eigen::Vector3f X0_near, X0_mid, X0_far;
-        Eigen::Vector3f X1_near, X1_mid, X1_far;
-        Eigen::Vector3f X_temp;
+        EVec3f X0_near, X0_mid, X0_far;
+        EVec3f X1_near, X1_mid, X1_far;
+        EVec3f X_temp;
         float sign_near, sign_mid, sign_far;
 
-        Eigen::Vector3f X0_m1, X0_p1;
-        Eigen::Vector3f X1_m1, X1_p1;
+        EVec3f X0_m1, X0_p1;
+        EVec3f X1_m1, X1_p1;
         float err_m1, err_mid, err_p1;
 
         for(int ch0 = 0; ch0 < n_ch_0; ++ch0) {
@@ -399,11 +399,9 @@ bool LidarVisualReconstructor::run(){
 
                 sign_near = X1_near(2) - CC0*sqrtf(X1_near(0)*X1_near(0) + X1_near(1)*X1_near(1));
                 sign_far  = X1_far(2)  - CC0*sqrtf(X1_far(0)*X1_far(0)   + X1_far(1)*X1_far(1));
-                cout << "sign near far: "<< sign_near <<"," << sign_far<<endl; // WEIRD!!!
 
                 if(sign_near * sign_far > 0){
                     idxs_cross_1.at<int>(ch0,ch1) = -1;
-                    cout << "ch0 ch1: " << ch0+1 <<" " << ch1 +1 << " continue;\n";
                     continue;
                 }
                 else{
@@ -450,8 +448,7 @@ bool LidarVisualReconstructor::run(){
             }
         } // end for lidar1
 
-        Eigen::Matrix4f T_l1l0_ = T_l0l1_.inverse();
-
+        EMat4f T_l1l0_ = T_l0l1_.inverse();
         for(int ch1 = 0; ch1 < n_ch_1; ++ch1) {
             float CC1 = std::tan((-15.0f+(float)ch1*dtheta_step)*D2R);
             for(int ch0 = 0; ch0 < n_ch_0; ++ch0) {
@@ -515,17 +512,392 @@ bool LidarVisualReconstructor::run(){
             }
         } // end for lidar0
 
+        for(int ch0 = 0; ch0 < n_ch_0; ++ch0){
+            for(int ch1 = 0; ch1 < n_ch_1; ++ch1){
+                if(idxs_cross_0.at<int>(ch0,ch1) < 0 ||idxs_cross_1.at<int>(ch0,ch1) < 0){
+                    idxs_cross_0.at<int>(ch0,ch1) = -1;
+                    idxs_cross_1.at<int>(ch0,ch1) = -1;
+                }
+            }
+        }
         cout << "idxs_cross0:\n" << idxs_cross_0<<"\n\n";
         cout << "idxs_cross1:\n" << idxs_cross_1<<"\n\n";
 
+
+        // equidistant points insertions.
+        float dist_step = 0.3f; // 0.3 [m] equidistances
+
+        // For lidar0
+        map<int, vector<int>> idxs_augment_l0;
+        for(int ch0 = 0; ch0 < n_ch_0; ++ch0){
+            for(int ch1 = 0; ch1 < n_ch_1+1; ++ch1){
+                idxs_augment_l0.insert(std::pair<int,vector<int>>(ch1+ch0*(n_ch_1+1),vector<int>(0)));
+            }
+        }
         
+
+        // Find augment points
+        EVec3f X_start, X_end;
+        EVec3f X_curr, dX;
+        for(int ch0 = 0; ch0 < n_ch_0; ++ch0){
+            // (1) Fill aug. points between intersections.
+            for(int n_seg = 1; n_seg < n_ch_1-1; ++n_seg){
+                int i_start = idxs_cross_0.at<int>(ch0, n_seg-1);
+                int i_end   = idxs_cross_0.at<int>(ch0, n_seg);
+
+                // if ch0 has an intersection with ch1 and the next intersection is not -1,
+                if(i_start > -1 && i_end > -1){
+                    int sign_stp = 1;
+                    if(i_start > i_end) sign_stp = -1; // inverse direction
+                    int idx_tmp = pcls_[0]->index_rings[ch0][i_start];
+                    X_start << *(pcls_[0]->x + idx_tmp), *(pcls_[0]->y + idx_tmp), *(pcls_[0]->z + idx_tmp);
+                    idx_tmp = pcls_[0]->index_rings[ch0][i_end];
+                    X_end << *(pcls_[0]->x + idx_tmp), *(pcls_[0]->y + idx_tmp), *(pcls_[0]->z + idx_tmp);
+                    float dist = (X_end-X_start).norm();
+                    if(dist > 1.5*dist_step){
+                        int n_steps = ceil(dist/dist_step);
+                        float step_tmp = dist/(float)n_steps;
+                        for(int jj = i_start+1; jj != i_end; jj += sign_stp){
+                            idx_tmp = pcls_[0]->index_rings[ch0][jj];
+                            X_curr << *(pcls_[0]->x + idx_tmp), *(pcls_[0]->y + idx_tmp), *(pcls_[0]->z + idx_tmp);
+                            dX = X_curr - X_start;
+                            if(dX.norm() > step_tmp){
+                                idxs_augment_l0[n_seg+ch0*(n_ch_1+1)].push_back(jj);
+                                X_start = X_curr;
+                            }
+                        } // end for
+                        if((X_curr-X_end).norm() < step_tmp) idxs_augment_l0[n_seg+ch0*(n_ch_1+1)].pop_back();
+                    }// end if
+                }// end if
+            }// end for n_seg
+            
+            
+            // (2) Find front point. 
+            int ch1_front = 0;
+            int int_a, int_b;
+            while(ch1_front < pcls_[1]->n_channels){
+                if(idxs_cross_0.at<int>(ch0,ch1_front) > -1) break;
+                ++ch1_front;
+            }
+            if(ch1_front > pcls_[1]->n_channels - 1) int_a = -1; // no intersection.
+            else int_a = idxs_cross_0.at<int>(ch0,ch1_front);
+
+            // (3) Find back point
+            int ch1_back = pcls_[1]->n_channels-1;
+            while(ch1_back > -1){
+                if(idxs_cross_0.at<int>(ch0,ch1_back) > -1) break;
+                --ch1_back;
+            }
+            if(ch1_back < 0) int_b = -1; // no intersection
+            else int_b = idxs_cross_0.at<int>(ch0,ch1_back);
+
+            // (4) Is index increasing? or decreasing ?
+            int i_initial, i_final;
+            if(int_a>int_b) { // decreasing
+                i_initial = pcls_[0]->index_rings[ch0].size()-1;
+                i_final = 0;
+            } else { // increasing 
+                i_final = pcls_[0]->index_rings[ch0].size()-1;
+                i_initial = 0;
+            }
+
+            // (5) fill front area
+            if(i_initial > -1 && int_a > -1){
+                int sign_stp = 1;
+                if(int_a < i_initial) sign_stp = -1;
+                int idx_tmp = pcls_[0]->index_rings[ch0][i_initial];
+                X_start << *(pcls_[0]->x + idx_tmp), *(pcls_[0]->y + idx_tmp), *(pcls_[0]->z + idx_tmp);
+                idx_tmp = pcls_[0]->index_rings[ch0][int_a];
+                X_end << *(pcls_[0]->x + idx_tmp), *(pcls_[0]->y + idx_tmp), *(pcls_[0]->z + idx_tmp);
+                float dist = (X_end-X_start).norm();
+                if(dist > 1.5*dist_step){
+                    int n_steps = ceil(dist/dist_step);
+                    float step_tmp = dist/(float)n_steps;
+                    for(int jj = i_initial; jj != int_a; jj += sign_stp){
+                        idx_tmp = pcls_[0]->index_rings[ch0][jj];
+                        X_curr << *(pcls_[0]->x + idx_tmp), *(pcls_[0]->y + idx_tmp), *(pcls_[0]->z + idx_tmp);
+                        dX = X_curr - X_start;
+                        if(dX.norm() > step_tmp){
+                            idxs_augment_l0[ch1_front+ch0*(n_ch_1+1)].push_back(jj);
+                            X_start = X_curr;
+                        }
+                    } // end for
+                    if((X_curr-X_end).norm() < step_tmp) idxs_augment_l0[ch1_front+ch0*(n_ch_1+1)].pop_back();
+                }// end if
+            }
+
+            // (6) fill back area
+            if(int_b > -1 && i_final > -1){
+                int sign_stp = 1;
+                if(int_b > i_final) sign_stp = -1;
+                int idx_tmp = pcls_[0]->index_rings[ch0][int_b];
+                X_start << *(pcls_[0]->x + idx_tmp), *(pcls_[0]->y + idx_tmp), *(pcls_[0]->z + idx_tmp);
+                idx_tmp = pcls_[0]->index_rings[ch0][i_final];
+                X_end << *(pcls_[0]->x + idx_tmp), *(pcls_[0]->y + idx_tmp), *(pcls_[0]->z + idx_tmp);
+                float dist = (X_end-X_start).norm();
+                if(dist > 1.5*dist_step){
+                    int n_steps = ceil(dist/dist_step);
+                    float step_tmp = dist/(float)n_steps;
+                    for(int jj = int_b+1; jj != i_final+1; jj += sign_stp){
+                        idx_tmp = pcls_[0]->index_rings[ch0][jj];
+                        X_curr << *(pcls_[0]->x + idx_tmp), *(pcls_[0]->y + idx_tmp), *(pcls_[0]->z + idx_tmp);
+                        dX = X_curr - X_start;
+                        if(dX.norm() > step_tmp){
+                            idxs_augment_l0[(ch1_back+1)+ch0*(n_ch_1+1)].push_back(jj);
+                            X_start = X_curr;
+                        }
+                    } // end for
+                    if((X_curr-X_end).norm() < step_tmp) idxs_augment_l0[(ch1_back+1)+ch0*(n_ch_1+1)].pop_back();
+                }   
+            }
+        }// end for ch0
+
+        // visualization idxs_augment_l0 and idxs_augment_l1
+        for(int ch0 = 0; ch0 < n_ch_0; ++ch0){
+            for(int ch1 = 0; ch1 < n_ch_1+1; ++ch1){
+                int n_elem = idxs_augment_l0[ch1 + ch0*(n_ch_1+1)].size();
+                cout << "[";
+                //for(auto itr = idxs_augment_l0[ch1 + ch0*(n_ch_1+1)].begin(); itr != idxs_augment_l0[ch1 + ch0*(n_ch_1+1)].end(); ++itr)
+                //    cout << *itr <<", ";
+                cout << idxs_augment_l0[ch1 + ch0*(n_ch_1+1)].size();
+                cout <<"],";
+            }
+            cout << "\n";
+        }
+
+
+
+
+        // For lidar1
+        map<int, vector<int>> idxs_augment_l1;
+        for(int ch1 = 0; ch1 < n_ch_1; ++ch1){
+            for(int ch0 = 0; ch0 < n_ch_0+1; ++ch0){
+                idxs_augment_l1.insert(std::pair<int,vector<int>>(ch0+ch1*(n_ch_0+1),vector<int>(0)));
+            }
+        }
+        
+
+        // Find augment points
+        for(int ch1 = 0; ch1 < n_ch_1; ++ch1){
+            // (1) Fill aug. points between intersections.
+            for(int n_seg = 1; n_seg < n_ch_1-1; ++n_seg){
+                int i_start = idxs_cross_1.at<int>(n_seg-1, ch1);
+                int i_end   = idxs_cross_1.at<int>(n_seg,   ch1);
+
+                // if ch1 has an intersection with ch1 and the next intersection is not -1,
+                if(i_start > -1 && i_end > -1){
+                    int sign_stp = 1;
+                    if(i_start > i_end) sign_stp = -1; // inverse direction
+                    int idx_tmp = pcls_[1]->index_rings[ch1][i_start];
+                    X_start << *(pcls_[1]->x + idx_tmp), *(pcls_[1]->y + idx_tmp), *(pcls_[1]->z + idx_tmp);
+                    idx_tmp = pcls_[1]->index_rings[ch1][i_end];
+                    X_end << *(pcls_[1]->x + idx_tmp), *(pcls_[1]->y + idx_tmp), *(pcls_[1]->z + idx_tmp);
+                    float dist = (X_end-X_start).norm();
+                    if(dist > 1.5*dist_step){
+                        int n_steps = ceil(dist/dist_step);
+                        float step_tmp = dist/(float)n_steps;
+                        for(int jj = i_start+1; jj != i_end; jj += sign_stp){
+                            idx_tmp = pcls_[1]->index_rings[ch1][jj];
+                            X_curr << *(pcls_[1]->x + idx_tmp), *(pcls_[1]->y + idx_tmp), *(pcls_[1]->z + idx_tmp);
+                            dX = X_curr - X_start;
+                            if(dX.norm() > step_tmp){
+                                idxs_augment_l1[n_seg+ch1*(n_ch_0+1)].push_back(jj);
+                                X_start = X_curr;
+                            }
+                        } // end for
+                        if((X_curr-X_end).norm() < step_tmp) idxs_augment_l1[n_seg+ch1*(n_ch_0+1)].pop_back();
+                    }// end if
+                }// end if
+            }// end for n_seg
+            
+            
+            // (2) Find front point. 
+            int ch0_front = 0;
+            int int_a, int_b;
+            while(ch0_front < pcls_[1]->n_channels){
+                if(idxs_cross_1.at<int>(ch0_front, ch1) > -1) break;
+                ++ch0_front;
+            }
+            if(ch0_front > pcls_[1]->n_channels - 1) int_a = -1; // no intersection.
+            else int_a = idxs_cross_1.at<int>(ch0_front,ch1);
+
+            // (3) Find back point
+            int ch0_back = pcls_[1]->n_channels-1;
+            while(ch0_back > -1){
+                if(idxs_cross_1.at<int>(ch0_back,ch1) > -1) break;
+                --ch0_back;
+            }
+            if(ch0_back < 0) int_b = -1; // no intersection
+            else int_b = idxs_cross_1.at<int>(ch0_back,ch1);
+
+            // (4) Is index increasing? or decreasing ?
+            int i_initial, i_final;
+            if(int_a>int_b) { // decreasing
+                i_initial = pcls_[1]->index_rings[ch1].size()-1;
+                i_final = 0;
+            } else { // increasing 
+                i_final = pcls_[1]->index_rings[ch1].size()-1;
+                i_initial = 0;
+            }
+
+            // (5) fill front area
+            if(i_initial > -1 && int_a > -1){
+                int sign_stp = 1;
+                if(int_a < i_initial) sign_stp = -1;
+                int idx_tmp = pcls_[1]->index_rings[ch1][i_initial];
+                X_start << *(pcls_[1]->x + idx_tmp), *(pcls_[1]->y + idx_tmp), *(pcls_[1]->z + idx_tmp);
+                idx_tmp = pcls_[1]->index_rings[ch1][int_a];
+                X_end << *(pcls_[1]->x + idx_tmp), *(pcls_[1]->y + idx_tmp), *(pcls_[1]->z + idx_tmp);
+                float dist = (X_end-X_start).norm();
+                if(dist > 1.5*dist_step){
+                    int n_steps = ceil(dist/dist_step);
+                    float step_tmp = dist/(float)n_steps;
+                    for(int jj = i_initial; jj != int_a; jj += sign_stp){
+                        idx_tmp = pcls_[1]->index_rings[ch1][jj];
+                        X_curr << *(pcls_[1]->x + idx_tmp), *(pcls_[1]->y + idx_tmp), *(pcls_[1]->z + idx_tmp);
+                        dX = X_curr - X_start;
+                        if(dX.norm() > step_tmp){
+                            idxs_augment_l1[ch0_front+ch1*(n_ch_0+1)].push_back(jj);
+                            X_start = X_curr;
+                        }
+                    } // end for
+                    if((X_curr-X_end).norm() < step_tmp) idxs_augment_l1[ch0_front+ch1*(n_ch_0+1)].pop_back();
+                }// end if
+            }
+
+            // (6) fill back area
+            if(int_b > -1 && i_final > -1){
+                int sign_stp = 1;
+                if(int_b > i_final) sign_stp = -1;
+                int idx_tmp = pcls_[1]->index_rings[ch1][int_b];
+                X_start << *(pcls_[1]->x + idx_tmp), *(pcls_[1]->y + idx_tmp), *(pcls_[1]->z + idx_tmp);
+                idx_tmp = pcls_[1]->index_rings[ch1][i_final];
+                X_end << *(pcls_[1]->x + idx_tmp), *(pcls_[1]->y + idx_tmp), *(pcls_[1]->z + idx_tmp);
+                float dist = (X_end-X_start).norm();
+                if(dist > 1.5*dist_step){
+                    int n_steps = ceil(dist/dist_step);
+                    float step_tmp = dist/(float)n_steps;
+                    for(int jj = int_b+1; jj != i_final+1; jj += sign_stp){
+                        idx_tmp = pcls_[1]->index_rings[ch1][jj];
+                        X_curr << *(pcls_[1]->x + idx_tmp), *(pcls_[1]->y + idx_tmp), *(pcls_[1]->z + idx_tmp);
+                        dX = X_curr - X_start;
+                        if(dX.norm() > step_tmp){
+                            idxs_augment_l1[(ch0_back+1)+ch1*(n_ch_0+1)].push_back(jj);
+                            X_start = X_curr;
+                        }
+                    } // end for
+                    if((X_curr-X_end).norm() < step_tmp) idxs_augment_l1[(ch0_back+1)+ch1*(n_ch_0+1)].pop_back();
+                }   
+            }
+        }// end for ch0
+
+        // visualization idxs_augment_l0 and idxs_augment_l1
+        for(int ch1 = 0; ch1 < n_ch_1; ++ch1){
+            for(int ch0 = 0; ch0 < n_ch_0+1; ++ch0){
+                int n_elem = idxs_augment_l1[ch0 + ch1*(n_ch_0+1)].size();
+                cout << "[";
+                //for(auto itr = idxs_augment_l1[ch0 + ch1*(n_ch_0+1)].begin(); itr != idxs_augment_l1[ch0 + ch1*(n_ch_0+1)].end(); ++itr)
+                //    cout << *itr <<", ";
+                cout <<idxs_augment_l1[ch0 + ch1*(n_ch_0+1)].size();
+                cout <<"],";
+            }
+            cout << "\n";
+        }
+
+
+        // Visualization on the figure.
+        if(1   ){
+            cv::Scalar orange(0, 165, 255), blue(255, 0, 0), magenta(255, 0, 255);
+
+            cv::Mat img_8u;
+            frames_[0]->img().convertTo(img_8u, CV_8UC3);
+            EVec3f X_tmp, X_warp;
+            EVec2f pts_tmp;
+            for(int ch0 = 0; ch0 < n_ch_0; ++ch0){
+                for(int ch1 =0; ch1 < n_ch_1; ++ch1){
+                    int idx_tmp = pcls_[0]->index_rings[ch0][idxs_cross_0.at<int>(ch0,ch1)];
+
+                    X_tmp(0) = *(pcls_[0]->x + idx_tmp);
+                    X_tmp(1) = *(pcls_[0]->y + idx_tmp);
+                    X_tmp(2) = *(pcls_[0]->z + idx_tmp);
+                    X_warp = T_cl0_[0].block<3,3>(0,0)*X_tmp + T_cl0_[0].block<3,1>(0,3);
+
+                    float invz = 1.0f/X_warp(2);
+                    pts_tmp(0) = cams_[0]->fx()*X_warp(0)*invz + cams_[0]->cx();
+                    pts_tmp(1) = cams_[0]->fy()*X_warp(1)*invz + cams_[0]->cy();
+                    cv::Point pt(pts_tmp(0),pts_tmp(1));
+                    cv::circle(img_8u, pt, 2, magenta);
+                }
+            }
+            for(int ch0 = 0; ch0 < n_ch_0; ++ch0){
+                for(int ch1 =0; ch1 < n_ch_1; ++ch1){
+                    int idx_tmp = pcls_[1]->index_rings[ch1][idxs_cross_1.at<int>(ch0,ch1)];
+
+                    X_tmp(0) = *(pcls_[1]->x + idx_tmp);
+                    X_tmp(1) = *(pcls_[1]->y + idx_tmp);
+                    X_tmp(2) = *(pcls_[1]->z + idx_tmp);
+                    X_warp = T_cl0_[0].block<3,3>(0,0)*(T_l0l1_.block<3,3>(0,0)*X_tmp + T_l0l1_.block<3,1>(0,3))+ T_cl0_[0].block<3,1>(0,3);
+
+                    float invz = 1.0f/X_warp(2);
+                    pts_tmp(0) = cams_[0]->fx()*X_warp(0)*invz + cams_[0]->cx();
+                    pts_tmp(1) = cams_[0]->fy()*X_warp(1)*invz + cams_[0]->cy();
+                    cv::Point pt(pts_tmp(0),pts_tmp(1));
+                    cv::circle(img_8u, pt, 2, magenta);
+                }
+            }
+            for(int ch1 = 0; ch1 < n_ch_1; ++ch1){
+                for(int ch0 = 0; ch0 < n_ch_0+1; ++ch0){
+                    int n_elem = idxs_augment_l1[ch0 + ch1*(n_ch_0+1)].size();
+                    for(auto itr = idxs_augment_l1[ch0 + ch1*(n_ch_0+1)].begin(); itr != idxs_augment_l1[ch0 + ch1*(n_ch_0+1)].end(); ++itr){
+                        int idx_tmp = pcls_[1]->index_rings[ch1][*itr];
+                        X_tmp(0) = *(pcls_[1]->x + idx_tmp);
+                        X_tmp(1) = *(pcls_[1]->y + idx_tmp);
+                        X_tmp(2) = *(pcls_[1]->z + idx_tmp);
+                        X_warp = T_cl0_[0].block<3,3>(0,0)*(T_l0l1_.block<3,3>(0,0)*X_tmp + T_l0l1_.block<3,1>(0,3))+ T_cl0_[0].block<3,1>(0,3);
+
+                        float invz = 1.0f/X_warp(2);
+                        pts_tmp(0) = cams_[0]->fx()*X_warp(0)*invz + cams_[0]->cx();
+                        pts_tmp(1) = cams_[0]->fy()*X_warp(1)*invz + cams_[0]->cy();
+                        cv::Point pt(pts_tmp(0),pts_tmp(1));
+                        cv::circle(img_8u, pt, 1, magenta);
+                    }                    
+                }
+            }
+            for(int ch0 = 0; ch0 < n_ch_0; ++ch0){
+                for(int ch1 = 0; ch1 < n_ch_1+1; ++ch1){
+                    int n_elem = idxs_augment_l0[ch1 + ch0*(n_ch_1+1)].size();
+                    for(auto itr = idxs_augment_l0[ch1 + ch0*(n_ch_1+1)].begin(); itr != idxs_augment_l0[ch1 + ch0*(n_ch_1+1)].end(); ++itr){
+                        int idx_tmp = pcls_[0]->index_rings[ch0][*itr];
+                        X_tmp(0) = *(pcls_[0]->x + idx_tmp);
+                        X_tmp(1) = *(pcls_[0]->y + idx_tmp);
+                        X_tmp(2) = *(pcls_[0]->z + idx_tmp);
+                        X_warp = T_cl0_[0].block<3,3>(0,0)*X_tmp + T_cl0_[0].block<3,1>(0,3);
+
+                        float invz = 1.0f/X_warp(2);
+                        pts_tmp(0) = cams_[0]->fx()*X_warp(0)*invz + cams_[0]->cx();
+                        pts_tmp(1) = cams_[0]->fy()*X_warp(1)*invz + cams_[0]->cy();
+                        cv::Point pt(pts_tmp(0),pts_tmp(1));
+                        cv::circle(img_8u, pt, 1, magenta);
+                    }                    
+                }
+            }
+
+            cv::namedWindow("intersections", CV_WINDOW_AUTOSIZE);
+            cv::imshow("intersections", img_8u);
+            cv::waitKey(0);
+        } //end if        
+
         // Delaunay ... 
 
+
         // KLT ...
+        
 
         // Densification ...
 
+
         // Extract profile 3D points ... 
+        
 
         // Respond to 'GCS' node.
         

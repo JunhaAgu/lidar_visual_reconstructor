@@ -114,22 +114,24 @@ struct LidarPcl {
     };
 
     void gatherRingIndex(){
-        // pre allocate memories
-        for(int ch = 0; ch < n_channels; ++ch)
-            index_rings[ch].reserve(4000);
+        
+        // pre allocate memories (or re-initialize).
+        for(int ch = 0; ch < n_channels; ++ch){
+            if(index_rings[ch].capacity() > 0) index_rings[ch].resize(0);
+            else index_rings[ch].reserve(5000);
+        }
 
         int* itr_ring = ring;
         int* itr_ring_end = ring + count;
         int cnt = 0;
-        for(; itr_ring < itr_ring_end; ++itr_ring){
+        for(; itr_ring < itr_ring_end; ++itr_ring)
             index_rings[*itr_ring].push_back(cnt++);
-        }
 
         cout << " cnt : " << cnt << endl;
-//#ifdef _VERBOSE_
+#ifdef _VERBOSE_
     for(int ch = 0; ch < n_channels; ++ch)
         cout << " ch["<<ch<<"] # elem: "<<index_rings[ch].size() <<"\n";
-//#endif
+#endif
     };
 
     void generateThetaPsi(){

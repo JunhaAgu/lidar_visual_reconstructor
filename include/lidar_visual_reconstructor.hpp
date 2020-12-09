@@ -5,6 +5,7 @@
 #include <iostream>
 #include <exception>
 #include <vector>
+#include <map>
 
 // ROS
 #include <ros/ros.h>
@@ -45,6 +46,14 @@
 
 #include "util/sophus_lie.hpp"
 
+
+// For easy coding T_T...
+typedef Eigen::Matrix2f EMat2f;
+typedef Eigen::Vector2f EVec2f;
+typedef Eigen::Matrix3f EMat3f;
+typedef Eigen::Vector3f EVec3f;
+typedef Eigen::Matrix4f EMat4f;
+typedef Eigen::Vector4f EVec4f;
 
 using namespace std;
 class LidarVisualReconstructor {
@@ -103,11 +112,11 @@ private:
 
 // extrinsics
 private:
-    vector<Eigen::Matrix4f> T_cl0_;  // 0 cabin, 1 boom from yaml (TODO: calibrator.)
-    vector<Eigen::Matrix4f> T_c0c1_; // 0 cabin, 1 boom  from yaml (TODO: calibrator.)
-    Eigen::Matrix4f T_l0l1_; // from GCS (relative lidar pose srv)
-    Eigen::Matrix3f R_l0l1_; // from GCS
-    Eigen::Vector3f t_l0l1_; // from GCS
+    vector<EMat4f> T_cl0_;  // 0 cabin, 1 boom from yaml (TODO: calibrator.)
+    vector<EMat4f> T_c0c1_; // 0 cabin, 1 boom  from yaml (TODO: calibrator.)
+    EMat4f T_l0l1_; // from GCS (relative lidar pose srv)
+    EMat3f R_l0l1_; // from GCS
+    EVec3f t_l0l1_; // from GCS
 
 };
 #endif
