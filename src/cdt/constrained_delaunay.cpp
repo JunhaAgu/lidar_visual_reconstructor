@@ -1,4 +1,73 @@
 #include "cdt/constrained_delaunay.hpp"
+
+/**
+* @brief Constructor (without constraints)
+* @details Constrained DT constructor (overloaded 2)
+* @return none.
+*/
+ConstrainedDT::ConstrainedDT() { };
+
+/**
+* @brief CDT initializer only with points (no constraints)
+* @details Constrained DT initializer
+* @return none.
+*/
+void ConstrainedDT::initializeDT(const vector<PointDB>& points_input){
+    flag_verbose_ = false;
+
+    cout << "  Constrained Delaunay triangulation is initialized.\n";
+    cout << "   L # of input points: " << points_input.size() <<"\n";
+    // insert points (with normalization)
+    n_pts_ = points_input.size();
+    this->getAndNormalizePoints(points_input);
+
+    // Make bins
+    n_slots_ = ceil(sqrtf(sqrtf(n_pts_)));
+    n_bins_ = n_slots_*n_slots_;
+    bins_.resize(n_bins_);
+
+    // binning all points
+    for (int n = 0; n < n_pts_; n++) {
+        int i = (int)(0.99f*(float)n_slots_*(points_[n].y / y_max_hat_));
+        int j = (int)(0.99f*(float)n_slots_*(points_[n].x / x_max_hat_));
+        int n_bin = 0;
+        if (i % 2 == 0) { // even number
+            n_bin = i*n_slots_ + j + 1;
+        }
+        else { // odd number
+            n_bin = (i + 1)*n_slots_ - j;
+        }
+        bins_[n_bin - 1].push_back(n);
+    }
+
+    // vertices of 'super Triangle'
+    this->points_.emplace_back(10000, -10000); // index: N + 1
+    this->points_.emplace_back(0, 10000); // index: N + 2
+    this->points_.emplace_back(-10000, -10000); // index: N (left-most)
+    id_super_Vertex[0] = n_pts_;
+    id_super_Vertex[1] = n_pts_ + 1;
+    id_super_Vertex[2] = n_pts_ + 2; // store the ids of vertices of super Triangle
+
+    // initialize Triangles
+    // Adjacent map (connectivity matrix after DT. n_pts x n_pts)
+    adjmat_ = new AdjacentMatrix(n_pts_ + 3);
+
+    n_tri_counter_ = 0; // accumulated # of triangle. (not related to existing # of triangles.)
+    n_Triangles_   = 0; // # of currently existing triangles.
+    Triangle* tri_super = new Triangle(n_pts_, n_pts_ + 1, n_pts_ + 2, n_tri_counter_++);
+    this->incorporateTriangle(tri_super); // connect 'adjmap' and insert the triangle to 'trimap'.
+
+    // Latest Triangle
+    this->tri_latest_ = tri_super;
+
+#ifdef _VERBOSE_
+        cout << "   L # of input points : " << n_pts_ << "\n";
+        cout << "   L # of slots, bins  : " << n_slots_ << ", " << n_bins_ << "\n";
+        cout << "   L # of constraints  : " << n_constraints_ << "\n";
+        cout << "   L # of Triangles (initialization step): " << n_Triangles_ << "\n\n";
+#endif
+};
+
 /**
 * @brief Constructor
 * @details Constrained DT constructor
@@ -308,7 +377,6 @@ void ConstrainedDT::getAndNormalizePoints(const vector<PointDB>& points_input) {
         if (x_max_hat_ < this->points_[i].x) x_max_hat_ = this->points_[i].x;
         if (y_max_hat_ < this->points_[i].y) y_max_hat_ = this->points_[i].y;
     }
-
 };
 
 /**

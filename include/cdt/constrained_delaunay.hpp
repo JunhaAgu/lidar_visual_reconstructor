@@ -27,6 +27,8 @@ using namespace std;
 class ConstrainedDT {
 public:
     /* Public methods */
+    ConstrainedDT();
+    void initializeDT(const vector<PointDB>& points_input);
     ConstrainedDT(const vector<Vertex>& points_input, const vector<Side>& constraints_input);
     ConstrainedDT(const vector<Eigen::Vector2f>& points_input); // no inputs.
     ConstrainedDT(const vector<PointDB>& points_input); // no inputs.
@@ -47,10 +49,13 @@ public:
 
     void showAllTriangles() {
         cout << " SHOW ALL Triangles! (except for a superTriangle) \n\n";
+        cout << " # of triangles : " << tri_map_.size() << "\n";
         for (auto it = tri_map_.begin(); it != tri_map_.end(); it++)
             cout << it->second->idx[0] << "," << it->second->idx[1] << "," << it->second->idx[2] << "\n";
         cout << "\n\n";
     };
+
+    const map<int,Triangle*>& getTriangleMap() const {return tri_map_;};
 
 
 private:

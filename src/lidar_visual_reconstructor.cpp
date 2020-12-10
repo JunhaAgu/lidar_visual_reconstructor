@@ -37,6 +37,9 @@ LidarVisualReconstructor::LidarVisualReconstructor(ros::NodeHandle& nh)
     // Initiate services
     client_lidarimagedata_    = nh_.serviceClient<hce_autoexcavator::lidarImageDataStamped>("/gcs_node/srv_lidar_image_data");
     client_relativelidarpose_ = nh_.serviceClient<hce_autoexcavator::relativeLidarPoseStamped>("/gcs_node/srv_relative_lidar_pose");
+
+    // Construct Constrained DT without initialization.
+    cdt_ = new ConstrainedDT(); // without initialization.
 };
 
 LidarVisualReconstructor::~LidarVisualReconstructor(){
@@ -46,6 +49,7 @@ LidarVisualReconstructor::~LidarVisualReconstructor(){
         if(*iter != nullptr) delete *iter;
     for(auto iter = frames_.begin(); iter != frames_.end(); ++iter)
         if(*iter != nullptr) delete *iter;
+    if(cdt_ != nullptr) delete cdt_;
 };
 
 bool LidarVisualReconstructor::serverCallbackProfilePoints(hce_autoexcavator::profilePointsStamped::Request &req,
@@ -118,7 +122,7 @@ void LidarVisualReconstructor::limitRanges(){
         *(pcls_[0]->z + i) > z_lims0[0] && *(pcls_[0]->z + i) < z_lims0[1];
         if(*mask_ptr) ++cnt;
     }
-    cout << " valid 0 : "<< cnt << "\n";
+    // cout << " valid 0 : "<< cnt << "\n";
     // 1-2) for lidar1
     cnt = 0;
     mask_ptr = pcls_[1]->mask;
@@ -129,7 +133,7 @@ void LidarVisualReconstructor::limitRanges(){
         *(pcls_[1]->z + i) > z_lims1[0] && *(pcls_[1]->z + i) < z_lims1[1];
         if(*mask_ptr) ++cnt;
     }
-    cout << " valid 1 : "<< cnt << "\n";
+    // cout << " valid 1 : "<< cnt << "\n";
 
     // 2) Warp all points of LiDARs to cam0 frame.
     // And, in image test is also executed! 
@@ -164,7 +168,7 @@ void LidarVisualReconstructor::limitRanges(){
         X_warp(2) > z_lims_cam[0] && X_warp(2) < z_lims_cam[1];
         if(*mask_ptr) ++cnt;
     } 
-    cout << " valid 0 : "<< cnt << "\n";
+    // cout << " valid 0 : "<< cnt << "\n";
 
     mask_ptr = pcls_[1]->mask;
     cnt = 0;
@@ -186,7 +190,7 @@ void LidarVisualReconstructor::limitRanges(){
         X_warp(2) > z_lims_cam[0] && X_warp(2) < z_lims_cam[1];
         if(*mask_ptr) ++cnt;
     }
-    cout << " valid 1 : "<< cnt << "\n";
+    // cout << " valid 1 : "<< cnt << "\n";
 
     if(1){
         cv::Scalar orange(0, 165, 255), blue(255, 0, 0), magenta(255, 0, 255);
@@ -316,6 +320,10 @@ bool LidarVisualReconstructor::run(){
             cv::waitKey(1000); // both imshow s are independently affected by waitKey.
             // If there are two windows, total waiting time becomes 1000*2 = 2000 ms.
         }
+
+        // initialize all containers 
+        db_.resize(0);
+
        
         // fill out LidarPcl.
         hce_autoexcavator::lidarImageDataStamped::Response& res_lidarimage = srv_lidarimagedata_.response;
@@ -945,33 +953,62 @@ bool LidarVisualReconstructor::run(){
                     }
                 }
             }
+        }      
+
+        // Projections.
+        EVec3f X_warp;
+        EVec2f pts_tmp;
+        cout << " Pixel points: \n";
+        for(auto itr = db_.begin(); itr != db_.end(); ++itr){
+            EVec3f X_warp = T_cl0_[0].block<3,3>(0,0)*(itr->X_) + T_cl0_[0].block<3,1>(0,3);
+            float invz = 1.0f/X_warp(2);
+            itr->pts_(0) = cams_[0]->fx()*X_warp(0)*invz + cams_[0]->cx();
+            itr->pts_(1) = cams_[0]->fy()*X_warp(1)*invz + cams_[0]->cy();
+            cout << itr->pts_(0) << "," << itr->pts_(1) << "\n";
         }
 
         // Visualization on the figure.
         if(1){
             cv::Scalar orange(0, 165, 255), blue(255, 0, 0), magenta(255, 0, 255);
-
             cv::Mat img_8u;
             cv::cvtColor(frames_[0]->img(),img_8u,CV_GRAY2BGR);
-            EVec3f X_tmp, X_warp;
-            EVec2f pts_tmp;
-            for(auto itr = db_.begin(); itr != db_.end(); ++itr){
-                EVec3f X_warp = T_cl0_[0].block<3,3>(0,0)*(itr->X_) + T_cl0_[0].block<3,1>(0,3);
-                float invz = 1.0f/X_warp(2);
-                pts_tmp(0) = cams_[0]->fx()*X_warp(0)*invz + cams_[0]->cx();
-                pts_tmp(1) = cams_[0]->fy()*X_warp(1)*invz + cams_[0]->cy();
-                cv::Point pt(pts_tmp(0),pts_tmp(1));
-                cv::circle(img_8u, pt, 3, magenta);
-            }
-           
+            for(auto itr = db_.begin(); itr != db_.end(); ++itr)
+                cv::circle(img_8u, cv::Point(itr->pts_(0),itr->pts_(1)), 3, magenta);
             cv::namedWindow("Final points", CV_WINDOW_AUTOSIZE);
             cv::imshow("Final points", img_8u);
             cv::waitKey(0);
-        } //end if        
-
-        // Projections.
+        } //end if  
 
         // Delaunay ... 
+        cdt_->initializeDT(db_);
+        cdt_->executeNormalDT();
+        cdt_->showAllTriangles();
+
+        if(1){
+            cv::Scalar orange(0, 165, 255), blue(255, 0, 0), magenta(255, 0, 255);
+            cv::Mat img_8u;
+            cv::cvtColor(frames_[0]->img(),img_8u,CV_GRAY2BGR);
+            for(auto itr = cdt_->getTriangleMap().begin(); itr != cdt_->getTriangleMap().end(); ++itr){
+                int i0 = itr->second->idx[0];
+                int i1 = itr->second->idx[1];
+                int i2 = itr->second->idx[2];
+                // cv::line(img_8u, 
+                //     cv::Point(db_[i0].pts_(0), db_[i0].pts_(1)),
+                //     cv::Point(db_[i1].pts_(0), db_[i1].pts_(1)), blue, 3, CV_AA);
+                // cv::line(img_8u, 
+                //     cv::Point(db_[i1].pts_(0), db_[i1].pts_(1)),
+                //     cv::Point(db_[i2].pts_(0), db_[i2].pts_(1)), blue, 3, CV_AA);
+                // cv::line(img_8u, 
+                //     cv::Point(db_[i0].pts_(0), db_[i0].pts_(1)),
+                //     cv::Point(db_[i2].pts_(0), db_[i2].pts_(1)), blue, 3, CV_AA);
+            }
+            for(auto itr = db_.begin(); itr != db_.end(); ++itr)
+                cv::circle(img_8u, cv::Point(itr->pts_(0),itr->pts_(1)), 3, magenta);
+            
+            cv::namedWindow("Delaunay results", CV_WINDOW_AUTOSIZE);
+            cv::imshow("Delaunay results", img_8u);
+            cv::waitKey(0);
+        }
 
 
         // KLT ...

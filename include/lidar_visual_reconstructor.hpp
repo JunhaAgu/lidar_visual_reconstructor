@@ -108,6 +108,7 @@ private:
 // Extracted points & Delaunay triangles.
 private:
     vector<PointDB> db_;
+    ConstrainedDT* cdt_;
 
 
 // cams & frames

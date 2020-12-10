@@ -127,8 +127,8 @@ struct LidarPcl {
         for(; itr_ring < itr_ring_end; ++itr_ring)
             index_rings[*itr_ring].push_back(cnt++);
 
-        cout << " cnt : " << cnt << endl;
 #ifdef _VERBOSE_
+    cout << " lidar_pcl cnt : " << cnt << endl;
     for(int ch = 0; ch < n_channels; ++ch)
         cout << " ch["<<ch<<"] # elem: "<<index_rings[ch].size() <<"\n";
 #endif
