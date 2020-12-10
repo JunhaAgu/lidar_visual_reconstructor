@@ -980,9 +980,20 @@ bool LidarVisualReconstructor::run(){
         } //end if  
 
         // Delaunay ... 
+        int n_db_size = db_.size();
+
         cdt_->initializeDT(db_);
         cdt_->executeNormalDT();
-        cdt_->showAllTriangles();
+        db_.emplace_back(); // super triangles
+        db_.emplace_back(); // super triangles
+        db_.emplace_back(); // super triangles
+
+        vector<PointDB> db_addi_;
+        cdt_->getCenterPointsOfTriangles(400,db_addi_);
+        cdt_->addPointsIntoDT(db_addi_);
+
+        for(auto itr = db_addi_.begin(); itr != db_addi_.end(); ++itr)
+            db_.emplace_back(*itr);
 
         if(1){
             cv::Scalar orange(0, 165, 255), blue(255, 0, 0), magenta(255, 0, 255);
@@ -992,23 +1003,30 @@ bool LidarVisualReconstructor::run(){
                 int i0 = itr->second->idx[0];
                 int i1 = itr->second->idx[1];
                 int i2 = itr->second->idx[2];
-                // cv::line(img_8u, 
-                //     cv::Point(db_[i0].pts_(0), db_[i0].pts_(1)),
-                //     cv::Point(db_[i1].pts_(0), db_[i1].pts_(1)), blue, 3, CV_AA);
-                // cv::line(img_8u, 
-                //     cv::Point(db_[i1].pts_(0), db_[i1].pts_(1)),
-                //     cv::Point(db_[i2].pts_(0), db_[i2].pts_(1)), blue, 3, CV_AA);
-                // cv::line(img_8u, 
-                //     cv::Point(db_[i0].pts_(0), db_[i0].pts_(1)),
-                //     cv::Point(db_[i2].pts_(0), db_[i2].pts_(1)), blue, 3, CV_AA);
+                if(i0 != n_db_size-1 && i1 != n_db_size-1 && i2 != n_db_size-1 &&
+                   i0 != n_db_size && i1 != n_db_size && i2 != n_db_size &&
+                   i0 != n_db_size+1 && i1 != n_db_size+1 && i2 != n_db_size+1){
+                    cv::line(img_8u, 
+                        cv::Point(db_[i0].pts_(0), db_[i0].pts_(1)),
+                        cv::Point(db_[i1].pts_(0), db_[i1].pts_(1)), blue, 3, CV_AA);
+                    cv::line(img_8u, 
+                        cv::Point(db_[i1].pts_(0), db_[i1].pts_(1)),
+                        cv::Point(db_[i2].pts_(0), db_[i2].pts_(1)), blue, 3, CV_AA);
+                    cv::line(img_8u, 
+                        cv::Point(db_[i0].pts_(0), db_[i0].pts_(1)),
+                        cv::Point(db_[i2].pts_(0), db_[i2].pts_(1)), blue, 3, CV_AA);
+                }
             }
             for(auto itr = db_.begin(); itr != db_.end(); ++itr)
-                cv::circle(img_8u, cv::Point(itr->pts_(0),itr->pts_(1)), 3, magenta);
+                cv::circle(img_8u, cv::Point(itr->pts_(0),itr->pts_(1)), 1, magenta);
             
             cv::namedWindow("Delaunay results", CV_WINDOW_AUTOSIZE);
             cv::imshow("Delaunay results", img_8u);
             cv::waitKey(0);
         }
+
+
+
 
 
         // KLT ...

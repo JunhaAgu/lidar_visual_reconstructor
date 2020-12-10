@@ -36,12 +36,13 @@ public:
     void executeNormalDT();
 
     // Densification algorithms
+    void getCenterPointsOfTriangles(const float& thres_area, vector<Vertex>& points_centers);
+    void getCenterPointsOfTriangles(const float& thres_area, vector<Eigen::Vector2f>& points_centers);
+    void getCenterPointsOfTriangles(const float& thres_area, vector<PointDB>& points_centers);
+
     void addPointsIntoDT(const vector<Vertex>& points_addi);
     void addPointsIntoDT(const vector<Eigen::Vector2f>& points_addi);
     void addPointsIntoDT(const vector<PointDB>& points_addi);
-
-    void getCenterPointsOfTriangles(const float& thres_area, vector<Vertex>& points_centers);
-    void getCenterPointsOfTriangles(const float& thres_area, vector<Eigen::Vector2f>& points_centers);
 
     // Constrained DT.
     void executeRefineConstrainedDT();

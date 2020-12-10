@@ -1998,3 +1998,25 @@ void ConstrainedDT::getCenterPointsOfTriangles(const float& thres_area, vector<E
             points_centers.emplace_back(0.33333f*(pa.x + pb.x + pc.x)*denom_+x_min_, 0.33333f*(pa.y + pb.y + pc.y)*denom_ + y_min_) ;
     }
 };
+
+void ConstrainedDT::getCenterPointsOfTriangles(const float& thres_area, vector<PointDB>& points_centers) {
+    points_centers.resize(0);
+
+    this->thres_area_ = thres_area;
+    denom_ = std::fmaxf(x_max_ - x_min_, y_max_ - y_min_);
+
+    for (auto iter = tri_map_.begin(); iter != tri_map_.end(); ++iter){
+        Triangle* tri_cur = iter->second;
+        Vertex& pa = this->points_[tri_cur->idx[0]];
+        Vertex& pb = this->points_[tri_cur->idx[1]];
+        Vertex& pc = this->points_[tri_cur->idx[2]];
+
+        float area = calcTriArea(pa,pb,pc)*denom_*denom_;
+
+        if (area > this->thres_area_ && area < 10000){
+            points_centers.emplace_back();
+            points_centers[points_centers.size()-1].pts_ <<
+                0.33333f*(pa.x + pb.x + pc.x)*denom_+x_min_, 0.33333f*(pa.y + pb.y + pc.y)*denom_ + y_min_;
+        }
+    }
+};
