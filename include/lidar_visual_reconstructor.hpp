@@ -43,6 +43,8 @@
 #include "frame.hpp"
 #include "camera.hpp"
 #include "feature_tracker.h"
+#include "point_database.hpp"
+#include "cdt/constrained_delaunay.hpp"
 
 #include "util/sophus_lie.hpp"
 
@@ -54,6 +56,7 @@ typedef Eigen::Matrix3f EMat3f;
 typedef Eigen::Vector3f EVec3f;
 typedef Eigen::Matrix4f EMat4f;
 typedef Eigen::Vector4f EVec4f;
+typedef Eigen::Vector4i EVec4i;
 
 using namespace std;
 class LidarVisualReconstructor {
@@ -101,6 +104,11 @@ private:
 private:
     int n_lidars_;  // 2
     vector<LidarPcl*> pcls_;
+
+// Extracted points & Delaunay triangles.
+private:
+    vector<PointDB> db_;
+
 
 // cams & frames
 private:

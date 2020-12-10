@@ -74,6 +74,129 @@ ConstrainedDT::ConstrainedDT(const vector<Vertex>& points_input, const vector<Si
 #endif
 };
 
+/**
+* @brief Constructor (without constraints)
+* @details Constrained DT constructor (overloaded)
+* @return none.
+*/
+ConstrainedDT::ConstrainedDT(const vector<Eigen::Vector2f>& points_input) {
+    flag_verbose_ = false;
+
+    cout << "  Constrained Delaunay triangulation is initialized.\n";
+
+    // insert points (with normalization)
+    n_pts_ = points_input.size();
+    this->getAndNormalizePoints(points_input);
+
+    // Make bins
+    n_slots_ = ceil(sqrtf(sqrtf(n_pts_)));
+    n_bins_ = n_slots_*n_slots_;
+    bins_.resize(n_bins_);
+
+    // binning all points
+    for (int n = 0; n < n_pts_; n++) {
+        int i = (int)(0.99f*(float)n_slots_*(points_[n].y / y_max_hat_));
+        int j = (int)(0.99f*(float)n_slots_*(points_[n].x / x_max_hat_));
+        int n_bin = 0;
+        if (i % 2 == 0) { // even number
+            n_bin = i*n_slots_ + j + 1;
+        }
+        else { // odd number
+            n_bin = (i + 1)*n_slots_ - j;
+        }
+        bins_[n_bin - 1].push_back(n);
+    }
+
+    // vertices of 'super Triangle'
+    this->points_.emplace_back(10000, -10000); // index: N + 1
+    this->points_.emplace_back(0, 10000); // index: N + 2
+    this->points_.emplace_back(-10000, -10000); // index: N (left-most)
+    id_super_Vertex[0] = n_pts_;
+    id_super_Vertex[1] = n_pts_ + 1;
+    id_super_Vertex[2] = n_pts_ + 2; // store the ids of vertices of super Triangle
+
+    // initialize Triangles
+    // Adjacent map (connectivity matrix after DT. n_pts x n_pts)
+    adjmat_ = new AdjacentMatrix(n_pts_ + 3);
+
+    n_tri_counter_ = 0; // accumulated # of triangle. (not related to existing # of triangles.)
+    n_Triangles_   = 0; // # of currently existing triangles.
+    Triangle* tri_super = new Triangle(n_pts_, n_pts_ + 1, n_pts_ + 2, n_tri_counter_++);
+    this->incorporateTriangle(tri_super); // connect 'adjmap' and insert the triangle to 'trimap'.
+
+    // Latest Triangle
+    this->tri_latest_ = tri_super;
+
+#ifdef _VERBOSE_
+        cout << "   L # of input points : " << n_pts_ << "\n";
+        cout << "   L # of slots, bins  : " << n_slots_ << ", " << n_bins_ << "\n";
+        cout << "   L # of constraints  : " << n_constraints_ << "\n";
+        cout << "   L # of Triangles (initialization step): " << n_Triangles_ << "\n\n";
+#endif
+};
+
+
+/**
+* @brief Constructor (without constraints)
+* @details Constrained DT constructor (overloaded 2)
+* @return none.
+*/
+ConstrainedDT::ConstrainedDT(const vector<PointDB>& points_input) {
+    flag_verbose_ = false;
+
+    cout << "  Constrained Delaunay triangulation is initialized.\n";
+
+    // insert points (with normalization)
+    n_pts_ = points_input.size();
+    this->getAndNormalizePoints(points_input);
+
+    // Make bins
+    n_slots_ = ceil(sqrtf(sqrtf(n_pts_)));
+    n_bins_ = n_slots_*n_slots_;
+    bins_.resize(n_bins_);
+
+    // binning all points
+    for (int n = 0; n < n_pts_; n++) {
+        int i = (int)(0.99f*(float)n_slots_*(points_[n].y / y_max_hat_));
+        int j = (int)(0.99f*(float)n_slots_*(points_[n].x / x_max_hat_));
+        int n_bin = 0;
+        if (i % 2 == 0) { // even number
+            n_bin = i*n_slots_ + j + 1;
+        }
+        else { // odd number
+            n_bin = (i + 1)*n_slots_ - j;
+        }
+        bins_[n_bin - 1].push_back(n);
+    }
+
+    // vertices of 'super Triangle'
+    this->points_.emplace_back(10000, -10000); // index: N + 1
+    this->points_.emplace_back(0, 10000); // index: N + 2
+    this->points_.emplace_back(-10000, -10000); // index: N (left-most)
+    id_super_Vertex[0] = n_pts_;
+    id_super_Vertex[1] = n_pts_ + 1;
+    id_super_Vertex[2] = n_pts_ + 2; // store the ids of vertices of super Triangle
+
+    // initialize Triangles
+    // Adjacent map (connectivity matrix after DT. n_pts x n_pts)
+    adjmat_ = new AdjacentMatrix(n_pts_ + 3);
+
+    n_tri_counter_ = 0; // accumulated # of triangle. (not related to existing # of triangles.)
+    n_Triangles_   = 0; // # of currently existing triangles.
+    Triangle* tri_super = new Triangle(n_pts_, n_pts_ + 1, n_pts_ + 2, n_tri_counter_++);
+    this->incorporateTriangle(tri_super); // connect 'adjmap' and insert the triangle to 'trimap'.
+
+    // Latest Triangle
+    this->tri_latest_ = tri_super;
+
+#ifdef _VERBOSE_
+        cout << "   L # of input points : " << n_pts_ << "\n";
+        cout << "   L # of slots, bins  : " << n_slots_ << ", " << n_bins_ << "\n";
+        cout << "   L # of constraints  : " << n_constraints_ << "\n";
+        cout << "   L # of Triangles (initialization step): " << n_Triangles_ << "\n\n";
+#endif
+};
+
 
 
 void ConstrainedDT::sortVertexOrderCCW(Triangle* tri) {
@@ -107,6 +230,71 @@ void ConstrainedDT::getAndNormalizePoints(const vector<Vertex>& points_input) {
         if (x_min_ > points_input[i].x) x_min_ = points_input[i].x;
         if (y_max_ < points_input[i].y) y_max_ = points_input[i].y;
         if (y_min_ > points_input[i].y) y_min_ = points_input[i].y;
+    }
+
+    // normalization of points' coordinates
+    denom_ = std::fmaxf(x_max_ - x_min_, y_max_ - y_min_);
+    float invdenom = 1.0f / denom_;
+    x_max_hat_ = -1;
+    y_max_hat_ = -1;
+    for (int i = 0; i < this->n_pts_; i++) {
+        this->points_[i].x = (this->points_[i].x - x_min_)*invdenom;
+        this->points_[i].y = (this->points_[i].y - y_min_)*invdenom;
+        if (x_max_hat_ < this->points_[i].x) x_max_hat_ = this->points_[i].x;
+        if (y_max_hat_ < this->points_[i].y) y_max_hat_ = this->points_[i].y;
+    }
+
+};
+
+/**
+* @brief insertPoint. (overloaded)
+* @details insertPoint (overloaded)
+* @return none.
+*/
+void ConstrainedDT::getAndNormalizePoints(const vector<Eigen::Vector2f>& points_input) {
+    this->points_.reserve(n_pts_); // pre-allocation
+    x_max_ = -1e9; x_min_ = 1e9;
+    y_max_ = -1e9; y_min_ = 1e9;
+
+    for (int i = 0; i < this->n_pts_; i++) {
+        this->points_.emplace_back(points_input[i](0),points_input[i](1));
+        if (x_max_ < points_input[i](0)) x_max_ = points_input[i](0);
+        if (x_min_ > points_input[i](0)) x_min_ = points_input[i](0);
+        if (y_max_ < points_input[i](1)) y_max_ = points_input[i](1);
+        if (y_min_ > points_input[i](1)) y_min_ = points_input[i](1);
+    }
+
+    // normalization of points' coordinates
+    denom_ = std::fmaxf(x_max_ - x_min_, y_max_ - y_min_);
+    float invdenom = 1.0f / denom_;
+    x_max_hat_ = -1;
+    y_max_hat_ = -1;
+    for (int i = 0; i < this->n_pts_; i++) {
+        this->points_[i].x = (this->points_[i].x - x_min_)*invdenom;
+        this->points_[i].y = (this->points_[i].y - y_min_)*invdenom;
+        if (x_max_hat_ < this->points_[i].x) x_max_hat_ = this->points_[i].x;
+        if (y_max_hat_ < this->points_[i].y) y_max_hat_ = this->points_[i].y;
+    }
+
+};
+
+
+/**
+* @brief insertPoint. (overloaded 2)
+* @details insertPoint (overloaded 2)
+* @return none.
+*/
+void ConstrainedDT::getAndNormalizePoints(const vector<PointDB>& points_input) {
+    this->points_.reserve(n_pts_); // pre-allocation
+    x_max_ = -1e9; x_min_ = 1e9;
+    y_max_ = -1e9; y_min_ = 1e9;
+
+    for (int i = 0; i < this->n_pts_; i++) {
+        this->points_.emplace_back(points_input[i].pts_(0),points_input[i].pts_(1));
+        if (x_max_ < points_[i].x) x_max_ = points_[i].x;
+        if (x_min_ > points_[i].x) x_min_ = points_[i].x;
+        if (y_max_ < points_[i].y) y_max_ = points_[i].y;
+        if (y_min_ > points_[i].y) y_min_ = points_[i].y;
     }
 
     // normalization of points' coordinates
@@ -661,7 +849,7 @@ void ConstrainedDT::findSharingTwoTriangles(const int& k, const int& l, Triangle
 * @details refine the original DT to constrained DT.
 * @return none.
 */
-void ConstrainedDT::refineConstrainedDT() {
+void ConstrainedDT::executeRefineConstrainedDT() {
     cout << " refine Constraints...\n";
     // STEP 1 (Loop over each constrained edge.)
     for (int nn = 0; nn < n_constraints_; nn++) {
@@ -1237,6 +1425,452 @@ void ConstrainedDT::addPointsIntoDT(const vector<Vertex>& points_addi) {
 };
 
 
+void ConstrainedDT::addPointsIntoDT(const vector<Eigen::Vector2f>& points_addi) {
+    cout << " Add points into Normal Delaunay Triangulation.\n";
+    // Initialize the newly inserted points.
+    int n_pts_addi = points_addi.size();  // # of inserted new points.
+    n_pts_org_ = points_.size(); // # of existing points. (including three super points)
+
+    for (int i = 0; i < n_pts_addi; i++) this->points_.emplace_back(points_addi[i](0),points_addi[i](1));
+
+    cout << "# of org points: " << points_.size() << " / # of addi points: " << points_addi.size() << '\n';
+
+
+    // normalization of points' coordinates
+    // points_addižŠ »õ·ÎÀÌ Ãß°¡ÇØÁØŽÙ.
+    denom_ = std::fmaxf(x_max_ - x_min_, y_max_ - y_min_);
+    float invdenom = 1.0f / denom_;
+    for (int i = n_pts_org_; i < n_pts_org_ +n_pts_addi; i++) {
+        this->points_[i].x = (this->points_[i].x - x_min_)*invdenom;
+        this->points_[i].y = (this->points_[i].y - y_min_)*invdenom;
+    }
+    this->n_pts_ = points_.size();
+
+    cout << " redfine adjmat_\n";
+    delete adjmat_;
+    this->adjmat_ = new AdjacentMatrix(n_pts_ + 3);
+    this->adjmat_->connectThreeNodes(n_pts_org_, n_pts_org_+1, n_pts_org_+2);
+
+    // STEP 4. Loop over each point.
+    for (int i = n_pts_org_; i < n_pts_; ++i) {
+        // STEP 5. Insert new point in triangulation.
+        // STEP 5-1. Lawson's searching to find enclosing Triangle (NOT CIRCUMCIRCLE!!!)
+        Triangle* tri_cur = this->tri_latest_;
+        int cnt = 0;
+        while (!isInTri(tri_cur, i, points_)) {// 'tri_temp' encloses the point 'p'
+                                               // 'tri_temp' does not enclose the points_[i]
+                                               // Not enclosing? Do Lawson's searching until finding an enclosing Triangle.
+            int next_dir = -1;
+            findLawsonSearch(tri_cur, next_dir, i, points_);
+            tri_cur = tri_cur->adj[next_dir];
+            if ((++cnt) > 100000) throw std::runtime_error("ERROR: Infinite while loop for circum test.\n");
+        } // end 
+
+        // disconnect tri_cur's points
+        disincorporateTriangle(tri_cur);
+
+        // STEP 5-2. Delete this Triangle (tri_cur) and 'make' new three Triangles by connecting p to its each Vertex.
+        Triangle* new0 = new Triangle(-1, -1, -1, n_tri_counter_++);
+        Triangle* new1 = new Triangle(-1, -1, -1, n_tri_counter_++);
+        Triangle* new2 = new Triangle(-1, -1, -1, n_tri_counter_++);
+
+        // new0 (p-1-2) : opposite Triangle : 0
+        new0->idx[0] = i; // opposite p
+        new0->idx[1] = tri_cur->idx[1]; // opposite tri_temp 1
+        new0->idx[2] = tri_cur->idx[2]; // opposite tri_temp 2
+        new0->adj[0] = tri_cur->adj[0];
+        new0->adj[1] = new1;
+        new0->adj[2] = new2;
+        if (new0->adj[0] != nullptr) // find non-sharing point from the tri_temp->adj[0]->idx
+            for (int kk = 0; kk < 3; kk++)
+                if (new0->adj[0]->adj[kk] == tri_cur) new0->adj[0]->adj[kk] = new0;
+        this->incorporateTriangle(new0);
+
+        // new1 (p-0-2) : opposite Triangle : 1            
+        new1->idx[0] = i; // opposite p
+        new1->idx[1] = tri_cur->idx[0]; // opposite tri_temp 0
+        new1->idx[2] = tri_cur->idx[2]; // opposite tri_temp 2
+        new1->adj[0] = tri_cur->adj[1];
+        new1->adj[1] = new0;
+        new1->adj[2] = new2;
+        if (new1->adj[0] != nullptr) // find non-sharing point from the tri_temp->adj[0]->idx
+            for (int kk = 0; kk < 3; kk++)
+                if (new1->adj[0]->adj[kk] == tri_cur) new1->adj[0]->adj[kk] = new1;
+        this->incorporateTriangle(new1);
+
+        // new2 (p-0-1) : opposite Triangle : 2
+        new2->idx[0] = i; // opposite p
+        new2->idx[1] = tri_cur->idx[0]; // opposite tri_temp 0
+        new2->idx[2] = tri_cur->idx[1]; // opposite tri_temp 1
+        new2->adj[0] = tri_cur->adj[2];
+        new2->adj[1] = new0;
+        new2->adj[2] = new1;
+        if (new2->adj[0] != nullptr) // find non-sharing point from the tri_temp->adj[0]->idx
+            for (int kk = 0; kk < 3; kk++)
+                if (new2->adj[0]->adj[kk] == tri_cur) new2->adj[0]->adj[kk] = new2;
+        this->incorporateTriangle(new2);
+
+        this->tri_latest_ = new2; // update last list.
+        delete tri_cur; // delete tri_cur and pop from the map
+
+        vector<int> id_new;
+        // STEP 6. (initialize stack) push adjacent three Triangles of the newly generated Triangles.
+        fstack_.clear();
+        if (new0->adj[0] != nullptr) {
+            fstack_.push(new0->adj[0]);
+            id_new.push_back(new0->adj[0]->id);
+        }
+        if (new1->adj[0] != nullptr) {
+            fstack_.push(new1->adj[0]);
+            id_new.push_back(new1->adj[0]->id);
+        }
+        if (new2->adj[0] != nullptr) {
+            fstack_.push(new2->adj[0]);
+            id_new.push_back(new2->adj[0]->id);
+        }
+
+        // STEP 7. (Restore Delaunay triangulation) While the stack or Triangles is not empty, 
+        // execute Lawson's swapping scheme, as defined by steps 7.1~7.3
+        Triangle* tri_outer = nullptr;
+        Triangle* tri_in = nullptr;
+        while (!fstack_.empty()) {
+            // STEP 7-1. Remove a Triangle which is opposite p from the top of the stack.
+            tri_outer = fstack_.top();
+            fstack_.pop();
+
+            // STEP 7-2. If p is outSide (or on) the circumcircle for this Triangle,
+            // return to STEP 7-1.
+            if (!isInCircum(tri_outer, i, points_)) continue;
+            // Else, the Triangle containing p as a Vertex and the unstacked Triangle form 
+            // a convex quadrilateral whose diagonal is drawn in the wrong direction.
+            else {
+                // Swap this diagonal so that two old Triangles are repalced by two new
+                // Triangles and the structure of the Delaunay triangulation is locally restored.
+                // Gist: swap the diagonal (delete two Triangles and make new two Triangles)
+                // find opposite Triangle index (i.e. one of newly generated three Triangles.)
+                int idx_op = -1;
+                for (int kk = 0; kk < 3; kk++) {
+                    if (tri_outer->adj[kk] != nullptr && tri_outer->adj[kk]->idx[0] == i)
+                        idx_op = kk; // tri_outerÀÇ adj Áß, idx[0] == i ÀÎ ÁöÁ¡À» Ã£ŽÂŽÙ.
+                }
+                tri_in = tri_outer->adj[idx_op]; 
+                                                 // oppo-center = new diagonal.
+                                                 // Thus, center-oppo-a / center-oppo-b (two new Triangles)
+                int oppo = tri_outer->idx[idx_op];
+                int a = tri_in->idx[1];
+                int b = tri_in->idx[2];
+
+                int idx_a_out = -1;
+                int idx_b_out = -1;
+                for (int kk = 0; kk < 3; kk++) {
+                    if (tri_outer->idx[kk] == a) idx_a_out = kk;
+                    if (tri_outer->idx[kk] == b) idx_b_out = kk;
+                }
+
+                // disconnect tri_in and tri_outer's points
+                disincorporateTriangle(tri_in);
+                disincorporateTriangle(tri_outer);
+
+                // make new two Triangles
+                Triangle* new_a = new Triangle(-1, -1, -1, n_tri_counter_++);
+                Triangle* new_b = new Triangle(-1, -1, -1, n_tri_counter_++);
+                new_a->idx[0] = i;
+                new_a->idx[1] = oppo;
+                new_a->idx[2] = b;
+                new_a->adj[0] = tri_outer->adj[idx_a_out];
+                new_a->adj[1] = tri_in->adj[1];
+                new_a->adj[2] = new_b;
+                if (new_a->adj[0] != nullptr) {
+                    int idx_op = -1; // opposite
+                    for (int kk = 0; kk < 3; kk++)
+                        if (new_a->adj[0]->adj[kk] != nullptr && new_a->adj[0]->adj[kk] == tri_outer) idx_op = kk;
+                    new_a->adj[0]->adj[idx_op] = new_a;
+                }
+                if (new_a->adj[1] != nullptr) {
+                    int idx_op = -1; // opposite
+                    for (int kk = 0; kk < 3; kk++)
+                        if (new_a->adj[1]->adj[kk] != nullptr && new_a->adj[1]->adj[kk] == tri_in) idx_op = kk;
+                    new_a->adj[1]->adj[idx_op] = new_a;
+                }
+                this->incorporateTriangle(new_a);
+
+                new_b->idx[0] = i;
+                new_b->idx[1] = oppo;
+                new_b->idx[2] = a;
+                new_b->adj[0] = tri_outer->adj[idx_b_out];
+                new_b->adj[1] = tri_in->adj[2];
+                new_b->adj[2] = new_a;
+                if (new_b->adj[0] != nullptr) {
+                    int idx_op = -1; // opposite
+                    for (int kk = 0; kk < 3; kk++)
+                        if (new_b->adj[0]->adj[kk] != nullptr && new_b->adj[0]->adj[kk] == tri_outer) idx_op = kk;
+                    new_b->adj[0]->adj[idx_op] = new_b;
+                }
+                if (new_b->adj[1] != nullptr) {
+                    int idx_op = -1; // opposite
+                    for (int kk = 0; kk < 3; kk++)
+                        if (new_b->adj[1]->adj[kk] != nullptr && new_b->adj[1]->adj[kk] == tri_in) idx_op = kk;
+                    new_b->adj[1]->adj[idx_op] = new_b;
+                }
+                this->incorporateTriangle(new_b);
+
+                if (new_a->adj[0] != nullptr) {
+                    bool isexist = false;
+                    for (int kk = 0; kk < id_new.size(); kk++) {
+                        if (id_new[kk] == new_a->adj[0]->id) {
+                            isexist = true;
+                            break;
+                        }
+                    }
+                    if (!isexist) fstack_.push(new_a->adj[0]);
+                }
+
+                if (new_b->adj[0] != nullptr) {
+                    bool isexist = false;
+                    for (int kk = 0; kk < id_new.size(); kk++) {
+                        if (id_new[kk] == new_b->adj[0]->id) {
+                            isexist = true;
+                            break;
+                        }
+                    }
+                    if (!isexist) fstack_.push(new_b->adj[0]);
+                }
+
+                this->tri_latest_ = new_b;
+
+                // delete two Triangles (tri_in, tri_outer)
+                delete tri_in;
+                delete tri_outer;
+            }
+        }// end while
+    }// end for i
+};
+
+
+
+
+void ConstrainedDT::addPointsIntoDT(const vector<PointDB>& points_addi) {
+    cout << " Add points into Normal Delaunay Triangulation.\n";
+    // Initialize the newly inserted points.
+    int n_pts_addi = points_addi.size();  // # of inserted new points.
+    n_pts_org_ = points_.size(); // # of existing points. (including three super points)
+
+    for (int i = 0; i < n_pts_addi; i++) this->points_.emplace_back(points_addi[i].pts_(0),points_addi[i].pts_(1));
+
+    cout << "# of org points: " << points_.size() << " / # of addi points: " << points_addi.size() << '\n';
+
+
+    // normalization of points' coordinates
+    // points_addižŠ »õ·ÎÀÌ Ãß°¡ÇØÁØŽÙ.
+    denom_ = std::fmaxf(x_max_ - x_min_, y_max_ - y_min_);
+    float invdenom = 1.0f / denom_;
+    for (int i = n_pts_org_; i < n_pts_org_ +n_pts_addi; i++) {
+        this->points_[i].x = (this->points_[i].x - x_min_)*invdenom;
+        this->points_[i].y = (this->points_[i].y - y_min_)*invdenom;
+    }
+    this->n_pts_ = points_.size();
+
+    cout << " redfine adjmat_\n";
+    delete adjmat_;
+    this->adjmat_ = new AdjacentMatrix(n_pts_ + 3);
+    this->adjmat_->connectThreeNodes(n_pts_org_, n_pts_org_+1, n_pts_org_+2);
+
+    // STEP 4. Loop over each point.
+    for (int i = n_pts_org_; i < n_pts_; ++i) {
+        // STEP 5. Insert new point in triangulation.
+        // STEP 5-1. Lawson's searching to find enclosing Triangle (NOT CIRCUMCIRCLE!!!)
+        Triangle* tri_cur = this->tri_latest_;
+        int cnt = 0;
+        while (!isInTri(tri_cur, i, points_)) {// 'tri_temp' encloses the point 'p'
+                                               // 'tri_temp' does not enclose the points_[i]
+                                               // Not enclosing? Do Lawson's searching until finding an enclosing Triangle.
+            int next_dir = -1;
+            findLawsonSearch(tri_cur, next_dir, i, points_);
+            tri_cur = tri_cur->adj[next_dir];
+            if ((++cnt) > 100000) throw std::runtime_error("ERROR: Infinite while loop for circum test.\n");
+        } // end 
+
+        // disconnect tri_cur's points
+        disincorporateTriangle(tri_cur);
+
+        // STEP 5-2. Delete this Triangle (tri_cur) and 'make' new three Triangles by connecting p to its each Vertex.
+        Triangle* new0 = new Triangle(-1, -1, -1, n_tri_counter_++);
+        Triangle* new1 = new Triangle(-1, -1, -1, n_tri_counter_++);
+        Triangle* new2 = new Triangle(-1, -1, -1, n_tri_counter_++);
+
+        // new0 (p-1-2) : opposite Triangle : 0
+        new0->idx[0] = i; // opposite p
+        new0->idx[1] = tri_cur->idx[1]; // opposite tri_temp 1
+        new0->idx[2] = tri_cur->idx[2]; // opposite tri_temp 2
+        new0->adj[0] = tri_cur->adj[0];
+        new0->adj[1] = new1;
+        new0->adj[2] = new2;
+        if (new0->adj[0] != nullptr) // find non-sharing point from the tri_temp->adj[0]->idx
+            for (int kk = 0; kk < 3; kk++)
+                if (new0->adj[0]->adj[kk] == tri_cur) new0->adj[0]->adj[kk] = new0;
+        this->incorporateTriangle(new0);
+
+        // new1 (p-0-2) : opposite Triangle : 1            
+        new1->idx[0] = i; // opposite p
+        new1->idx[1] = tri_cur->idx[0]; // opposite tri_temp 0
+        new1->idx[2] = tri_cur->idx[2]; // opposite tri_temp 2
+        new1->adj[0] = tri_cur->adj[1];
+        new1->adj[1] = new0;
+        new1->adj[2] = new2;
+        if (new1->adj[0] != nullptr) // find non-sharing point from the tri_temp->adj[0]->idx
+            for (int kk = 0; kk < 3; kk++)
+                if (new1->adj[0]->adj[kk] == tri_cur) new1->adj[0]->adj[kk] = new1;
+        this->incorporateTriangle(new1);
+
+        // new2 (p-0-1) : opposite Triangle : 2
+        new2->idx[0] = i; // opposite p
+        new2->idx[1] = tri_cur->idx[0]; // opposite tri_temp 0
+        new2->idx[2] = tri_cur->idx[1]; // opposite tri_temp 1
+        new2->adj[0] = tri_cur->adj[2];
+        new2->adj[1] = new0;
+        new2->adj[2] = new1;
+        if (new2->adj[0] != nullptr) // find non-sharing point from the tri_temp->adj[0]->idx
+            for (int kk = 0; kk < 3; kk++)
+                if (new2->adj[0]->adj[kk] == tri_cur) new2->adj[0]->adj[kk] = new2;
+        this->incorporateTriangle(new2);
+
+        this->tri_latest_ = new2; // update last list.
+        delete tri_cur; // delete tri_cur and pop from the map
+
+        vector<int> id_new;
+        // STEP 6. (initialize stack) push adjacent three Triangles of the newly generated Triangles.
+        fstack_.clear();
+        if (new0->adj[0] != nullptr) {
+            fstack_.push(new0->adj[0]);
+            id_new.push_back(new0->adj[0]->id);
+        }
+        if (new1->adj[0] != nullptr) {
+            fstack_.push(new1->adj[0]);
+            id_new.push_back(new1->adj[0]->id);
+        }
+        if (new2->adj[0] != nullptr) {
+            fstack_.push(new2->adj[0]);
+            id_new.push_back(new2->adj[0]->id);
+        }
+
+        // STEP 7. (Restore Delaunay triangulation) While the stack or Triangles is not empty, 
+        // execute Lawson's swapping scheme, as defined by steps 7.1~7.3
+        Triangle* tri_outer = nullptr;
+        Triangle* tri_in = nullptr;
+        while (!fstack_.empty()) {
+            // STEP 7-1. Remove a Triangle which is opposite p from the top of the stack.
+            tri_outer = fstack_.top();
+            fstack_.pop();
+
+            // STEP 7-2. If p is outSide (or on) the circumcircle for this Triangle,
+            // return to STEP 7-1.
+            if (!isInCircum(tri_outer, i, points_)) continue;
+            // Else, the Triangle containing p as a Vertex and the unstacked Triangle form 
+            // a convex quadrilateral whose diagonal is drawn in the wrong direction.
+            else {
+                // Swap this diagonal so that two old Triangles are repalced by two new
+                // Triangles and the structure of the Delaunay triangulation is locally restored.
+                // Gist: swap the diagonal (delete two Triangles and make new two Triangles)
+                // find opposite Triangle index (i.e. one of newly generated three Triangles.)
+                int idx_op = -1;
+                for (int kk = 0; kk < 3; kk++) {
+                    if (tri_outer->adj[kk] != nullptr && tri_outer->adj[kk]->idx[0] == i)
+                        idx_op = kk; // tri_outerÀÇ adj Áß, idx[0] == i ÀÎ ÁöÁ¡À» Ã£ŽÂŽÙ.
+                }
+                tri_in = tri_outer->adj[idx_op]; 
+                                                 // oppo-center = new diagonal.
+                                                 // Thus, center-oppo-a / center-oppo-b (two new Triangles)
+                int oppo = tri_outer->idx[idx_op];
+                int a = tri_in->idx[1];
+                int b = tri_in->idx[2];
+
+                int idx_a_out = -1;
+                int idx_b_out = -1;
+                for (int kk = 0; kk < 3; kk++) {
+                    if (tri_outer->idx[kk] == a) idx_a_out = kk;
+                    if (tri_outer->idx[kk] == b) idx_b_out = kk;
+                }
+
+                // disconnect tri_in and tri_outer's points
+                disincorporateTriangle(tri_in);
+                disincorporateTriangle(tri_outer);
+
+                // make new two Triangles
+                Triangle* new_a = new Triangle(-1, -1, -1, n_tri_counter_++);
+                Triangle* new_b = new Triangle(-1, -1, -1, n_tri_counter_++);
+                new_a->idx[0] = i;
+                new_a->idx[1] = oppo;
+                new_a->idx[2] = b;
+                new_a->adj[0] = tri_outer->adj[idx_a_out];
+                new_a->adj[1] = tri_in->adj[1];
+                new_a->adj[2] = new_b;
+                if (new_a->adj[0] != nullptr) {
+                    int idx_op = -1; // opposite
+                    for (int kk = 0; kk < 3; kk++)
+                        if (new_a->adj[0]->adj[kk] != nullptr && new_a->adj[0]->adj[kk] == tri_outer) idx_op = kk;
+                    new_a->adj[0]->adj[idx_op] = new_a;
+                }
+                if (new_a->adj[1] != nullptr) {
+                    int idx_op = -1; // opposite
+                    for (int kk = 0; kk < 3; kk++)
+                        if (new_a->adj[1]->adj[kk] != nullptr && new_a->adj[1]->adj[kk] == tri_in) idx_op = kk;
+                    new_a->adj[1]->adj[idx_op] = new_a;
+                }
+                this->incorporateTriangle(new_a);
+
+                new_b->idx[0] = i;
+                new_b->idx[1] = oppo;
+                new_b->idx[2] = a;
+                new_b->adj[0] = tri_outer->adj[idx_b_out];
+                new_b->adj[1] = tri_in->adj[2];
+                new_b->adj[2] = new_a;
+                if (new_b->adj[0] != nullptr) {
+                    int idx_op = -1; // opposite
+                    for (int kk = 0; kk < 3; kk++)
+                        if (new_b->adj[0]->adj[kk] != nullptr && new_b->adj[0]->adj[kk] == tri_outer) idx_op = kk;
+                    new_b->adj[0]->adj[idx_op] = new_b;
+                }
+                if (new_b->adj[1] != nullptr) {
+                    int idx_op = -1; // opposite
+                    for (int kk = 0; kk < 3; kk++)
+                        if (new_b->adj[1]->adj[kk] != nullptr && new_b->adj[1]->adj[kk] == tri_in) idx_op = kk;
+                    new_b->adj[1]->adj[idx_op] = new_b;
+                }
+                this->incorporateTriangle(new_b);
+
+                if (new_a->adj[0] != nullptr) {
+                    bool isexist = false;
+                    for (int kk = 0; kk < id_new.size(); kk++) {
+                        if (id_new[kk] == new_a->adj[0]->id) {
+                            isexist = true;
+                            break;
+                        }
+                    }
+                    if (!isexist) fstack_.push(new_a->adj[0]);
+                }
+
+                if (new_b->adj[0] != nullptr) {
+                    bool isexist = false;
+                    for (int kk = 0; kk < id_new.size(); kk++) {
+                        if (id_new[kk] == new_b->adj[0]->id) {
+                            isexist = true;
+                            break;
+                        }
+                    }
+                    if (!isexist) fstack_.push(new_b->adj[0]);
+                }
+
+                this->tri_latest_ = new_b;
+
+                // delete two Triangles (tri_in, tri_outer)
+                delete tri_in;
+                delete tri_outer;
+            }
+        }// end while
+    }// end for i
+};
+
+
 void ConstrainedDT::renewConstraints(const vector<Side>& constraint_edges_addi) {
     // constraint_edges_addi is corresponding to the accumulated # of triangle.
     // get new constraints
@@ -1259,7 +1893,26 @@ void ConstrainedDT::renewConstraints(const vector<Side>& constraint_edges_addi) 
 };
 
 
-void ConstrainedDT::addCenterPointsOfTriangles(const float& thres_area, vector<Vertex>& points_centers) {
+void ConstrainedDT::getCenterPointsOfTriangles(const float& thres_area, vector<Vertex>& points_centers) {
+    points_centers.resize(0);
+
+    this->thres_area_ = thres_area;
+    denom_ = std::fmaxf(x_max_ - x_min_, y_max_ - y_min_);
+
+    for (auto iter = tri_map_.begin(); iter != tri_map_.end(); ++iter){
+        Triangle* tri_cur = iter->second;
+        Vertex& pa = this->points_[tri_cur->idx[0]];
+        Vertex& pb = this->points_[tri_cur->idx[1]];
+        Vertex& pc = this->points_[tri_cur->idx[2]];
+
+        float area = calcTriArea(pa,pb,pc)*denom_*denom_;
+
+        if (area > this->thres_area_ && area < 10000)
+            points_centers.emplace_back(0.33333f*(pa.x + pb.x + pc.x)*denom_+x_min_, 0.33333f*(pa.y + pb.y + pc.y)*denom_ + y_min_) ;
+    }
+};
+
+void ConstrainedDT::getCenterPointsOfTriangles(const float& thres_area, vector<Eigen::Vector2f>& points_centers) {
     points_centers.resize(0);
 
     this->thres_area_ = thres_area;

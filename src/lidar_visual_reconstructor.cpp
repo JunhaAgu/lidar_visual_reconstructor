@@ -367,11 +367,10 @@ bool LidarVisualReconstructor::run(){
         // Find intersections
         int MAX_ITER_DIVISION = 50; // TODO: global parameter.
 
-        int n_ch_0 = pcls_[0]->n_channels;
-        int n_ch_1 = pcls_[1]->n_channels;
         float dtheta_step = 2.0f; // 2.0 degrees
-        cv::Mat idxs_cross_0 = cv::Mat::zeros(n_ch_0,n_ch_1,CV_32SC1); // int
-        cv::Mat idxs_cross_1 = cv::Mat::zeros(n_ch_0,n_ch_1,CV_32SC1); // int
+        vector<cv::Mat> idxs_cross;
+        idxs_cross.push_back(cv::Mat::zeros(pcls_[0]->n_channels, pcls_[1]->n_channels,CV_32SC1));
+        idxs_cross.push_back(cv::Mat::zeros(pcls_[0]->n_channels, pcls_[1]->n_channels,CV_32SC1));
 
         EVec3f X0_near, X0_mid, X0_far;
         EVec3f X1_near, X1_mid, X1_far;
@@ -382,9 +381,9 @@ bool LidarVisualReconstructor::run(){
         EVec3f X1_m1, X1_p1;
         float err_m1, err_mid, err_p1;
 
-        for(int ch0 = 0; ch0 < n_ch_0; ++ch0) {
+        for(int ch0 = 0; ch0 < pcls_[0]->n_channels; ++ch0) {
             float CC0 = std::tan((-15.0f+(float)ch0*dtheta_step)*D2R);
-            for(int ch1 = 0; ch1 < n_ch_1; ++ch1) {
+            for(int ch1 = 0; ch1 < pcls_[1]->n_channels; ++ch1) {
                 int i_near = 0; 
                 int i_far = pcls_[1]->index_rings[ch1].size() - 1;
                 X_temp(0) = *(pcls_[1]->x + pcls_[1]->index_rings[ch1][i_near]); 
@@ -401,7 +400,7 @@ bool LidarVisualReconstructor::run(){
                 sign_far  = X1_far(2)  - CC0*sqrtf(X1_far(0)*X1_far(0)   + X1_far(1)*X1_far(1));
 
                 if(sign_near * sign_far > 0){
-                    idxs_cross_1.at<int>(ch0,ch1) = -1;
+                    idxs_cross[1].at<int>(ch0,ch1) = -1;
                     continue;
                 }
                 else{
@@ -433,25 +432,24 @@ bool LidarVisualReconstructor::run(){
                             X1_p1 = T_l0l1_.block<3,3>(0,0)*X_temp + T_l0l1_.block<3,1>(0,3);
                             err_p1 = abs(X1_p1(2) - CC0*sqrt(X1_p1(0)*X1_p1(0) + X1_p1(1)*X1_p1(1)));
                             if(err_mid < err_p1){
-                                if(err_mid < err_m1) idxs_cross_1.at<int>(ch0,ch1) = idx_mid; // mid
-                                else idxs_cross_1.at<int>(ch0,ch1) = idx_mid - 1; // m1
+                                if(err_mid < err_m1) idxs_cross[1].at<int>(ch0,ch1) = idx_mid; // mid
+                                else idxs_cross[1].at<int>(ch0,ch1) = idx_mid - 1; // m1
                             }
                             else{
-                                if(err_p1 < err_m1) idxs_cross_1.at<int>(ch0,ch1) = idx_mid+1; // p1
-                                else idxs_cross_1.at<int>(ch0,ch1) = idx_mid - 1; // m1
+                                if(err_p1 < err_m1) idxs_cross[1].at<int>(ch0,ch1) = idx_mid+1; // p1
+                                else idxs_cross[1].at<int>(ch0,ch1) = idx_mid - 1; // m1
                             }
                             break;
                         }
                     }
                 }
-
             }
         } // end for lidar1
 
         EMat4f T_l1l0_ = T_l0l1_.inverse();
-        for(int ch1 = 0; ch1 < n_ch_1; ++ch1) {
+        for(int ch1 = 0; ch1 < pcls_[1]->n_channels; ++ch1) {
             float CC1 = std::tan((-15.0f+(float)ch1*dtheta_step)*D2R);
-            for(int ch0 = 0; ch0 < n_ch_0; ++ch0) {
+            for(int ch0 = 0; ch0 < pcls_[0]->n_channels; ++ch0) {
                 int i_near = 0; 
                 int i_far = pcls_[0]->index_rings[ch0].size() - 1;
                 X_temp << *(pcls_[0]->x + pcls_[0]->index_rings[ch0][i_near]),
@@ -468,7 +466,7 @@ bool LidarVisualReconstructor::run(){
                 sign_far  = X0_far(2)  - CC1*sqrt(X0_far(0)*X0_far(0)   + X0_far(1)*X0_far(1));
 
                 if(sign_near * sign_far > 0){
-                    idxs_cross_0.at<int>(ch0,ch1) = -1;
+                    idxs_cross[0].at<int>(ch0,ch1) = -1;
                     continue;
                 }
                 else{
@@ -499,11 +497,11 @@ bool LidarVisualReconstructor::run(){
                             X0_p1 = T_l1l0_.block<3,3>(0,0)*X_temp + T_l1l0_.block<3,1>(0,3);
                             err_p1 = abs(X0_p1(2) - CC1*sqrt(X0_p1(0)*X0_p1(0) + X0_p1(1)*X0_p1(1)));
                             if(err_mid < err_p1)
-                                if(err_mid < err_m1) idxs_cross_0.at<int>(ch0,ch1) = idx_mid; // mid
-                                else idxs_cross_0.at<int>(ch0,ch1) = idx_mid - 1; // m1
+                                if(err_mid < err_m1) idxs_cross[0].at<int>(ch0,ch1) = idx_mid; // mid
+                                else idxs_cross[0].at<int>(ch0,ch1) = idx_mid - 1; // m1
                             else
-                                if(err_p1 < err_m1) idxs_cross_0.at<int>(ch0,ch1) = idx_mid+1; // p1
-                                else idxs_cross_0.at<int>(ch0,ch1) = idx_mid - 1; // m1
+                                if(err_p1 < err_m1) idxs_cross[0].at<int>(ch0,ch1) = idx_mid+1; // p1
+                                else idxs_cross[0].at<int>(ch0,ch1) = idx_mid - 1; // m1
 
                             break;
                         }
@@ -512,16 +510,16 @@ bool LidarVisualReconstructor::run(){
             }
         } // end for lidar0
 
-        for(int ch0 = 0; ch0 < n_ch_0; ++ch0){
-            for(int ch1 = 0; ch1 < n_ch_1; ++ch1){
-                if(idxs_cross_0.at<int>(ch0,ch1) < 0 ||idxs_cross_1.at<int>(ch0,ch1) < 0){
-                    idxs_cross_0.at<int>(ch0,ch1) = -1;
-                    idxs_cross_1.at<int>(ch0,ch1) = -1;
+        for(int ch0 = 0; ch0 < pcls_[0]->n_channels; ++ch0){
+            for(int ch1 = 0; ch1 < pcls_[1]->n_channels; ++ch1){
+                if(idxs_cross[0].at<int>(ch0,ch1) < 0 ||idxs_cross[1].at<int>(ch0,ch1) < 0){
+                    idxs_cross[0].at<int>(ch0,ch1) = -1;
+                    idxs_cross[1].at<int>(ch0,ch1) = -1;
                 }
             }
         }
-        cout << "idxs_cross0:\n" << idxs_cross_0<<"\n\n";
-        cout << "idxs_cross1:\n" << idxs_cross_1<<"\n\n";
+        // cout << "idxs_cross0:\n" << idxs_cross[0]<<"\n\n";
+        // cout << "idxs_cross1:\n" << idxs_cross[1]<<"\n\n";
 
 
         // equidistant points insertions.
@@ -529,9 +527,9 @@ bool LidarVisualReconstructor::run(){
 
         // For lidar0
         map<int, vector<int>> idxs_augment_l0;
-        for(int ch0 = 0; ch0 < n_ch_0; ++ch0){
-            for(int ch1 = 0; ch1 < n_ch_1+1; ++ch1){
-                idxs_augment_l0.insert(std::pair<int,vector<int>>(ch1+ch0*(n_ch_1+1),vector<int>(0)));
+        for(int ch0 = 0; ch0 < pcls_[0]->n_channels; ++ch0){
+            for(int ch1 = 0; ch1 < pcls_[1]->n_channels+1; ++ch1){
+                idxs_augment_l0.insert(std::pair<int,vector<int>>(ch1+ch0*(pcls_[1]->n_channels+1),vector<int>(0)));
             }
         }
         
@@ -539,11 +537,11 @@ bool LidarVisualReconstructor::run(){
         // Find augment points
         EVec3f X_start, X_end;
         EVec3f X_curr, dX;
-        for(int ch0 = 0; ch0 < n_ch_0; ++ch0){
+        for(int ch0 = 0; ch0 < pcls_[0]->n_channels; ++ch0){
             // (1) Fill aug. points between intersections.
-            for(int n_seg = 1; n_seg < n_ch_1-1; ++n_seg){
-                int i_start = idxs_cross_0.at<int>(ch0, n_seg-1);
-                int i_end   = idxs_cross_0.at<int>(ch0, n_seg);
+            for(int n_seg = 1; n_seg < pcls_[1]->n_channels; ++n_seg){
+                int i_start = idxs_cross[0].at<int>(ch0, n_seg-1);
+                int i_end   = idxs_cross[0].at<int>(ch0, n_seg);
 
                 // if ch0 has an intersection with ch1 and the next intersection is not -1,
                 if(i_start > -1 && i_end > -1){
@@ -557,16 +555,16 @@ bool LidarVisualReconstructor::run(){
                     if(dist > 1.5*dist_step){
                         int n_steps = ceil(dist/dist_step);
                         float step_tmp = dist/(float)n_steps;
-                        for(int jj = i_start+1; jj != i_end; jj += sign_stp){
+                        for(int jj = i_start; jj != i_end+sign_stp; jj += sign_stp){
                             idx_tmp = pcls_[0]->index_rings[ch0][jj];
                             X_curr << *(pcls_[0]->x + idx_tmp), *(pcls_[0]->y + idx_tmp), *(pcls_[0]->z + idx_tmp);
                             dX = X_curr - X_start;
                             if(dX.norm() > step_tmp){
-                                idxs_augment_l0[n_seg+ch0*(n_ch_1+1)].push_back(jj);
+                                idxs_augment_l0[n_seg+ch0*(pcls_[1]->n_channels+1)].push_back(jj);
                                 X_start = X_curr;
                             }
                         } // end for
-                        if((X_curr-X_end).norm() < step_tmp) idxs_augment_l0[n_seg+ch0*(n_ch_1+1)].pop_back();
+                        if((X_curr-X_end).norm() < step_tmp) idxs_augment_l0[n_seg+ch0*(pcls_[1]->n_channels+1)].pop_back();
                     }// end if
                 }// end if
             }// end for n_seg
@@ -576,20 +574,20 @@ bool LidarVisualReconstructor::run(){
             int ch1_front = 0;
             int int_a, int_b;
             while(ch1_front < pcls_[1]->n_channels){
-                if(idxs_cross_0.at<int>(ch0,ch1_front) > -1) break;
+                if(idxs_cross[0].at<int>(ch0,ch1_front) > -1) break;
                 ++ch1_front;
             }
             if(ch1_front > pcls_[1]->n_channels - 1) int_a = -1; // no intersection.
-            else int_a = idxs_cross_0.at<int>(ch0,ch1_front);
+            else int_a = idxs_cross[0].at<int>(ch0,ch1_front);
 
             // (3) Find back point
             int ch1_back = pcls_[1]->n_channels-1;
             while(ch1_back > -1){
-                if(idxs_cross_0.at<int>(ch0,ch1_back) > -1) break;
+                if(idxs_cross[0].at<int>(ch0,ch1_back) > -1) break;
                 --ch1_back;
             }
             if(ch1_back < 0) int_b = -1; // no intersection
-            else int_b = idxs_cross_0.at<int>(ch0,ch1_back);
+            else int_b = idxs_cross[0].at<int>(ch0,ch1_back);
 
             // (4) Is index increasing? or decreasing ?
             int i_initial, i_final;
@@ -613,16 +611,16 @@ bool LidarVisualReconstructor::run(){
                 if(dist > 1.5*dist_step){
                     int n_steps = ceil(dist/dist_step);
                     float step_tmp = dist/(float)n_steps;
-                    for(int jj = i_initial; jj != int_a; jj += sign_stp){
+                    for(int jj = i_initial; jj != int_a+sign_stp; jj += sign_stp){
                         idx_tmp = pcls_[0]->index_rings[ch0][jj];
                         X_curr << *(pcls_[0]->x + idx_tmp), *(pcls_[0]->y + idx_tmp), *(pcls_[0]->z + idx_tmp);
                         dX = X_curr - X_start;
                         if(dX.norm() > step_tmp){
-                            idxs_augment_l0[ch1_front+ch0*(n_ch_1+1)].push_back(jj);
+                            idxs_augment_l0[ch1_front+ch0*(pcls_[1]->n_channels+1)].push_back(jj);
                             X_start = X_curr;
                         }
                     } // end for
-                    if((X_curr-X_end).norm() < step_tmp) idxs_augment_l0[ch1_front+ch0*(n_ch_1+1)].pop_back();
+                    if((X_curr-X_end).norm() < step_tmp) idxs_augment_l0[ch1_front+ch0*(pcls_[1]->n_channels+1)].pop_back();
                 }// end if
             }
 
@@ -638,74 +636,81 @@ bool LidarVisualReconstructor::run(){
                 if(dist > 1.5*dist_step){
                     int n_steps = ceil(dist/dist_step);
                     float step_tmp = dist/(float)n_steps;
-                    for(int jj = int_b+1; jj != i_final+1; jj += sign_stp){
+                    for(int jj = int_b; jj != i_final+sign_stp; jj += sign_stp){
                         idx_tmp = pcls_[0]->index_rings[ch0][jj];
                         X_curr << *(pcls_[0]->x + idx_tmp), *(pcls_[0]->y + idx_tmp), *(pcls_[0]->z + idx_tmp);
                         dX = X_curr - X_start;
                         if(dX.norm() > step_tmp){
-                            idxs_augment_l0[(ch1_back+1)+ch0*(n_ch_1+1)].push_back(jj);
+                            idxs_augment_l0[(ch1_back+1)+ch0*(pcls_[1]->n_channels+1)].push_back(jj);
                             X_start = X_curr;
                         }
                     } // end for
-                    if((X_curr-X_end).norm() < step_tmp) idxs_augment_l0[(ch1_back+1)+ch0*(n_ch_1+1)].pop_back();
+                    if((X_curr-X_end).norm() < step_tmp) idxs_augment_l0[(ch1_back+1)+ch0*(pcls_[1]->n_channels+1)].pop_back();
                 }   
             }
         }// end for ch0
 
-        // visualization idxs_augment_l0 and idxs_augment_l1
-        for(int ch0 = 0; ch0 < n_ch_0; ++ch0){
-            for(int ch1 = 0; ch1 < n_ch_1+1; ++ch1){
-                int n_elem = idxs_augment_l0[ch1 + ch0*(n_ch_1+1)].size();
-                cout << "[";
-                //for(auto itr = idxs_augment_l0[ch1 + ch0*(n_ch_1+1)].begin(); itr != idxs_augment_l0[ch1 + ch0*(n_ch_1+1)].end(); ++itr)
-                //    cout << *itr <<", ";
-                cout << idxs_augment_l0[ch1 + ch0*(n_ch_1+1)].size();
-                cout <<"],";
-            }
-            cout << "\n";
-        }
-
+        // // visualization idxs_augment_l0 and idxs_augment_l1
+        // for(int ch0 = 0; ch0 < pcls_[0]->n_channels; ++ch0){
+        //     for(int ch1 = 0; ch1 < pcls_[1]->n_channels+1; ++ch1){
+        //         int n_elem = idxs_augment_l0[ch1 + ch0*(pcls_[1]->n_channels+1)].size();
+        //         cout << "[";
+        //         //for(auto itr = idxs_augment_l0[ch1 + ch0*(pcls_[1]->n_channels+1)].begin(); itr != idxs_augment_l0[ch1 + ch0*(pcls_[1]->n_channels+1)].end(); ++itr)
+        //         //    cout << *itr <<", ";
+        //         cout << idxs_augment_l0[ch1 + ch0*(pcls_[1]->n_channels+1)].size();
+        //         cout <<"],";
+        //     }
+        //     cout << "\n";
+        // }
 
 
 
         // For lidar1
         map<int, vector<int>> idxs_augment_l1;
-        for(int ch1 = 0; ch1 < n_ch_1; ++ch1){
-            for(int ch0 = 0; ch0 < n_ch_0+1; ++ch0){
-                idxs_augment_l1.insert(std::pair<int,vector<int>>(ch0+ch1*(n_ch_0+1),vector<int>(0)));
+        for(int ch1 = 0; ch1 < pcls_[1]->n_channels; ++ch1){
+            for(int ch0 = 0; ch0 < pcls_[0]->n_channels+1; ++ch0){
+                idxs_augment_l1.insert(std::pair<int,vector<int>>(ch0+ch1*(pcls_[0]->n_channels+1),vector<int>(0)));
             }
         }
         
 
         // Find augment points
-        for(int ch1 = 0; ch1 < n_ch_1; ++ch1){
-            // (1) Fill aug. points between intersections.
-            for(int n_seg = 1; n_seg < n_ch_1-1; ++n_seg){
-                int i_start = idxs_cross_1.at<int>(n_seg-1, ch1);
-                int i_end   = idxs_cross_1.at<int>(n_seg,   ch1);
+        for(int ch1 = 0; ch1 < pcls_[1]->n_channels; ++ch1)
+        { // (1) Fill aug. points between intersections.
+            for(int n_seg = 1; n_seg < pcls_[0]->n_channels; ++n_seg)
+            {
+                int i_start = idxs_cross[1].at<int>(n_seg-1, ch1);
+                int i_end   = idxs_cross[1].at<int>(n_seg,   ch1);
 
                 // if ch1 has an intersection with ch1 and the next intersection is not -1,
-                if(i_start > -1 && i_end > -1){
+                if(i_start > -1 && i_end > -1)
+                {
                     int sign_stp = 1;
                     if(i_start > i_end) sign_stp = -1; // inverse direction
+
                     int idx_tmp = pcls_[1]->index_rings[ch1][i_start];
-                    X_start << *(pcls_[1]->x + idx_tmp), *(pcls_[1]->y + idx_tmp), *(pcls_[1]->z + idx_tmp);
-                    idx_tmp = pcls_[1]->index_rings[ch1][i_end];
-                    X_end << *(pcls_[1]->x + idx_tmp), *(pcls_[1]->y + idx_tmp), *(pcls_[1]->z + idx_tmp);
+                    X_start <<  *(pcls_[1]->x + idx_tmp), *(pcls_[1]->y + idx_tmp), *(pcls_[1]->z + idx_tmp);
+                    idx_tmp     = pcls_[1]->index_rings[ch1][i_end];
+                    X_end   <<  *(pcls_[1]->x + idx_tmp), *(pcls_[1]->y + idx_tmp), *(pcls_[1]->z + idx_tmp);
                     float dist = (X_end-X_start).norm();
-                    if(dist > 1.5*dist_step){
+                    if(dist > 1.5*dist_step)
+                    {
                         int n_steps = ceil(dist/dist_step);
                         float step_tmp = dist/(float)n_steps;
-                        for(int jj = i_start+1; jj != i_end; jj += sign_stp){
+
+                        for(int jj = i_start; jj != i_end+sign_stp; jj += sign_stp) // i_end cannot be reached!!!!!
+                        {
                             idx_tmp = pcls_[1]->index_rings[ch1][jj];
                             X_curr << *(pcls_[1]->x + idx_tmp), *(pcls_[1]->y + idx_tmp), *(pcls_[1]->z + idx_tmp);
                             dX = X_curr - X_start;
-                            if(dX.norm() > step_tmp){
-                                idxs_augment_l1[n_seg+ch1*(n_ch_0+1)].push_back(jj);
+                            if(dX.norm() > step_tmp)
+                            {
+                                idxs_augment_l1[n_seg+ch1*(pcls_[0]->n_channels+1)].push_back(jj);
                                 X_start = X_curr;
                             }
                         } // end for
-                        if((X_curr-X_end).norm() < step_tmp) idxs_augment_l1[n_seg+ch1*(n_ch_0+1)].pop_back();
+                        
+                        if((X_curr-X_end).norm() < step_tmp) idxs_augment_l1[n_seg+ch1*(pcls_[0]->n_channels+1)].pop_back();
                     }// end if
                 }// end if
             }// end for n_seg
@@ -714,32 +719,32 @@ bool LidarVisualReconstructor::run(){
             // (2) Find front point. 
             int ch0_front = 0;
             int int_a, int_b;
-            while(ch0_front < pcls_[1]->n_channels){
-                if(idxs_cross_1.at<int>(ch0_front, ch1) > -1) break;
+            while(ch0_front < pcls_[0]->n_channels){
+                if(idxs_cross[1].at<int>(ch0_front, ch1) > -1) break;
                 ++ch0_front;
             }
-            if(ch0_front > pcls_[1]->n_channels - 1) int_a = -1; // no intersection.
-            else int_a = idxs_cross_1.at<int>(ch0_front,ch1);
+            if(ch0_front > pcls_[0]->n_channels - 1) int_a = -1; // no intersection.
+            else int_a = idxs_cross[1].at<int>(ch0_front,ch1);
 
             // (3) Find back point
-            int ch0_back = pcls_[1]->n_channels-1;
+            int ch0_back = pcls_[0]->n_channels-1;
             while(ch0_back > -1){
-                if(idxs_cross_1.at<int>(ch0_back,ch1) > -1) break;
+                if(idxs_cross[1].at<int>(ch0_back,  ch1) > -1) break;
                 --ch0_back;
             }
             if(ch0_back < 0) int_b = -1; // no intersection
-            else int_b = idxs_cross_1.at<int>(ch0_back,ch1);
+            else int_b = idxs_cross[1].at<int>(ch0_back,ch1);
 
             // (4) Is index increasing? or decreasing ?
             int i_initial, i_final;
-            if(int_a>int_b) { // decreasing
+            if(int_a > int_b) { // decreasing
                 i_initial = pcls_[1]->index_rings[ch1].size()-1;
-                i_final = 0;
+                i_final   = 0;
             } else { // increasing 
-                i_final = pcls_[1]->index_rings[ch1].size()-1;
+                i_final   = pcls_[1]->index_rings[ch1].size()-1;
                 i_initial = 0;
             }
-
+        
             // (5) fill front area
             if(i_initial > -1 && int_a > -1){
                 int sign_stp = 1;
@@ -752,16 +757,16 @@ bool LidarVisualReconstructor::run(){
                 if(dist > 1.5*dist_step){
                     int n_steps = ceil(dist/dist_step);
                     float step_tmp = dist/(float)n_steps;
-                    for(int jj = i_initial; jj != int_a; jj += sign_stp){
+                    for(int jj = i_initial; jj != int_a+sign_stp; jj += sign_stp){
                         idx_tmp = pcls_[1]->index_rings[ch1][jj];
                         X_curr << *(pcls_[1]->x + idx_tmp), *(pcls_[1]->y + idx_tmp), *(pcls_[1]->z + idx_tmp);
                         dX = X_curr - X_start;
                         if(dX.norm() > step_tmp){
-                            idxs_augment_l1[ch0_front+ch1*(n_ch_0+1)].push_back(jj);
+                            idxs_augment_l1[ch0_front+ch1*(pcls_[0]->n_channels+1)].push_back(jj);
                             X_start = X_curr;
                         }
                     } // end for
-                    if((X_curr-X_end).norm() < step_tmp) idxs_augment_l1[ch0_front+ch1*(n_ch_0+1)].pop_back();
+                    if((X_curr-X_end).norm() < step_tmp) idxs_augment_l1[ch0_front+ch1*(pcls_[0]->n_channels+1)].pop_back();
                 }// end if
             }
 
@@ -777,32 +782,33 @@ bool LidarVisualReconstructor::run(){
                 if(dist > 1.5*dist_step){
                     int n_steps = ceil(dist/dist_step);
                     float step_tmp = dist/(float)n_steps;
-                    for(int jj = int_b+1; jj != i_final+1; jj += sign_stp){
+                    for(int jj = int_b; jj != i_final+sign_stp; jj += sign_stp){
                         idx_tmp = pcls_[1]->index_rings[ch1][jj];
                         X_curr << *(pcls_[1]->x + idx_tmp), *(pcls_[1]->y + idx_tmp), *(pcls_[1]->z + idx_tmp);
                         dX = X_curr - X_start;
                         if(dX.norm() > step_tmp){
-                            idxs_augment_l1[(ch0_back+1)+ch1*(n_ch_0+1)].push_back(jj);
+                            idxs_augment_l1[(ch0_back+1)+ch1*(pcls_[0]->n_channels+1)].push_back(jj);
                             X_start = X_curr;
                         }
                     } // end for
-                    if((X_curr-X_end).norm() < step_tmp) idxs_augment_l1[(ch0_back+1)+ch1*(n_ch_0+1)].pop_back();
+                    if((X_curr-X_end).norm() < step_tmp) idxs_augment_l1[(ch0_back+1)+ch1*(pcls_[0]->n_channels+1)].pop_back();
                 }   
             }
         }// end for ch0
 
-        // visualization idxs_augment_l0 and idxs_augment_l1
-        for(int ch1 = 0; ch1 < n_ch_1; ++ch1){
-            for(int ch0 = 0; ch0 < n_ch_0+1; ++ch0){
-                int n_elem = idxs_augment_l1[ch0 + ch1*(n_ch_0+1)].size();
-                cout << "[";
-                //for(auto itr = idxs_augment_l1[ch0 + ch1*(n_ch_0+1)].begin(); itr != idxs_augment_l1[ch0 + ch1*(n_ch_0+1)].end(); ++itr)
-                //    cout << *itr <<", ";
-                cout <<idxs_augment_l1[ch0 + ch1*(n_ch_0+1)].size();
-                cout <<"],";
-            }
-            cout << "\n";
-        }
+        // // visualization idxs_augment_l0 and idxs_augment_l1
+        // for(int ch1 = 0; ch1 < pcls_[1]->n_channels; ++ch1){
+        //     for(int ch0 = 0; ch0 < pcls_[0]->n_channels+1; ++ch0){
+        //         int n_elem = idxs_augment_l1[ch0 + ch1*(pcls_[0]->n_channels+1)].size();
+        //         cout << "[";
+        //         //for(auto itr = idxs_augment_l1[ch0 + ch1*(pcls_[0]->n_channels+1)].begin(); itr != idxs_augment_l1[ch0 + ch1*(pcls_[0]->n_channels+1)].end(); ++itr)
+        //         //    cout << *itr <<", ";
+        //         cout <<idxs_augment_l1[ch0+ch1*(pcls_[0]->n_channels+1)].size();
+                
+        //         cout <<"],";
+        //     }
+        //     cout << "\n";
+        // }
 
 
         // Visualization on the figure.
@@ -810,12 +816,12 @@ bool LidarVisualReconstructor::run(){
             cv::Scalar orange(0, 165, 255), blue(255, 0, 0), magenta(255, 0, 255);
 
             cv::Mat img_8u;
-            frames_[0]->img().convertTo(img_8u, CV_8UC3);
+            cv::cvtColor(frames_[0]->img(),img_8u,CV_GRAY2BGR);
             EVec3f X_tmp, X_warp;
             EVec2f pts_tmp;
-            for(int ch0 = 0; ch0 < n_ch_0; ++ch0){
-                for(int ch1 =0; ch1 < n_ch_1; ++ch1){
-                    int idx_tmp = pcls_[0]->index_rings[ch0][idxs_cross_0.at<int>(ch0,ch1)];
+            for(int ch0 = 0; ch0 < pcls_[0]->n_channels; ++ch0){
+                for(int ch1 =0; ch1 < pcls_[1]->n_channels; ++ch1){
+                    int idx_tmp = pcls_[0]->index_rings[ch0][idxs_cross[0].at<int>(ch0,ch1)];
 
                     X_tmp(0) = *(pcls_[0]->x + idx_tmp);
                     X_tmp(1) = *(pcls_[0]->y + idx_tmp);
@@ -829,9 +835,9 @@ bool LidarVisualReconstructor::run(){
                     cv::circle(img_8u, pt, 2, magenta);
                 }
             }
-            for(int ch0 = 0; ch0 < n_ch_0; ++ch0){
-                for(int ch1 =0; ch1 < n_ch_1; ++ch1){
-                    int idx_tmp = pcls_[1]->index_rings[ch1][idxs_cross_1.at<int>(ch0,ch1)];
+            for(int ch0 = 0; ch0 < pcls_[0]->n_channels; ++ch0){
+                for(int ch1 =0; ch1 < pcls_[1]->n_channels; ++ch1){
+                    int idx_tmp = pcls_[1]->index_rings[ch1][idxs_cross[1].at<int>(ch0,ch1)];
 
                     X_tmp(0) = *(pcls_[1]->x + idx_tmp);
                     X_tmp(1) = *(pcls_[1]->y + idx_tmp);
@@ -845,10 +851,10 @@ bool LidarVisualReconstructor::run(){
                     cv::circle(img_8u, pt, 2, magenta);
                 }
             }
-            for(int ch1 = 0; ch1 < n_ch_1; ++ch1){
-                for(int ch0 = 0; ch0 < n_ch_0+1; ++ch0){
-                    int n_elem = idxs_augment_l1[ch0 + ch1*(n_ch_0+1)].size();
-                    for(auto itr = idxs_augment_l1[ch0 + ch1*(n_ch_0+1)].begin(); itr != idxs_augment_l1[ch0 + ch1*(n_ch_0+1)].end(); ++itr){
+            for(int ch1 = 0; ch1 < pcls_[1]->n_channels; ++ch1){
+                for(int ch0 = 0; ch0 < pcls_[0]->n_channels+1; ++ch0){
+                    int n_elem = idxs_augment_l1[ch0 + ch1*(pcls_[0]->n_channels+1)].size();
+                    for(auto itr = idxs_augment_l1[ch0 + ch1*(pcls_[0]->n_channels+1)].begin(); itr != idxs_augment_l1[ch0 + ch1*(pcls_[0]->n_channels+1)].end(); ++itr){
                         int idx_tmp = pcls_[1]->index_rings[ch1][*itr];
                         X_tmp(0) = *(pcls_[1]->x + idx_tmp);
                         X_tmp(1) = *(pcls_[1]->y + idx_tmp);
@@ -863,10 +869,10 @@ bool LidarVisualReconstructor::run(){
                     }                    
                 }
             }
-            for(int ch0 = 0; ch0 < n_ch_0; ++ch0){
-                for(int ch1 = 0; ch1 < n_ch_1+1; ++ch1){
-                    int n_elem = idxs_augment_l0[ch1 + ch0*(n_ch_1+1)].size();
-                    for(auto itr = idxs_augment_l0[ch1 + ch0*(n_ch_1+1)].begin(); itr != idxs_augment_l0[ch1 + ch0*(n_ch_1+1)].end(); ++itr){
+            for(int ch0 = 0; ch0 < pcls_[0]->n_channels; ++ch0){
+                for(int ch1 = 0; ch1 < pcls_[1]->n_channels+1; ++ch1){
+                    int n_elem = idxs_augment_l0[ch1 + ch0*(pcls_[1]->n_channels+1)].size();
+                    for(auto itr = idxs_augment_l0[ch1 + ch0*(pcls_[1]->n_channels+1)].begin(); itr != idxs_augment_l0[ch1 + ch0*(pcls_[1]->n_channels+1)].end(); ++itr){
                         int idx_tmp = pcls_[0]->index_rings[ch0][*itr];
                         X_tmp(0) = *(pcls_[0]->x + idx_tmp);
                         X_tmp(1) = *(pcls_[0]->y + idx_tmp);
@@ -886,6 +892,84 @@ bool LidarVisualReconstructor::run(){
             cv::imshow("intersections", img_8u);
             cv::waitKey(0);
         } //end if        
+
+        // Extract all intersecting points!
+        // (1) add intersects
+        int cnt_tmp = 0;
+        for(int ch0 = 0; ch0 < pcls_[0]->n_channels; ++ch0) {
+            for(int ch1 = 0; ch1 < pcls_[1]->n_channels; ++ch1) {
+                if(idxs_cross[0].at<int>(ch0,ch1) > -1){
+                    int idx0 = pcls_[0]->index_rings[ch0][idxs_cross[0].at<int>(ch0,ch1)];
+                    int idx1 = pcls_[1]->index_rings[ch1][idxs_cross[1].at<int>(ch0,ch1)];
+                    db_.emplace_back();
+                    db_[cnt_tmp].X_ <<
+                        *(pcls_[0]->x + idx0), *(pcls_[0]->y + idx0), *(pcls_[0]->z + idx0);
+                    db_[cnt_tmp].state_ = 1;
+                    db_[cnt_tmp].info_ << 0, ch0, idx0, idx1;
+                    ++cnt_tmp;
+                }
+            }
+        }
+        // (2) add lidar0 augment points
+        for(int ch0 = 0; ch0 < pcls_[0]->n_channels; ++ch0) {
+            for(int n_seg = 0; n_seg < pcls_[1]->n_channels+1; ++n_seg) {
+                if(idxs_augment_l0[n_seg+ch0*(pcls_[1]->n_channels+1)].size() > 0){
+                    for(auto itr = idxs_augment_l0[n_seg+ch0*(pcls_[1]->n_channels+1)].begin(); 
+                            itr != idxs_augment_l0[n_seg+ch0*(pcls_[1]->n_channels+1)].end(); ++itr){
+                        int idx0 = pcls_[0]->index_rings[ch0][*itr];
+                        db_.emplace_back();
+                        db_[cnt_tmp].X_ <<
+                            *(pcls_[0]->x + idx0), *(pcls_[0]->y + idx0), *(pcls_[0]->z + idx0);
+                        db_[cnt_tmp].state_ = 0;
+                        db_[cnt_tmp].info_ << 0, ch0, idx0, -1;
+                        ++cnt_tmp;
+                    }
+                }
+            }
+        }
+
+        // (3) add lidar1 augment points
+        EVec3f X_tmp;
+        for(int ch1 = 0; ch1 < pcls_[1]->n_channels; ++ch1) {
+            for(int n_seg = 0; n_seg < pcls_[0]->n_channels+1; ++n_seg) {
+                if(idxs_augment_l1[n_seg+ch1*(pcls_[0]->n_channels+1)].size() > 0){
+                    for(auto itr = idxs_augment_l1[n_seg+ch1*(pcls_[0]->n_channels+1)].begin(); 
+                            itr != idxs_augment_l1[n_seg+ch1*(pcls_[0]->n_channels+1)].end(); ++itr){
+                        int idx1 = pcls_[1]->index_rings[ch1][*itr];
+                        db_.emplace_back();
+                        X_tmp << *(pcls_[1]->x + idx1), *(pcls_[1]->y + idx1), *(pcls_[1]->z + idx1);
+                        db_[cnt_tmp].X_ = T_l0l1_.block<3,3>(0,0)*X_tmp + T_l0l1_.block<3,1>(0,3);
+                        db_[cnt_tmp].state_ = 0;
+                        db_[cnt_tmp].info_ << 1, ch1, idx1, -1;
+                        ++cnt_tmp;
+                    }
+                }
+            }
+        }
+
+        // Visualization on the figure.
+        if(1){
+            cv::Scalar orange(0, 165, 255), blue(255, 0, 0), magenta(255, 0, 255);
+
+            cv::Mat img_8u;
+            cv::cvtColor(frames_[0]->img(),img_8u,CV_GRAY2BGR);
+            EVec3f X_tmp, X_warp;
+            EVec2f pts_tmp;
+            for(auto itr = db_.begin(); itr != db_.end(); ++itr){
+                EVec3f X_warp = T_cl0_[0].block<3,3>(0,0)*(itr->X_) + T_cl0_[0].block<3,1>(0,3);
+                float invz = 1.0f/X_warp(2);
+                pts_tmp(0) = cams_[0]->fx()*X_warp(0)*invz + cams_[0]->cx();
+                pts_tmp(1) = cams_[0]->fy()*X_warp(1)*invz + cams_[0]->cy();
+                cv::Point pt(pts_tmp(0),pts_tmp(1));
+                cv::circle(img_8u, pt, 3, magenta);
+            }
+           
+            cv::namedWindow("Final points", CV_WINDOW_AUTOSIZE);
+            cv::imshow("Final points", img_8u);
+            cv::waitKey(0);
+        } //end if        
+
+        // Projections.
 
         // Delaunay ... 
 

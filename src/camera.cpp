@@ -42,10 +42,10 @@ void Camera::generateUndistortMaps(){
     for(int v = 0; v < n_rows_; ++v){
         map_x_ptr = undist_map_x_.ptr<float>(v);
         map_y_ptr = undist_map_y_.ptr<float>(v);
-        y = (v - cy_) * fyinv_;
+        y = (v - cy_ + 1) * fyinv_;
 
         for(int u = 0; u < n_cols_; ++u){
-            x = (u - cx_) * fxinv_;
+            x = (u - cx_ + 1) * fxinv_;
             xy2 = 2*x*y;
             xx = x*x; yy = y*y;
             r2 = xx + yy;

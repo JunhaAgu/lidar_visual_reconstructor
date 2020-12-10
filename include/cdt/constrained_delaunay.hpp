@@ -7,9 +7,12 @@
 #include <vector>
 #include <list>
 #include <map>
+#include <Eigen/Dense>
+
 #include "cdt/faststack.hpp" // take place of std::stack.
 #include "cdt/adjacent_map.hpp"
 #include "cdt/geometry_struct.hpp" // Vertex, Side, Triangle
+#include "point_database.hpp"
 
 
 using namespace std;
@@ -25,14 +28,21 @@ class ConstrainedDT {
 public:
     /* Public methods */
     ConstrainedDT(const vector<Vertex>& points_input, const vector<Side>& constraints_input);
+    ConstrainedDT(const vector<Eigen::Vector2f>& points_input); // no inputs.
+    ConstrainedDT(const vector<PointDB>& points_input); // no inputs.
     ~ConstrainedDT();
     void executeNormalDT();
-    void refineConstrainedDT();
 
     // Densification algorithms
     void addPointsIntoDT(const vector<Vertex>& points_addi);
-    void addCenterPointsOfTriangles(const float& thres_area, vector<Vertex>& points_centers);
+    void addPointsIntoDT(const vector<Eigen::Vector2f>& points_addi);
+    void addPointsIntoDT(const vector<PointDB>& points_addi);
 
+    void getCenterPointsOfTriangles(const float& thres_area, vector<Vertex>& points_centers);
+    void getCenterPointsOfTriangles(const float& thres_area, vector<Eigen::Vector2f>& points_centers);
+
+    // Constrained DT.
+    void executeRefineConstrainedDT();
     void renewConstraints(const vector<Side>& constraint_edges_addi); // After 'addConstraints()', do 'refineConstrainedDT()'.
 
     void showAllTriangles() {
@@ -46,7 +56,9 @@ public:
 private:
     /* Private methods */
     void getAndNormalizePoints(const vector<Vertex>& points_input);
-    void binAndSortPoints(const vector<Vertex>& points, vector<int>& index) {};
+    void getAndNormalizePoints(const vector<Eigen::Vector2f>& points_input);
+    void getAndNormalizePoints(const vector<PointDB>& points_input);
+
     bool isInCircum(Triangle* tri, int i, const vector<Vertex>& pts);
     void findLawsonSearch(const Triangle* tri, int& next_dir, int i, const vector<Vertex>& pts);
 
