@@ -48,7 +48,7 @@ set(SRC ${SRC}
   src/hcegcs.cpp
   src/lidar_visual_reconstructor.cpp
   
-  src/feature_tracker.cpp
+  src/epipolar_klt.cpp
   src/frame.cpp
   src/camera.cpp
 

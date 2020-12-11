@@ -1,7 +1,7 @@
 #include "feature_tracker.h"
 
 
-FeatureTracker::FeatureTracker(const int& n_cols, const int& n_rows, const int& MAX_PYR_LVL) 
+EpipolarKLT::EpipolarKLT(const int& n_cols, const int& n_rows, const int& MAX_PYR_LVL) 
 {
     MAX_PYR_LVL_ = MAX_PYR_LVL;
     n_cols_pyr_.reserve(MAX_PYR_LVL_);
@@ -67,7 +67,7 @@ FeatureTracker::FeatureTracker(const int& n_cols, const int& n_rows, const int& 
     cout << "length of up vp : " << cnt << endl;
 };
 
-FeatureTracker::~FeatureTracker(){
+EpipolarKLT::~EpipolarKLT(){
     if (errs_ssd != nullptr) custom_aligned_free((void*)errs_ssd);
     if (errs_ncc != nullptr) custom_aligned_free((void*)errs_ncc);
     if (mask != nullptr) custom_aligned_free((void*)mask);
@@ -94,7 +94,7 @@ FeatureTracker::~FeatureTracker(){
 
     if (errs_ssd_sse != nullptr) custom_aligned_free((void*)errs_ssd_sse);
 };
-inline void FeatureTracker::update(const Vec6& Jt, const float& r, const float& weight, float& err_ssd)
+inline void EpipolarKLT::update(const Vec6& Jt, const float& r, const float& weight, float& err_ssd)
 {
     // cout << "Jt.transpose()*Jt:\n" << Jt*(Jt.transpose()) << endl;
     JtWJ.noalias() += (Jt*Jt.transpose())*weight;
@@ -102,6 +102,6 @@ inline void FeatureTracker::update(const Vec6& Jt, const float& r, const float& 
     err_ssd += r*r*weight;
 }
 
-void FeatureTracker::solveGaussNewtonStep(Vec6& delta) {
+void EpipolarKLT::solveGaussNewtonStep(Vec6& delta) {
     delta = JtWJ.ldlt().solve(mJtWr);
 };

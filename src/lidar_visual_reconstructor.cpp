@@ -675,8 +675,8 @@ bool LidarVisualReconstructor::run(){
 
         // For lidar1
         map<int, vector<int>> idxs_augment_l1;
-        for(int ch1 = 0; ch1 < pcls_[1]->n_channels; ++ch1){
-            for(int ch0 = 0; ch0 < pcls_[0]->n_channels+1; ++ch0){
+        for(int ch1 = 0; ch1 < pcls_[1]->n_channels; ++ch1) {
+            for(int ch0 = 0; ch0 < pcls_[0]->n_channels+1; ++ch0) {
                 idxs_augment_l1.insert(std::pair<int,vector<int>>(ch0+ch1*(pcls_[0]->n_channels+1),vector<int>(0)));
             }
         }
@@ -820,7 +820,7 @@ bool LidarVisualReconstructor::run(){
 
 
         // Visualization on the figure.
-        if(1   ){
+        if(1){
             cv::Scalar orange(0, 165, 255), blue(255, 0, 0), magenta(255, 0, 255);
 
             cv::Mat img_8u;
@@ -988,8 +988,13 @@ bool LidarVisualReconstructor::run(){
         db_.emplace_back(); // super triangles
         db_.emplace_back(); // super triangles
 
+        // KLT ...
+
+        
+
+        // Densification ...
         vector<PointDB> db_addi_;
-        cdt_->getCenterPointsOfTriangles(400,db_addi_);
+        cdt_->getCenterPointsOfTriangles(400, db_addi_);
         cdt_->addPointsIntoDT(db_addi_);
 
         for(auto itr = db_addi_.begin(); itr != db_addi_.end(); ++itr)
@@ -998,8 +1003,9 @@ bool LidarVisualReconstructor::run(){
         if(1){
             cv::Scalar orange(0, 165, 255), blue(255, 0, 0), magenta(255, 0, 255);
             cv::Mat img_8u;
-            cv::cvtColor(frames_[0]->img(),img_8u,CV_GRAY2BGR);
-            for(auto itr = cdt_->getTriangleMap().begin(); itr != cdt_->getTriangleMap().end(); ++itr){
+            cv::cvtColor(frames_[0]->img(), img_8u, CV_GRAY2BGR);
+            for(auto itr  = cdt_->getTriangleMap().begin();
+                     itr != cdt_->getTriangleMap().end();  ++itr){
                 int i0 = itr->second->idx[0];
                 int i1 = itr->second->idx[1];
                 int i2 = itr->second->idx[2];
@@ -1024,16 +1030,6 @@ bool LidarVisualReconstructor::run(){
             cv::imshow("Delaunay results", img_8u);
             cv::waitKey(0);
         }
-
-
-
-
-
-        // KLT ...
-        
-
-        // Densification ...
-
 
         // Extract profile 3D points ... 
         

@@ -1,5 +1,5 @@
-#ifndef _FEATURETRACKER_H_
-#define _FEATURETRACKER_H_
+#ifndef _EPIPOLARKLT_H_
+#define _EPIPOLARKLT_H_
 
 #include <iostream>
 #include <vector>
@@ -20,11 +20,11 @@ typedef Eigen::Matrix<float, 2, 2> Mat2;
 typedef Eigen::Matrix<float, 6, 1> Vec6;
 typedef Eigen::Matrix<float, 6, 6> Mat66;
 
-class FeatureTracker {
+class EpipolarKLT {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    FeatureTracker(const int& n_cols, const int& n_rows, const int& MAX_PYR_LVL);
-    ~FeatureTracker();
+    EpipolarKLT(const int& n_cols, const int& n_rows, const int& MAX_PYR_LVL);
+    ~EpipolarKLT();
 
     void registerImages(const cv::Mat& Ik, const cv::Mat& Ic, 
             const cv::Mat& du_k, const cv::Mat& dv_k,
@@ -110,4 +110,4 @@ private:
 
 };
 
-#endif 
+#endif

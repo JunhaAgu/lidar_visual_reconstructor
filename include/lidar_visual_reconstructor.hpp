@@ -42,7 +42,7 @@
 #include "lidar_pcl.hpp"
 #include "frame.hpp"
 #include "camera.hpp"
-#include "feature_tracker.h"
+#include "epipolar_klt.h"
 #include "point_database.hpp"
 #include "cdt/constrained_delaunay.hpp"
 
