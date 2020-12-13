@@ -224,7 +224,7 @@ void LidarVisualReconstructor::loadSensorExtrinsics(string& dir){
     fs["cabin.T_cl0"] >> T_cl0_tmp;
     fs["cabin.T_c0c1"] >> T_c0c1_tmp;
 
-    cv::cv2eigen(T_cl0_tmp, T_cl0_eigen_tmp);
+    cv::cv2eigen(T_cl0_tmp,  T_cl0_eigen_tmp);
     cv::cv2eigen(T_c0c1_tmp, T_c0c1_eigen_tmp);  
     T_cl0_.push_back(T_cl0_eigen_tmp);
     T_c0c1_.push_back(T_c0c1_eigen_tmp);
@@ -281,12 +281,16 @@ bool LidarVisualReconstructor::run(){
         cv_ptr = cv_bridge::toCvCopy(srv_lidarimagedata_.response.img1,
             sensor_msgs::image_encodings::MONO8);
         frames_[1]->constructFrame(cv_ptr->image);
-        
+
         if(0) {
+            cv::imwrite("/home/larrkchlaptop/imageraw0.png",frames_[0]->imgu_raw());
+            cv::imwrite("/home/larrkchlaptop/imageraw1.png",frames_[1]->imgu_raw());
+            cv::imwrite("/home/larrkchlaptop/image0.png",frames_[0]->imgu());
+            cv::imwrite("/home/larrkchlaptop/image1.png",frames_[1]->imgu());
             cv::namedWindow("0 image", CV_WINDOW_AUTOSIZE);
             cv::namedWindow("1 image", CV_WINDOW_AUTOSIZE);
-            cv::imshow("0 image", frames_[0]->img_raw());
-            cv::imshow("1 image", frames_[1]->img_raw());
+            cv::imshow("0 image", frames_[0]->imgu_raw());
+            cv::imshow("1 image", frames_[1]->imgu_raw());
             cv::waitKey(1000); // both imshow s are independently affected by waitKey.
             // If there are two windows, total waiting time becomes 1000*2 = 2000 ms.
         }
@@ -794,7 +798,7 @@ bool LidarVisualReconstructor::run(){
             cv::Scalar orange(0, 165, 255), blue(255, 0, 0), magenta(255, 0, 255);
 
             cv::Mat img_8u;
-            cv::cvtColor(frames_[0]->img(),img_8u,CV_GRAY2BGR);
+            cv::cvtColor(frames_[0]->imgu(),img_8u,CV_GRAY2BGR);
             EVec3f X_tmp, X_warp;
             EVec2f pts_tmp;
             for(int ch0 = 0; ch0 < pcls_[0]->n_channels; ++ch0){
@@ -935,29 +939,11 @@ bool LidarVisualReconstructor::run(){
             itr->pts_(1) = cams_[0]->fy()*X_warp(1)*invz + cams_[0]->cy();
         }
 
-        // test 
-        float* res = new float[10];
-        res[0] = improc::interpImageSingle(frames_[0]->img_pyr()[0],10,100);
-        res[1] = improc::interpImageSingle(frames_[0]->img_pyr()[0],20,100);
-        res[2] = improc::interpImageSingle(frames_[0]->img_pyr()[0],30,100);
-        res[3] = improc::interpImageSingle(frames_[0]->img_pyr()[0],40,100);
-        res[4] = improc::interpImageSingle(frames_[0]->img_pyr()[0],50,100);
-        res[5] = improc::interpImageSingle(frames_[0]->img_pyr()[0],60,100);
-        res[6] = improc::interpImageSingle(frames_[0]->img_pyr()[0],70,100);
-        res[7] = improc::interpImageSingle(frames_[0]->img_pyr()[0],80,100);
-        res[8] = improc::interpImageSingle(frames_[0]->img_pyr()[0],90,100);
-        res[9] = improc::interpImageSingle(frames_[0]->img_pyr()[0],100,100);
-        for(int i = 0; i < 10 ; i ++){
-            cout <<*(res+i)<<"\n";
-        }
-
-        delete[] res;
-
         // Visualization on the figure.
         if(1){
             cv::Scalar orange(0, 165, 255), blue(255, 0, 0), magenta(255, 0, 255);
             cv::Mat img_8u;
-            cv::cvtColor(frames_[0]->img(),img_8u,CV_GRAY2BGR);
+            cv::cvtColor(frames_[0]->imgu(),img_8u,CV_GRAY2BGR);
             for(auto itr = db_.begin(); itr != db_.end(); ++itr)
                 cv::circle(img_8u, cv::Point(itr->pts_(0),itr->pts_(1)), 3, magenta);
             cv::namedWindow("Final points", CV_WINDOW_AUTOSIZE);
@@ -970,11 +956,12 @@ bool LidarVisualReconstructor::run(){
         cdt_->initializeDT(db_);
         cdt_->executeNormalDT();
 
-        
+
 
         // KLT ...
         // Get initial guesses. (2 m ~ 40 m)
         float std_depth = 1.0f; // 1.0 m uncertainty.
+        int cntt = 0;
         for(auto itr = db_.begin(); itr != db_.end(); ++itr){
             itr->X_     = T_cl0_[0].block<3,3>(0,0) * itr->X_ + T_cl0_[0].block<3,1>(0,3);
             itr->depth_lidar_ = itr->X_(2);
@@ -1016,17 +1003,24 @@ bool LidarVisualReconstructor::run(){
 #endif
         // Normal Epipolar KLT (with barrier function)
         float logalpha = 0.0f, beta = 0.0f;
-        int MAX_ITER = 40;
-        int win_sz   = 43;
+        int MAX_ITER = 50;
+        int win_sz   = 33;
+        
+        tic();
         eklt_->runEpipolarKLT(
             frames_[0]->img_pyr(), frames_[1]->img_pyr(), 
             frames_[0]->du(), frames_[0]->dv(),
             frames_[1]->du(), frames_[1]->dv(),
             win_sz, MAX_ITER, logalpha, beta, db_);
+        toc(1);
 
 
         // Calculate affine illumination changes
-
+        tic();
+        eklt_->runAffineBrightnessCompensation(
+            frames_[0]->img_pyr(), frames_[1]->img_pyr(),
+            db_,logalpha,beta);
+        toc(1);
 
         // Affine constrained Epipolar KLT (with barrier function)
 
@@ -1051,7 +1045,7 @@ bool LidarVisualReconstructor::run(){
         if(1){
             cv::Scalar orange(0, 165, 255), blue(255, 0, 0), magenta(255, 0, 255);
             cv::Mat img_8u;
-            cv::cvtColor(frames_[0]->img(), img_8u, CV_GRAY2BGR);
+            cv::cvtColor(frames_[0]->imgu(), img_8u, CV_GRAY2BGR);
             for(auto itr  = cdt_->getTriangleMap().begin();
                      itr != cdt_->getTriangleMap().end();  ++itr){
                 int i0 = itr->second->idx[0];

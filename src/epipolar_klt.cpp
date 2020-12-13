@@ -16,11 +16,11 @@ void EpipolarKLT::runEpipolarKLT(
     int MAX_PYR_LVL = Ik.size();
     vector<int> n_cols_pyr_;
     vector<int> n_rows_pyr_;
-
-    cout << " EKLT: registered image lvl: " << MAX_PYR_LVL <<"\n";
     n_pts_ = db.size();
+#ifdef _VERBOSE_
+    cout << " EKLT: registered image lvl: " << MAX_PYR_LVL <<"\n";
     cout << " EKLT: # of input points: " << n_pts_ << "\n";
-
+#endif
     for(int i = 0; i < MAX_PYR_LVL; ++i) {
         n_cols_pyr_.push_back(Ik[i].cols);
         n_rows_pyr_.push_back(Ik[i].rows);
@@ -55,9 +55,9 @@ void EpipolarKLT::runEpipolarKLT(
         double s_far = l.norm();
         l /= s_far;
         double s = (db[i].pts_prior_*invpow- pt_near).norm(); // from prior information.
-        cout <<"["<<i<<"]pt near far: "<< pt_near(0) <<"," <<pt_near(1)<<"/" <<pt_far(0)<<"," <<pt_far(1) <<"\n";
-        cout <<"prior: "<< db[i].pts_prior_(0)*invpow <<"," << db[i].pts_prior_(1)*invpow <<"\n"; 
-        cout <<"["<<i<<"] start s: " << s<<endl;
+        // cout <<"["<<i<<"]pt near far: "<< pt_near(0) <<"," <<pt_near(1)<<"/" <<pt_far(0)<<"," <<pt_far(1) <<"\n";
+        // cout <<"prior: "<< db[i].pts_prior_(0)*invpow <<"," << db[i].pts_prior_(1)*invpow <<"\n"; 
+        // cout <<"["<<i<<"] start s: " << s<<endl;
         Eigen::Vector2f pt_k(db[i].pts_(0), db[i].pts_(1));
         pt_k *= invpow;
 
@@ -71,16 +71,7 @@ void EpipolarKLT::runEpipolarKLT(
             // calculate reference image brightness
             for(int j = 0; j < M; ++j)
                 *(Ik_vector + j) = improc::interpImageSingle(Ik[lvl], patch[j].x + pt_k(0),  patch[j].y + pt_k(1));
-
-            if(a && lvl == MAX_PYR_LVL-1){
-                for(int j = 0; j < M; ++j)
-                    cout<<*(Ik_vector+j)<<",";
-                cout <<"\n";
-                a=false;
-            }
             
-            //cout << "lvl i delta pt: "<<lvl<<", "<<i <<", "<< delta_pt(0) <<"," <<delta_pt(1)<<"\n";
-
             // ITERATION!!!
             for(int iter = 0; iter < MAX_ITER; ++iter){
                 delta_pt = s*l;
@@ -102,10 +93,6 @@ void EpipolarKLT::runEpipolarKLT(
                     Ic_warp = interp_tmp(0);
                     dx_warp = interp_tmp(1);
                     dy_warp = interp_tmp(2);
-
-                    //Ic_warp = improc::interpImageSingle(Ic[lvl],   u_warp, v_warp);
-                    //dx_warp = improc::interpImageSingle(du_c[lvl], u_warp, v_warp);
-                    //dy_warp = improc::interpImageSingle(dv_c[lvl], u_warp, v_warp);
                     
                     if(Ic_warp < 0 || *(Ik_vector + j) < 0) continue;
 
@@ -133,12 +120,14 @@ void EpipolarKLT::runEpipolarKLT(
                 s += delta_s;
                 if(s < 0.01f) s = 0.01f;
                 if(s > s_far) s = s_far - 0.01f;
+                if(std::isnan(delta_s)) s = 0.1f;
 
                 if(lvl == 0) {
                     db[i].pts_tracked_ << s*l(0) + pt_near(0), s*l(1) + pt_near(1);
                     db[i].err_klt_normal_ = sqrt(r2_sum/cnt_valid);
+                    db[i].s_normal_ = s;
                 }
-                if( abs(delta_s) < pow(10.0f,-(5-0.25f*(lvl+1)) ) ){
+                if( abs(delta_s) < pow(10.0f, -(5-0.25f*(lvl+1)) ) ){
                     if(lvl == 0){
                         if(db[i].err_klt_normal_ > 20.0f) db[i].klt_valid_ = false;
                     }
@@ -153,11 +142,97 @@ void EpipolarKLT::runEpipolarKLT(
             s_far   *= 2;
             s       *= 2;
         }
+#ifdef _VERBOSE_
         cout << "[" << i <<"]: s.. [" << 0 << "   " << s << "   "  << s_far << "]\n";
+#endif
     }
 
     delete[] Ik_vector;
 
+};
+
+void EpipolarKLT::runAffineBrightnessCompensation(const vector<cv::Mat>& Ik, const vector<cv::Mat>& Ic, 
+        const vector<PointDB>& db, float& logalpha_res, float& beta_res)
+{
+    int win_sz = 10;
+    int MAX_ITER = 2222;
+    float thres_huber = 10;
+
+    int M = (2 * win_sz + 1)*(2 * win_sz + 1);
+    vector<cv::Point2f> patch;
+    for (int u = -win_sz; u < win_sz + 1; ++u)
+        for (int v = -win_sz; v < win_sz + 1; ++v)
+            patch.emplace_back((float)u, (float)v);
+
+    int n_pts = db.size();
+    int n_total = M*n_pts;
+    float* I1 = new float[n_total];
+    float* I2 = new float[n_total];
+
+    int cnt = 0; 
+    for(int i = 0; i < n_pts; ++i){
+        for(int j = 0; j < M; ++j){
+            *(I1+cnt) = improc::interpImageSingle(Ik[0],
+                patch[j].x + db[i].pts_(0), patch[j].y + db[i].pts_(1));
+            *(I2+cnt) = improc::interpImageSingle(Ic[0],
+                patch[j].x + db[i].pts_tracked_(0), patch[j].y + db[i].pts_tracked_(1));
+
+            if( ( isnan(*(I1+cnt)) || isnan(*(I2+cnt)) ) ) continue;
+            ++cnt;
+        }
+    }
+    // A = [I2,1].....
+    // ab_initial = (A'*A)^-1*A'*I1
+    // A'*A = [sum I2*I2, sum I2; sum I2, cnt] --> (A'*A)^-1 = [1, -I2; -I2, I2*I2]/(I2*I2-)
+    Eigen::Vector2f b(0,0); // == A'*I1 == [sum I2*I1, sum I1]'
+    Eigen::Matrix2f AtA; AtA.setZero();
+    float I1_tmp,I2_tmp;
+    for(int i = 0; i < cnt; ++i){
+        I1_tmp = *(I1+i);
+        I2_tmp = *(I2+i);
+        AtA(0,0) += I2_tmp*I2_tmp;
+        AtA(0,1) += I2_tmp;
+        b(0) += I2_tmp*I1_tmp;
+        b(1) += I1_tmp;
+    }
+    AtA(1,0) = AtA(0,1);
+    AtA(1,1) = cnt;
+
+    Eigen::Vector2f alphabeta = AtA.inverse()*b;
+#ifdef _VERBOSE_
+    cout <<"ab initial: "<<alphabeta(0) << "," << alphabeta(1) << "\n";
+#endif
+    // iterations with Huber thres.
+    Eigen::Vector2f delta_ab;
+    Eigen::Matrix2f JtwJ;
+    Eigen::Vector2f Jtwr;
+    float w;
+    for(int iter = 0; iter < MAX_ITER; ++iter){
+        JtwJ << 0,0,0,0;
+        Jtwr << 0,0;
+        for(int i=0; i < cnt; ++i){
+            I1_tmp = *(I1+i);
+            I2_tmp = *(I2+i);
+            float r = alphabeta(0)*I2_tmp + alphabeta(1) - I1_tmp;
+            w = fabs(r) < thres_huber ? 1.0f : thres_huber / fabs(r);
+            JtwJ(0,0) += I2_tmp*I2_tmp*w;
+            JtwJ(0,1) += I2_tmp*w;
+            JtwJ(1,1) += w;
+            Jtwr(0) += w*I2_tmp*r;
+            Jtwr(1) += w*r;
+        }
+        delta_ab = -JtwJ.inverse()*Jtwr;
+        alphabeta += delta_ab;
+#ifdef _VERBOSE_
+        cout << "iter [" << iter <<"] / ab: [" << alphabeta(0) <<", " << alphabeta(1) <<"] \n";
+#endif
+        if(delta_ab.norm() < 1e-6) break;
+    }
+
+    logalpha_res = alphabeta(0);
+    beta_res     = alphabeta(1);
+    delete[] I1;
+    delete[] I2;
 };
 
 EpipolarKLT::~EpipolarKLT(){

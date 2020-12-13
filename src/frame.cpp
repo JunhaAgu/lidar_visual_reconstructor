@@ -47,11 +47,11 @@ void Frame::constructFrame(const cv::Mat& img_input){
     img_raw_.convertTo(img_raw_f_, CV_32FC1);
 
     // undistort image
-    cam_->undistortImage(img_raw_, img_undist_);
+    cam_->undistortImage(img_raw_f_, img_undist_f_);
     
-    img_undist_.convertTo(img_undist_f_, CV_32FC1);
+    img_undist_f_.convertTo(img_undist_, CV_8UC1);
 
-    improc::imagePyramid( img_undist_f_, img_pyr_);
+    improc::imagePyramid( img_undist_f_, img_pyr_ );
     calcGradient();
     cout << "frame is successfully constructed.\n";
 

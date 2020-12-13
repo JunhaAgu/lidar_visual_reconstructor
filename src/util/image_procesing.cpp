@@ -233,13 +233,30 @@ namespace improc {
         // 1-ay
         // I3           I4
         float ax, ay;
-        int u0 = (int)u; // truncated coordinates
-        int v0 = (int)v;
+        int u0 = (int)floor(u); // truncated coordinates
+        int v0 = (int)floor(v);
         // cout << "u0 v0: " << u0 << ", " << v0 << ", ncols, nrows: " << n_cols << ", " << n_rows << endl;
-        if ((u0 > 0) && (u0 < n_cols - 1)) ax = u - (float)u0;
-        else return -1;
-        if ((v0 >= 0) && (v0 < n_rows - 1)) ay = v - (float)v0;
-        else return -1;
+        if ((u >= 0) && (u < n_cols - 1)) ax = u - (float)u0;
+		else if(u == n_cols-1){
+			u0 = (n_cols-1)-1;
+			ax = 0;
+		} 
+        else if(u > -1 && u < 0){
+			u0 = 1;
+			ax = 1;
+		}
+		else return -1;
+        if(v >= 0 && v < n_rows-1){
+			ay = v-(float)v0;
+		}
+		else if(v == n_rows-1){
+			v0 = (n_rows-1)-1;
+			ay = 0;
+		}
+		else if(v > -1 && v < 0){
+			v0 = 1; ay = 1;
+		}
+		else return -1;
 
         float axay = ax*ay;
         int v0cols = v0*n_cols;
@@ -247,13 +264,11 @@ namespace improc {
 
         float I00, I01, I10, I11;
         I00 = img_ptr[v0colsu0];
-        I01 = img_ptr[v0colsu0 + 1];
-        I10 = img_ptr[v0colsu0 + n_cols];
+        I10 = img_ptr[v0colsu0 + 1];
+        I01 = img_ptr[v0colsu0 + n_cols];
         I11 = img_ptr[v0colsu0 + n_cols + 1];
-
-        float res = ax*(I01 - I00) + ay*(I10 - I00) + axay*(-I01 + I00 + I11 - I10) + I00;
         
-        return res;
+        return (axay*(-I01+I00-I10+I11) + ax*(-I00+I10) + ay*(-I00+I01) + I00);
     };
 
     void interpImageSingle3(const cv::Mat& img, const cv::Mat& du, const cv::Mat& dv, const float& u, const float& v, Eigen::Vector3f& interp_) 

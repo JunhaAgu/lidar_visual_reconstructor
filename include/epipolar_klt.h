@@ -37,6 +37,7 @@ public:
 
     void runAffineBrightnessCompensation(
         const vector<cv::Mat>& Ik, const vector<cv::Mat>& Ic, 
+        const vector<PointDB>& db,
         float& logalpha_res, float& beta_res);
 
     void runEpipolarAffineKLT(

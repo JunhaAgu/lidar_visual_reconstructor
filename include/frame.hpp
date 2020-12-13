@@ -27,8 +27,9 @@ public:
 
     void constructFrame(const cv::Mat& img_input);
 
-    cv::Mat img_raw() const {return img_raw_;};
-    cv::Mat img() const {return img_undist_;};
+    cv::Mat imgu_raw() const {return img_raw_;};
+    cv::Mat imgu() const {return img_undist_;};
+    cv::Mat imgf() const {return img_undist_f_;};
     vector<cv::Mat> img_pyr() const {return img_pyr_;};
     vector<cv::Mat> du() const {return du_pyr_;};
     vector<cv::Mat> dv() const {return dv_pyr_;};

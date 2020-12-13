@@ -12,6 +12,8 @@ struct PointDB {
     float depth_recon_;           // estimated depths for 'points_constraints_'
     float err_klt_normal_;
     float err_klt_affine_;
+    float s_normal_;
+    float s_affine_;
     bool klt_valid_;
     Eigen::Vector3f X_;           // augmented by densification step.
     Eigen::Vector3f X_recon_;     // reconstructed 3D point.
@@ -30,6 +32,8 @@ struct PointDB {
         depth_recon_ = -1;
         err_klt_normal_ = -1;
         err_klt_affine_ = -1;
+        s_normal_ = -1;
+        s_affine_ = -1;
         klt_valid_ = true;
         X_ << -1,-1,-1;
         X_recon_ << -1,-1,-1;
