@@ -45,6 +45,7 @@ private:
     cv::Mat img_undist_f_; // CV_32FC1
     cv::Mat du_s_; // CV_16S, sobel result, maximum resolution.
     cv::Mat dv_s_; // CV_16S, sobel result, maximum resolution.
+    cv::Mat d_tmp_;
 
     vector<cv::Mat> img_pyr_; // CV_32F
     vector<cv::Mat> du_pyr_;  // CV_32F

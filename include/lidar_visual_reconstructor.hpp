@@ -1,6 +1,7 @@
 #ifndef _LIDAR_VISUAL_RECONSTRUCTOR_H_
 #define _LIDAR_VISUAL_RECONSTRUCTOR_H_
 
+//#define _FLAG_DRAW_
 
 #include <iostream>
 #include <exception>
@@ -82,10 +83,7 @@ private:
 private:
     void limitRanges();
 
-
-
-
-
+// ROS related variables.
 private:
     ros::NodeHandle nh_;
     ros::ServiceClient client_lidarimagedata_;
@@ -97,8 +95,8 @@ private:
 
 // Tracker
 private:
-    FeatureTracker* tracker_;
-    // ConstraindDelaunayTriangulation* cdt_;
+    EpipolarKLT* eklt_;
+
 
 // pcl
 private:
@@ -107,7 +105,7 @@ private:
 
 // Extracted points & Delaunay triangles.
 private:
-    vector<PointDB> db_;
+    vector<PointDB> db_; // Points to be reconstructed.
     ConstrainedDT* cdt_;
 
 
@@ -117,12 +115,13 @@ private:
     vector<Camera*> cams_;
     vector<Frame*> frames_;
 
-    int MAX_LVL_PYR_;;
+    int MAX_LVL_PYR_;
 
-// extrinsics
+// Extrinsics
 private:
     vector<EMat4f> T_cl0_;  // 0 cabin, 1 boom from yaml (TODO: calibrator.)
     vector<EMat4f> T_c0c1_; // 0 cabin, 1 boom  from yaml (TODO: calibrator.)
+    vector<EMat4f> T_c1c0_; // 0 cabin, 1 boom  from yaml (TODO: calibrator.)
     EMat4f T_l0l1_; // from GCS (relative lidar pose srv)
     EMat3f R_l0l1_; // from GCS
     EVec3f t_l0l1_; // from GCS

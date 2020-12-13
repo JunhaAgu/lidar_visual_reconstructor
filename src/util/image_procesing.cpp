@@ -57,13 +57,14 @@ namespace improc {
 	void imagePyramid(const cv::Mat& img, vector<cv::Mat>& img_pyr) {
 		// img needs to be 'CV_32FC1'.
 		if (img_pyr.size() > 0) {
+			cout << " max lvl improc: " << img_pyr.size() << "\n";
 			size_t max_lvl = img_pyr.size();
 			img.copyTo(img_pyr[0]);
 			for (size_t lvl = 1; lvl < max_lvl; lvl++) {
 				pyrDownSSE(img_pyr[lvl - 1], img_pyr[lvl]);
 			}
 		}
-		else throw std::runtime_error("In 'imagePyramid', img_pyr needs to be initialized!\n");
+		else std::runtime_error("In 'imagePyramid', img_pyr needs to be initialized!\n");
 	};
 
 	void interpImage(const cv::Mat& img, const vector<chk::Point2f>& pts, vector<float>& brightness, vector<int>& valid_vec) {
@@ -255,7 +256,7 @@ namespace improc {
         return res;
     };
 
-    void interpImageSingle3(const cv::Mat& img, const cv::Mat& du, const cv::Mat& dv, const float& u, const float& v, chk::Point3f& interp_) 
+    void interpImageSingle3(const cv::Mat& img, const cv::Mat& du, const cv::Mat& dv, const float& u, const float& v, Eigen::Vector3f& interp_) 
     {
         float* img_ptr = (float*)img.ptr<float>(0);
         float* du_ptr = (float*)du.ptr<float>(0);
@@ -276,17 +277,17 @@ namespace improc {
         if ((u0 > 0) && (u0 < n_cols - 1))
             ax = u - (float)u0;
         else {
-            interp_.x = -1;
-            interp_.y = -1;
-            interp_.z = -1;
+            interp_(0) = -1;
+            interp_(1) = -1;
+            interp_(2) = -1;
             return;
         }
         if ((v0 >= 0) && (v0 < n_rows - 1))
             ay = v - (float)v0;
         else {
-            interp_.x = -1;
-            interp_.y = -1;
-            interp_.z = -1;
+            interp_(0) = -1;
+            interp_(1) = -1;
+            interp_(2) = -1;
             return;
         }
         float axay = ax*ay;
@@ -316,9 +317,9 @@ namespace improc {
         float res_du  = ax*(du01 - du00) + ay*(du10 - du00) + axay*(-du01 + du00 + du11 - du10) + du00;
         float res_dv  = ax*(dv01 - dv00) + ay*(dv10 - dv00) + axay*(-dv01 + dv00 + dv11 - dv10) + dv00;
 
-        interp_.x = res_img;
-        interp_.y = res_du;
-        interp_.z = res_dv;
+        interp_(0) = res_img;
+        interp_(1) = res_du;
+        interp_(2) = res_dv;
     };
 
 	void sampleImage(const cv::Mat& img, const vector<chk::Point2f>& pts, chk::Point2f& pt_offset, float* brightness,int* valid_vec) {

@@ -40,6 +40,9 @@ LidarVisualReconstructor::LidarVisualReconstructor(ros::NodeHandle& nh)
 
     // Construct Constrained DT without initialization.
     cdt_ = new ConstrainedDT(); // without initialization.
+
+    // Epipolar KLT initialization
+    eklt_ = new EpipolarKLT();
 };
 
 LidarVisualReconstructor::~LidarVisualReconstructor(){
@@ -49,7 +52,8 @@ LidarVisualReconstructor::~LidarVisualReconstructor(){
         if(*iter != nullptr) delete *iter;
     for(auto iter = frames_.begin(); iter != frames_.end(); ++iter)
         if(*iter != nullptr) delete *iter;
-    if(cdt_ != nullptr) delete cdt_;
+    if(cdt_  != nullptr) delete cdt_;
+    if(eklt_ != nullptr) delete eklt_;
 };
 
 bool LidarVisualReconstructor::serverCallbackProfilePoints(hce_autoexcavator::profilePointsStamped::Request &req,
@@ -192,49 +196,6 @@ void LidarVisualReconstructor::limitRanges(){
     }
     // cout << " valid 1 : "<< cnt << "\n";
 
-    if(1){
-        cv::Scalar orange(0, 165, 255), blue(255, 0, 0), magenta(255, 0, 255);
-
-        cv::Mat img_8u;
-        frames_[0]->img().convertTo(img_8u, CV_8UC3);
-        mask_ptr = pcls_[0]->mask;
-        for(int i = 0; i < pcls_[0]->count; ++i, ++mask_ptr){
-            if(*mask_ptr){
-                X_tmp(0) = *(pcls_[0]->x + i);
-                X_tmp(1) = *(pcls_[0]->y + i);
-                X_tmp(2) = *(pcls_[0]->z + i);
-                
-                X_warp = T_cl0_[0].block<3,3>(0,0)*X_tmp + T_cl0_[0].block<3,1>(0,3);
-
-                float invz = 1.0f/X_warp(2);
-                pts_tmp(0) = cams_[0]->fx()*X_warp(0)*invz + cams_[0]->cx();
-                pts_tmp(1) = cams_[0]->fy()*X_warp(1    )*invz + cams_[0]->cy();
-                cv::Point pt(pts_tmp(0),pts_tmp(1));
-                cv::circle(img_8u, pt, 1, magenta);
-            }
-        }
-        mask_ptr = pcls_[1]->mask;
-        for(int i = 0; i < pcls_[1]->count; ++i,++mask_ptr){
-            if(*mask_ptr){
-                X_tmp(0) = *(pcls_[1]->x + i);
-                X_tmp(1) = *(pcls_[1]->y + i);
-                X_tmp(2) = *(pcls_[1]->z + i);
-
-                X_warp = T_cl0_[0].block<3,3>(0,0)*(T_l0l1_.block<3,3>(0,0)*X_tmp + T_l0l1_.block<3,1>(0,3))+ T_cl0_[0].block<3,1>(0,3);
-
-                float invz = 1.0f/X_warp(2);
-                pts_tmp(0) = cams_[0]->fx()*X_warp(0)*invz + cams_[0]->cx();
-                pts_tmp(1) = cams_[0]->fy()*X_warp(1)*invz + cams_[0]->cy();
-                cv::Point pt(pts_tmp(0),pts_tmp(1));
-                cv::circle(img_8u, pt, 1, magenta);
-            }
-        }
-
-        cv::namedWindow("limitRanges", CV_WINDOW_AUTOSIZE);
-        cv::imshow("limitRanges", img_8u);
-        cv::waitKey(0);
-    } //end if
-    
     // delete invalid points (mask == 0)
     pcls_[0]->deleteMaskInvalid();
     pcls_[1]->deleteMaskInvalid();
@@ -247,6 +208,11 @@ void LidarVisualReconstructor::loadSensorExtrinsics(string& dir){
     cv::FileStorage fs(dir, cv::FileStorage::READ);
     if(!fs.isOpened()) throw std::runtime_error("extrinsic file cannoEVec2fbe found!\n");
     cout << "extrinsic file is loaded...\n";
+
+    // initialize.
+    T_cl0_.resize(0);
+    T_c0c1_.resize(0);
+    T_c1c0_.resize(0);
 
     // fill out params.
     // 0: cabin
@@ -262,6 +228,7 @@ void LidarVisualReconstructor::loadSensorExtrinsics(string& dir){
     cv::cv2eigen(T_c0c1_tmp, T_c0c1_eigen_tmp);  
     T_cl0_.push_back(T_cl0_eigen_tmp);
     T_c0c1_.push_back(T_c0c1_eigen_tmp);
+    T_c1c0_.push_back(T_c0c1_eigen_tmp.inverse());
 
     fs["boom.T_cl0"] >> T_cl0_tmp;
     fs["boom.T_c0c1"] >> T_c0c1_tmp;
@@ -269,6 +236,7 @@ void LidarVisualReconstructor::loadSensorExtrinsics(string& dir){
     cv::cv2eigen(T_c0c1_tmp, T_c0c1_eigen_tmp);   
     T_cl0_.push_back(T_cl0_eigen_tmp);
     T_c0c1_.push_back(T_c0c1_eigen_tmp);
+    T_c1c0_.push_back(T_c0c1_eigen_tmp.inverse());
 };
 
 // 'run()' function is executed when 'GCS' requests profile 3D points.
@@ -288,6 +256,8 @@ bool LidarVisualReconstructor::run(){
         xi_l0l1(5) = srv_relativelidarpose_.response.wz;
 
         sophuslie::se3Exp(xi_l0l1, T_l0l1_);
+        R_l0l1_ = T_l0l1_.block<3,3>(0,0);
+        t_l0l1_ = T_l0l1_.block<3,1>(0,3);
         
         cout << " recon node T_l0l1: \n" << T_l0l1_ << "\n";
     }
@@ -958,14 +928,30 @@ bool LidarVisualReconstructor::run(){
         // Projections.
         EVec3f X_warp;
         EVec2f pts_tmp;
-        cout << " Pixel points: \n";
         for(auto itr = db_.begin(); itr != db_.end(); ++itr){
             EVec3f X_warp = T_cl0_[0].block<3,3>(0,0)*(itr->X_) + T_cl0_[0].block<3,1>(0,3);
             float invz = 1.0f/X_warp(2);
             itr->pts_(0) = cams_[0]->fx()*X_warp(0)*invz + cams_[0]->cx();
             itr->pts_(1) = cams_[0]->fy()*X_warp(1)*invz + cams_[0]->cy();
-            cout << itr->pts_(0) << "," << itr->pts_(1) << "\n";
         }
+
+        // test 
+        float* res = new float[10];
+        res[0] = improc::interpImageSingle(frames_[0]->img_pyr()[0],10,100);
+        res[1] = improc::interpImageSingle(frames_[0]->img_pyr()[0],20,100);
+        res[2] = improc::interpImageSingle(frames_[0]->img_pyr()[0],30,100);
+        res[3] = improc::interpImageSingle(frames_[0]->img_pyr()[0],40,100);
+        res[4] = improc::interpImageSingle(frames_[0]->img_pyr()[0],50,100);
+        res[5] = improc::interpImageSingle(frames_[0]->img_pyr()[0],60,100);
+        res[6] = improc::interpImageSingle(frames_[0]->img_pyr()[0],70,100);
+        res[7] = improc::interpImageSingle(frames_[0]->img_pyr()[0],80,100);
+        res[8] = improc::interpImageSingle(frames_[0]->img_pyr()[0],90,100);
+        res[9] = improc::interpImageSingle(frames_[0]->img_pyr()[0],100,100);
+        for(int i = 0; i < 10 ; i ++){
+            cout <<*(res+i)<<"\n";
+        }
+
+        delete[] res;
 
         // Visualization on the figure.
         if(1){
@@ -981,25 +967,87 @@ bool LidarVisualReconstructor::run(){
 
         // Delaunay ... 
         int n_db_size = db_.size();
-
         cdt_->initializeDT(db_);
         cdt_->executeNormalDT();
-        db_.emplace_back(); // super triangles
-        db_.emplace_back(); // super triangles
-        db_.emplace_back(); // super triangles
-
-        // KLT ...
 
         
 
+        // KLT ...
+        // Get initial guesses. (2 m ~ 40 m)
+        float std_depth = 1.0f; // 1.0 m uncertainty.
+        for(auto itr = db_.begin(); itr != db_.end(); ++itr){
+            itr->X_     = T_cl0_[0].block<3,3>(0,0) * itr->X_ + T_cl0_[0].block<3,1>(0,3);
+            itr->depth_lidar_ = itr->X_(2);
+
+            // guess nearest & farthest points
+            EVec3f X_near, X_far, X_subcam;
+            X_near << itr->pts_(0), itr->pts_(1), 1.0f;
+            X_near *= (itr->depth_lidar_ - std_depth);
+            X_subcam = T_c1c0_[0].block<3,3>(0,0)*cams_[0]->Kinv()*X_near + T_c1c0_[0].block<3,1>(0,3);
+            X_subcam = cams_[1]->K()*X_subcam;
+            itr->pts_guess_near_ << X_subcam(0)/X_subcam(2), X_subcam(1)/X_subcam(2);
+
+            X_far << itr->pts_(0), itr->pts_(1), 1.0f;
+            X_far *= (itr->depth_lidar_ + std_depth);
+            X_subcam = T_c1c0_[0].block<3,3>(0,0)*cams_[0]->Kinv()*X_far + T_c1c0_[0].block<3,1>(0,3);
+            X_subcam = cams_[1]->K()*X_subcam;
+            itr->pts_guess_far_ << X_subcam(0)/X_subcam(2), X_subcam(1)/X_subcam(2);
+
+            itr->pts_prior_ = (itr->pts_guess_near_ + itr->pts_guess_far_)*0.5f;
+        }
+
+#ifdef _FLAG_DRAW_
+        for(auto itr = db_.begin(); itr != db_.end(); ++itr){
+            cv::Scalar orange(0, 165, 255), blue(255, 0, 0), magenta(255, 0, 255);
+            cv::Scalar cyan(0,255,255), black(20,20,20);
+            cv::Mat img_8u;
+            cv::cvtColor(frames_[1]->img(),img_8u,CV_GRAY2BGR);
+            for(auto itr = db_.begin(); itr != db_.end(); ++itr){
+                cv::line(img_8u, cv::Point(itr->pts_guess_near_(0), itr->pts_guess_near_(1)),
+                        cv::Point(itr->pts_guess_far_(0), itr->pts_guess_far_(1)), black, 1, CV_AA);
+                cv::circle(img_8u, cv::Point(itr->pts_prior_(0),itr->pts_prior_(1)), 2, magenta);
+                cv::circle(img_8u, cv::Point(itr->pts_guess_near_(0), itr->pts_guess_near_(1)), 2, cyan);
+                cv::circle(img_8u, cv::Point(itr->pts_guess_far_(0), itr->pts_guess_far_(1)), 2, blue);
+            }
+            cv::namedWindow("subimage points", CV_WINDOW_AUTOSIZE);
+            cv::imshow("subimage points", img_8u);
+            cv::waitKey(0);
+        }   
+#endif
+        // Normal Epipolar KLT (with barrier function)
+        float logalpha = 0.0f, beta = 0.0f;
+        int MAX_ITER = 40;
+        int win_sz   = 43;
+        eklt_->runEpipolarKLT(
+            frames_[0]->img_pyr(), frames_[1]->img_pyr(), 
+            frames_[0]->du(), frames_[0]->dv(),
+            frames_[1]->du(), frames_[1]->dv(),
+            win_sz, MAX_ITER, logalpha, beta, db_);
+
+
+        // Calculate affine illumination changes
+
+
+        // Affine constrained Epipolar KLT (with barrier function)
+
+
+        // Depth reconstruction via DLT (known R_c0c1 and t_c0c1.)    
+
+
         // Densification ...
+        cout << " Densification!! \n";
+        db_.emplace_back(); // super triangles
+        db_.emplace_back(); // super triangles
+        db_.emplace_back(); // super triangles
+
         vector<PointDB> db_addi_;
         cdt_->getCenterPointsOfTriangles(400, db_addi_);
         cdt_->addPointsIntoDT(db_addi_);
 
-        for(auto itr = db_addi_.begin(); itr != db_addi_.end(); ++itr)
+        for(auto itr = db_addi_.begin(); itr != db_addi_.end(); ++itr) 
             db_.emplace_back(*itr);
 
+//#ifdef _FLAG_DRAW_
         if(1){
             cv::Scalar orange(0, 165, 255), blue(255, 0, 0), magenta(255, 0, 255);
             cv::Mat img_8u;
@@ -1030,6 +1078,7 @@ bool LidarVisualReconstructor::run(){
             cv::imshow("Delaunay results", img_8u);
             cv::waitKey(0);
         }
+//#endif
 
         // Extract profile 3D points ... 
         
