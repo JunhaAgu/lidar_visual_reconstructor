@@ -306,27 +306,30 @@ namespace improc {
             return;
         }
         float axay = ax*ay;
-        int v0cols = v0*n_cols;
-        int v0colsu0 = v0cols + u0;
-
         float I00, I01, I10, I11;
         float du00, du01, du10, du11;
         float dv00, dv01, dv10, dv11;
+		
+        int v0cols = v0*n_cols;
+        int v0colsu0 = v0cols + u0;
+		int v0colsu0_p1     = v0colsu0 + 1;
+		int v0colsu0_cols   = v0colsu0 + n_cols;
+		int v0colsu0_cols_1 = v0colsu0_cols + 1;
 
         I00 = img_ptr[v0colsu0];
-        I01 = img_ptr[v0colsu0 + 1];
-        I10 = img_ptr[v0colsu0 + n_cols];
-        I11 = img_ptr[v0colsu0 + n_cols + 1];
+        I01 = img_ptr[v0colsu0_p1];
+        I10 = img_ptr[v0colsu0_cols];
+        I11 = img_ptr[v0colsu0_cols_1];
 
         du00 = du_ptr[v0colsu0];
-        du01 = du_ptr[v0colsu0 + 1];
-        du10 = du_ptr[v0colsu0 + n_cols];
-        du11 = du_ptr[v0colsu0 + n_cols + 1];
+        du01 = du_ptr[v0colsu0_p1];
+        du10 = du_ptr[v0colsu0_cols];
+        du11 = du_ptr[v0colsu0_cols_1];
 
         dv00 = dv_ptr[v0colsu0];
-        dv01 = dv_ptr[v0colsu0 + 1];
-        dv10 = dv_ptr[v0colsu0 + n_cols];
-        dv11 = dv_ptr[v0colsu0 + n_cols + 1];
+        dv01 = dv_ptr[v0colsu0_p1];
+        dv10 = dv_ptr[v0colsu0_cols];
+        dv11 = dv_ptr[v0colsu0_cols_1];
 
         float res_img = ax*(I01 - I00) + ay*(I10 - I00) + axay*(-I01 + I00 + I11 - I10) + I00;
         float res_du  = ax*(du01 - du00) + ay*(du10 - du00) + axay*(-du01 + du00 + du11 - du10) + du00;

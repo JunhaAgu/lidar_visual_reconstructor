@@ -14,59 +14,54 @@ void EpipolarKLT::runEpipolarKLT(
             vector<PointDB>& db) {
     // In this function, MAX_LVL, n_cols, n_rows are set.
     int MAX_PYR_LVL = Ik.size();
-    vector<int> n_cols_pyr_;
-    vector<int> n_rows_pyr_;
     n_pts_ = db.size();
 #ifdef _VERBOSE_
     cout << " EKLT: registered image lvl: " << MAX_PYR_LVL <<"\n";
     cout << " EKLT: # of input points: " << n_pts_ << "\n";
 #endif
-    for(int i = 0; i < MAX_PYR_LVL; ++i) {
-        n_cols_pyr_.push_back(Ik[i].cols);
-        n_rows_pyr_.push_back(Ik[i].rows);
-    }
 
     if(win_sz % 2 == 1) std::runtime_error("EKLT: a window size must be odd number!\n");
     int win_half = (win_sz - 1)/2; // my convention! 
     int M = (2 * win_half + 1)*(2 * win_half + 1);
     // M_ = 2*win_sz_*win_sz_ + 2*win_sz_ + 1; // fast setting.
     vector<cv::Point2f> patch;
+    patch.reserve(M);
     for (int u = -win_half; u < win_half + 1; ++u)
         for (int v = -win_half; v < win_half + 1; ++v)
             patch.emplace_back((float)u, (float)v);
 
-    double* Ik_vector = new double[M];
+    float* Ik_vector = new float[M];
 
 
     // Do EKLT. for all points!
-    double thres_huber = 10.0;
-    double SCALER      = 2.0;
+    float thres_huber = 10.0;
+    float SCALER      = 2.0;
 
 
-    double J_tmp, r;
+    float J_tmp, r;
+    Eigen::Vector2f pt_near, pt_far, l, pt_k;
+    Eigen::Vector3f interp_tmp;
+    Eigen::Vector2f delta_pt;
     for(int i = 0; i < n_pts_; ++i) {
         db[i].err_klt_normal_ = -1.0; // error initialization
 
         // Get points.
-        double invpow = 1.0 / (pow(2,MAX_PYR_LVL-1));
-        Eigen::Vector2f pt_near = db[i].pts_guess_near_*invpow;
-        Eigen::Vector2f pt_far  = db[i].pts_guess_far_ *invpow;
-        Eigen::Vector2f l       = pt_far - pt_near;
-        double s_far = l.norm();
+        float invpow = 1.0 / (pow(2,MAX_PYR_LVL-1));
+        pt_near = db[i].pts_guess_near_*invpow;
+        pt_far  = db[i].pts_guess_far_ *invpow;
+        l       = pt_far - pt_near;
+        float s_far = l.norm();
         l /= s_far;
-        double s = (db[i].pts_prior_*invpow- pt_near).norm(); // from prior information.
+        float s = (db[i].pts_prior_*invpow- pt_near).norm(); // from prior information.
         // cout <<"["<<i<<"]pt near far: "<< pt_near(0) <<"," <<pt_near(1)<<"/" <<pt_far(0)<<"," <<pt_far(1) <<"\n";
         // cout <<"prior: "<< db[i].pts_prior_(0)*invpow <<"," << db[i].pts_prior_(1)*invpow <<"\n"; 
         // cout <<"["<<i<<"] start s: " << s<<endl;
-        Eigen::Vector2f pt_k(db[i].pts_(0), db[i].pts_(1));
+        pt_k << db[i].pts_(0), db[i].pts_(1);
         pt_k *= invpow;
 
-        Eigen::Vector3f interp_tmp;
-        Eigen::Vector2f delta_pt;
-        double Ic_warp, dx_warp, dy_warp, Ik_single, r, w, J;
-        double JtwJ_scalar = 0, Jtwr_scalar = 0;
-        double delta_s = 0, r2_sum = 0;
-        bool a =true;
+        float Ic_warp, dx_warp, dy_warp, Ik_single, r, w, J;
+        float JtwJ_scalar = 0, Jtwr_scalar = 0;
+        float delta_s = 0, r2_sum = 0;
         for(int lvl = MAX_PYR_LVL-1; lvl > -1; --lvl){
             // calculate reference image brightness
             for(int j = 0; j < M; ++j)
@@ -81,11 +76,13 @@ void EpipolarKLT::runEpipolarKLT(
                 r2_sum = 0;
                 // Generate reference patch. (M+1) residual.
                 int cnt_valid = 0;
+                float u_warp , v_warp, Ik_now;
                 for(int j = 0; j < M; ++j){
-                    float u_warp = patch[j].x + pt_near(0) + delta_pt(0);
-                    float v_warp = patch[j].y + pt_near(1) + delta_pt(1);
+                    u_warp = patch[j].x + pt_near(0) + delta_pt(0);
+                    v_warp = patch[j].y + pt_near(1) + delta_pt(1);
+                    Ik_now = *(Ik_vector + j);
 
-                    if((u_warp < 1) || (u_warp > n_cols_pyr_[lvl] || (v_warp < 1) || (v_warp > n_rows_pyr_[lvl]))) // outside of image.
+                    if((u_warp < 1) || (u_warp > Ik[lvl].cols) || (v_warp < 1) || (v_warp > Ik[lvl].rows)) // outside of image.
                         continue;
                    
                     // calculate and push edge residual, Huber weight, Jacobian, and Hessian
@@ -94,29 +91,29 @@ void EpipolarKLT::runEpipolarKLT(
                     dx_warp = interp_tmp(1);
                     dy_warp = interp_tmp(2);
                     
-                    if(Ic_warp < 0 || *(Ik_vector + j) < 0) continue;
+                    if(Ic_warp < 0 || Ik_now < 0) continue;
 
                      // valid pixel!
                     ++cnt_valid;
                     
-                    r = Ic_warp - *(Ik_vector + j);
+                    r = Ic_warp - Ik_now;
                     w = fabs(r) < thres_huber ? 1.0f : thres_huber / fabs(r);
                     J = dx_warp*l(0) + dy_warp*l(1);
 
-                    JtwJ_scalar += w*J*J;
-                    Jtwr_scalar += J*w*r;
+                    float Jw = J*w;
+                    JtwJ_scalar += Jw*J;
+                    Jtwr_scalar += Jw*r;
                     r2_sum += r*r;
                 }
-
-                r = -sqrt(cnt_valid)*SCALER*(log(s) + log(-s+s_far) + 2.0f*log(0.5f*s_far));
-                J = -sqrt(cnt_valid)*SCALER*(2*s-s_far)/(s*(s-s_far));
+                float sqrtscaler =  -sqrt(cnt_valid)*SCALER;
+                r = sqrtscaler*(log(s) + log(-s+s_far) + 2.0f*log(0.5f*s_far));
+                J = sqrtscaler*(2*s-s_far)/(s*(s-s_far));
                 w = fabs(r) < thres_huber ? 1.0f : thres_huber / fabs(r);
                 JtwJ_scalar += w*J*J;
                 Jtwr_scalar += J*w*r;
 
                 // Calculate step size!
                 delta_s = -Jtwr_scalar/JtwJ_scalar;
-                // cout << " delta s: "<< delta_s <<"\n";
                 s += delta_s;
                 if(s < 0.01f) s = 0.01f;
                 if(s > s_far) s = s_far - 0.01f;

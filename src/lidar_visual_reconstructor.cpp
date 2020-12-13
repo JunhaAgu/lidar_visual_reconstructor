@@ -1002,9 +1002,9 @@ bool LidarVisualReconstructor::run(){
         }   
 #endif
         // Normal Epipolar KLT (with barrier function)
-        float logalpha = 0.0f, beta = 0.0f;
-        int MAX_ITER = 50;
-        int win_sz   = 33;
+        float logalpha = 1.0f, beta = 0.0f;
+        int MAX_ITER = 30;
+        int win_sz   = 43;
         
         tic();
         eklt_->runEpipolarKLT(

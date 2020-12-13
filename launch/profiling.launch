@@ -1,0 +1,6 @@
+<launch>
+    <node pkg="hce_autoexcavator" name="reconstruction_node" type="reconstruction_node" output="screen" launch-prefix="valgrind --tool=callgrind --callgrind-out-file='callgrind.reconstruction_node.%p' "/>
+
+
+	   
+</launch>
