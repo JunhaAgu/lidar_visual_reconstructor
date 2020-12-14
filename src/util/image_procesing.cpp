@@ -271,6 +271,57 @@ namespace improc {
         return (axay*(-I01+I00-I10+I11) + ax*(-I00+I10) + ay*(-I00+I01) + I00);
     };
 
+
+    void interpImageSingleRegularPatch(const cv::Mat& img, const float& ur, const float& vr, 
+								const vector<cv::Point2f>& patch, float* res) 
+	{
+        float* img_ptr = (float*)img.ptr<float>(0);
+        int n_cols = img.cols;
+        int n_rows = img.rows;
+
+        int ur0    = (int)floor(ur); // truncated coordinates
+        int vr0    = (int)floor(vr);
+		float ax   = ur-(float)ur0; // globally used in the patch.
+		float ay   = vr-(float)vr0;
+        float axay = ax*ay;
+
+		// iterate in the vector
+		int M = patch.size();
+
+		float u,v;
+		int u0,v0;
+		float I00, I01, I10, I11;
+		float* pointer_cur = nullptr;
+		for(int i = 0; i < M; ++i){
+			u  = patch[i].x + ur;
+			v  = patch[i].y + vr;
+
+			if (u < 1 || u > n_cols - 1){
+				*(res+i) = -1;
+				continue;
+			}
+			if( v < 1 || v > n_rows - 1) {
+				*(res+i) = -1;
+				continue;
+			}
+
+			u0 = (int)floor(u);
+			v0 = (int)floor(v);
+
+			int v0cols   = v0*n_cols;
+			int v0colsu0 = v0cols + u0;
+			pointer_cur  = img_ptr + v0colsu0;
+		
+			I00 = *pointer_cur;
+			I10 = *(pointer_cur + 1);
+			I01 = *(pointer_cur + n_cols);
+			I11 = *(pointer_cur + n_cols + 1);
+
+			*(res+i) = (axay*(-I01+I00-I10+I11) + ax*(-I00+I10) + ay*(-I00+I01) + I00);
+		}
+    };
+
+
     void interpImageSingle3(const cv::Mat& img, const cv::Mat& du, const cv::Mat& dv, const float& u, const float& v, Eigen::Vector3f& interp_) 
     {
         float* img_ptr = (float*)img.ptr<float>(0);
@@ -289,7 +340,7 @@ namespace improc {
         int u0 = (int)u; // truncated coordinates
         int v0 = (int)v;
         // cout << "u0 v0: " << u0 << ", " << v0 << ", ncols, nrows: " << n_cols << ", " << n_rows << endl;
-        if ((u0 > 0) && (u0 < n_cols - 1))
+        if (u0 > 0 && u0 < n_cols - 1)
             ax = u - (float)u0;
         else {
             interp_(0) = -1;
@@ -338,6 +389,77 @@ namespace improc {
         interp_(0) = res_img;
         interp_(1) = res_du;
         interp_(2) = res_dv;
+    };
+	 void interpImageSingle3RegularPatch(const cv::Mat& img, const cv::Mat& du, const cv::Mat& dv,
+	 	 const float& ur, const float& vr, const vector<cv::Point2f>& patch, float* res_img, float* res_du, float* res_dv) 
+    {
+        float* img_ptr = (float*)img.ptr<float>(0);
+        float* du_ptr  = (float*)du.ptr<float>(0);
+        float* dv_ptr  = (float*)dv.ptr<float>(0);
+
+        int n_cols = img.cols;
+        int n_rows = img.rows;
+
+        int ur0    = (int)floor(ur); // truncated coordinates
+        int vr0    = (int)floor(vr);
+		float ax   = ur-(float)ur0; // globally used in the patch.
+		float ay   = vr-(float)vr0;
+        float axay = ax*ay;
+
+		// iterate in the vector
+		int M = patch.size();
+
+		float u,v;
+		int u0,v0;
+		float I00, I01, I10, I11;
+		float* pointer_cur = nullptr;
+        for(int i = 0; i < M; ++i){
+			u  = patch[i].x + ur;
+			v  = patch[i].y + vr;
+
+			if (u < 1 || u > n_cols - 1 ){
+				*(res_img+i) = -1;
+				*(res_du+i) = 0;
+				*(res_dv+i) = 0;
+				continue;
+			}
+			if( v < 1 || v > n_rows - 1) {
+				*(res_img+i) = -1;
+				*(res_du+i) = 0;
+				*(res_dv+i) = 0;
+				continue;
+			}
+
+			u0 = (int)floor(u);
+			v0 = (int)floor(v);
+
+			int v0cols   = v0*n_cols;
+			int v0colsu0 = v0cols + u0;
+			pointer_cur = img_ptr + v0colsu0;
+		
+			I00 = *pointer_cur;
+			I10 = *(pointer_cur + 1);
+			I01 = *(pointer_cur += n_cols);
+			I11 = *(++pointer_cur);
+
+			*(res_img+i) = (axay*(-I01+I00-I10+I11) + ax*(-I00+I10) + ay*(-I00+I01) + I00);
+
+			pointer_cur = du_ptr + v0colsu0;
+			I00 = *pointer_cur;
+			I10 = *(pointer_cur + 1);
+			I01 = *(pointer_cur += n_cols);
+			I11 = *(++pointer_cur);
+
+			*(res_du+i) = (axay*(-I01+I00-I10+I11) + ax*(-I00+I10) + ay*(-I00+I01) + I00);
+
+			pointer_cur = dv_ptr + v0colsu0;
+			I00 = *pointer_cur;
+			I10 = *(pointer_cur + 1);
+			I01 = *(pointer_cur += n_cols);
+			I11 = *(++pointer_cur);
+
+			*(res_dv+i) = (axay*(-I01+I00-I10+I11) + ax*(-I00+I10) + ay*(-I00+I01) + I00);
+		}
     };
 
 	void sampleImage(const cv::Mat& img, const vector<chk::Point2f>& pts, chk::Point2f& pt_offset, float* brightness,int* valid_vec) {

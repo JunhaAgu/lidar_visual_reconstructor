@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(hce_autoexcavator)
-SET(CMAKE_BUILD_TYPE Release) # Release, RelWithDebInfo
+set(CMAKE_BUILD_TYPE Release) # Release, RelWithDebInfo
 
 find_package(catkin REQUIRED cmake_modules)
 find_package(Eigen REQUIRED)
@@ -69,7 +69,6 @@ include_directories( ${catkin_INCLUDE_DIRS} )
 include_directories( ${Eigen_INCLUDE_DIRS} )
 
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -std=c++11 -pg -O2 -m64 -Ofast -flto -msse3 -march=native -mfpmath=sse")
-
 
 # executables
 add_executable (reconstruction_node src/main_reconstruction.cpp ${SRC})

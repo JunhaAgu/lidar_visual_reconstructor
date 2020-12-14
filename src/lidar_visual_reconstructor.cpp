@@ -42,7 +42,7 @@ LidarVisualReconstructor::LidarVisualReconstructor(ros::NodeHandle& nh)
     cdt_ = new ConstrainedDT(); // without initialization.
 
     // Epipolar KLT initialization
-    eklt_ = new EpipolarKLT();
+    eklt_ = new EpipolarKLT(43,true);
 };
 
 LidarVisualReconstructor::~LidarVisualReconstructor(){
@@ -1002,8 +1002,8 @@ bool LidarVisualReconstructor::run(){
         }   
 #endif
         // Normal Epipolar KLT (with barrier function)
-        float logalpha = 1.0f, beta = 0.0f;
-        int MAX_ITER = 30;
+        float alpha = 1.0f, beta = 0.0f;
+        int MAX_ITER = 50;
         int win_sz   = 43;
         
         tic();
@@ -1011,7 +1011,7 @@ bool LidarVisualReconstructor::run(){
             frames_[0]->img_pyr(), frames_[1]->img_pyr(), 
             frames_[0]->du(), frames_[0]->dv(),
             frames_[1]->du(), frames_[1]->dv(),
-            win_sz, MAX_ITER, logalpha, beta, db_);
+            win_sz, MAX_ITER, alpha, beta, db_);
         toc(1);
 
 
@@ -1019,11 +1019,17 @@ bool LidarVisualReconstructor::run(){
         tic();
         eklt_->runAffineBrightnessCompensation(
             frames_[0]->img_pyr(), frames_[1]->img_pyr(),
-            db_,logalpha,beta);
+            db_, alpha, beta);
         toc(1);
 
         // Affine constrained Epipolar KLT (with barrier function)
-
+        tic();
+        eklt_->runEpipolarAffineKLT(
+            frames_[0]->img_pyr(), frames_[1]->img_pyr(), 
+            frames_[0]->du(), frames_[0]->dv(),
+            frames_[1]->du(), frames_[1]->dv(),
+            win_sz, MAX_ITER, alpha, beta, db_);
+        toc(1);
 
         // Depth reconstruction via DLT (known R_c0c1 and t_c0c1.)    
 
