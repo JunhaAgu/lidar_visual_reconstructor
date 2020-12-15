@@ -17,6 +17,7 @@
 #include "util/image_processing.hpp"
 
 #include "immintrin.h"
+#include "stdlib.h"
 
 using namespace std;
 typedef Eigen::Matrix<float, 2, 1> Vec2;
@@ -53,6 +54,14 @@ public:
         const float& alpha, const float& beta, 
         vector<PointDB>& db);
 
+    void runEpipolarAffineKLT_SSE(
+        const vector<cv::Mat>& Ik,   const vector<cv::Mat>& Ic, 
+        const vector<cv::Mat>& du_k, const vector<cv::Mat>& dv_k,
+        const vector<cv::Mat>& du_c, const vector<cv::Mat>& dv_c,
+        const int& win_sz, const int& MAX_ITER,
+        const float& alpha, const float& beta, 
+        vector<PointDB>& db);
+
 // points and pattern
 private:
     int n_pts_; // # of current pixel points.
@@ -78,18 +87,21 @@ private:
     // mJtWr_sse_ = [15,16,17,18,19]^t
     // err = [20];
 
-    Mat55 JtWJ_sse_, JtJ_sse_;
-    Vec5 mJtWr_sse_, JtJinvJt_sse_;
+    Mat55 JtWJ_sse_;
+    Vec5 mJtWr_sse_;
+
+    int n_patch_;
+    int n_ssesteps_; // == floor(n_patch_ / 4)
+    int n_patch_trunc_ ; // == 4* n_ssesteps_ <= n_patch_
 
     float* err_sse_;
-    int* mask_;
     float* upattern_;
     float* vpattern_;
 
-    float* buf_up_ref_;
-    float* buf_vp_ref_;
-    float* buf_up_warp_;
-    float* buf_vp_warp_;
+    float* buf_u_ref_;
+    float* buf_v_ref_;
+    float* buf_u_warp_;
+    float* buf_v_warp_;
 
     float* buf_Ik_;
     float* buf_Ic_warp_;
@@ -101,8 +113,32 @@ private:
 
     float* SSEData_; // [4 * 21] (for make "JtWJ_sse_" and "mJtWR_sse_")
 
+    // for interpolation SIMD version
+    float* I00_;
+    float* I01_;
+    float* I10_;
+    float* I11_;
+    
+    float* mask_Ik_; // test validity of pixel.
+
+    float* mask_Ic_;
+    float* mask_duc_;
+    float* mask_dvc_;
+
+    void sse_setPatchPattern(const vector<cv::Point2f>& patch);
+    void sse_generateReferencePoints(const float& u, const float& v); // 
+    void sse_warpAffine(const Vec5& params, const float& lx, const float& ly, const float& u, const float& v);
+    void sse_interpReferenceImage(const cv::Mat& Ik);
+    void sse_calcResidualAndWeight(const cv::Mat& Ic, const cv::Mat& du_c, const cv::Mat& dv_c, const float& alpha, const float& beta,  const float& thres_huber);
+    void sse_calcHessianAndJacobian(const Vec5& params, const float& lx, const float& ly, float& err_sse);
+    void sse_update(const __m128& J1, const __m128& J2, const __m128& J3, const __m128& J4, const __m128& J5,
+        const __m128& res, const __m128& weight, float& err_sse);
+    void sse_solveGaussNewtonStep(Vec5& params_updated);
 
 
+    void sse_interpImage_simd(const cv::Mat& img, float* buf_u, float* buf_v,  float* res_img, float* mask);
+    void sse_calcResidualAndWeight_simd(const cv::Mat& Ic, const cv::Mat& du_c, const cv::Mat& dv_c,
+        const float& alpha, const float& beta, const float& thres_huber);
 private:
     void calcEpipolarAffineKLTSingle(
         const cv::Mat& img_k, const cv::Mat& img_c, 

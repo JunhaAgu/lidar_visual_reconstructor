@@ -283,7 +283,6 @@ namespace improc {
         int vr0    = (int)floor(vr);
 		float ax   = ur-(float)ur0; // globally used in the patch.
 		float ay   = vr-(float)vr0;
-        float axay = ax*ay;
 
 		// iterate in the vector
 		int M = patch.size();
@@ -317,7 +316,7 @@ namespace improc {
 			I01 = *(pointer_cur + n_cols);
 			I11 = *(pointer_cur + n_cols + 1);
 
-			*(res+i) = (axay*(-I01+I00-I10+I11) + ax*(-I00+I10) + ay*(-I00+I01) + I00);
+			*(res+i) = (ax*(ay*(-I01+I00-I10+I11) + (-I00+I10)) + ay*(-I00+I01) + I00);
 		}
     };
 
@@ -356,7 +355,6 @@ namespace improc {
             interp_(2) = -1;
             return;
         }
-        float axay = ax*ay;
         float I00, I01, I10, I11;
         float du00, du01, du10, du11;
         float dv00, dv01, dv10, dv11;
@@ -382,15 +380,15 @@ namespace improc {
         dv10 = dv_ptr[v0colsu0_cols];
         dv11 = dv_ptr[v0colsu0_cols_1];
 
-        float res_img = ax*(I01 - I00) + ay*(I10 - I00) + axay*(-I01 + I00 + I11 - I10) + I00;
-        float res_du  = ax*(du01 - du00) + ay*(du10 - du00) + axay*(-du01 + du00 + du11 - du10) + du00;
-        float res_dv  = ax*(dv01 - dv00) + ay*(dv10 - dv00) + axay*(-dv01 + dv00 + dv11 - dv10) + dv00;
+        float res_img = ax*(I01 - I00)   + ax*(ay*(-I01 + I00 + I11 - I10) + (I10 - I00)) + I00;
+        float res_du  = ax*(du01 - du00) + ax*(ay*(-du01 + du00 + du11 - du10) + (du10 - du00)) + du00;
+        float res_dv  = ax*(dv01 - dv00) + ax*(ay*(-dv01 + dv00 + dv11 - dv10) + (dv10 - dv00)) + dv00;
 
         interp_(0) = res_img;
         interp_(1) = res_du;
         interp_(2) = res_dv;
     };
-	 void interpImageSingle3RegularPatch(const cv::Mat& img, const cv::Mat& du, const cv::Mat& dv,
+	void interpImageSingle3RegularPatch(const cv::Mat& img, const cv::Mat& du, const cv::Mat& dv,
 	 	 const float& ur, const float& vr, const vector<cv::Point2f>& patch, float* res_img, float* res_du, float* res_dv) 
     {
         float* img_ptr = (float*)img.ptr<float>(0);
@@ -404,7 +402,6 @@ namespace improc {
         int vr0    = (int)floor(vr);
 		float ax   = ur-(float)ur0; // globally used in the patch.
 		float ay   = vr-(float)vr0;
-        float axay = ax*ay;
 
 		// iterate in the vector
 		int M = patch.size();
@@ -442,7 +439,7 @@ namespace improc {
 			I01 = *(pointer_cur += n_cols);
 			I11 = *(++pointer_cur);
 
-			*(res_img+i) = (axay*(-I01+I00-I10+I11) + ax*(-I00+I10) + ay*(-I00+I01) + I00);
+			*(res_img+i) = (ax*(ay*(-I01+I00-I10+I11) + (-I00+I10)) + ay*(-I00+I01) + I00);
 
 			pointer_cur = du_ptr + v0colsu0;
 			I00 = *pointer_cur;
@@ -450,7 +447,7 @@ namespace improc {
 			I01 = *(pointer_cur += n_cols);
 			I11 = *(++pointer_cur);
 
-			*(res_du+i) = (axay*(-I01+I00-I10+I11) + ax*(-I00+I10) + ay*(-I00+I01) + I00);
+			*(res_du+i) = (ax*(ay*(-I01+I00-I10+I11) + (-I00+I10)) + ay*(-I00+I01) + I00);
 
 			pointer_cur = dv_ptr + v0colsu0;
 			I00 = *pointer_cur;
@@ -458,7 +455,77 @@ namespace improc {
 			I01 = *(pointer_cur += n_cols);
 			I11 = *(++pointer_cur);
 
-			*(res_dv+i) = (axay*(-I01+I00-I10+I11) + ax*(-I00+I10) + ay*(-I00+I01) + I00);
+			*(res_dv+i) = (ax*(ay*(-I01+I00-I10+I11) + (-I00+I10)) + ay*(-I00+I01) + I00);
+		}
+    };
+
+	void interpImageSingle3ArbitraryPatch(const cv::Mat& img, const cv::Mat& du, const cv::Mat& dv,
+	 	 const vector<cv::Point2f>& patch, float* res_img, float* res_du, float* res_dv) 
+    {
+        float* img_ptr = (float*)img.ptr<float>(0);
+        float* du_ptr  = (float*)du.ptr<float>(0);
+        float* dv_ptr  = (float*)dv.ptr<float>(0);
+
+        int n_cols = img.cols;
+        int n_rows = img.rows;
+
+		// iterate in the vector
+		int M = patch.size();
+
+		float ax, ay, axay;
+		float u,v;
+		int u0,v0;
+		float I00, I01, I10, I11;
+		float* pointer_cur = nullptr;
+        for(int i = 0; i < M; ++i){
+			u = patch[i].x;
+			v = patch[i].y;
+			if (u < 1 || u > n_cols - 1 ){
+				*(res_img+i) = -1;
+				*(res_du+i) = 0;
+				*(res_dv+i) = 0;
+				continue;
+			}
+			if( v < 1 || v > n_rows - 1) {
+				*(res_img+i) = -1;
+				*(res_du+i) = 0;
+				*(res_dv+i) = 0;
+				continue;
+			}
+
+			u0 = (int)floor(u);
+			v0 = (int)floor(v);
+
+			ax = u-(float)u0;
+			ay = v-(float)v0;
+			axay = ax*ay;
+
+			int v0cols   = v0*n_cols;
+			int v0colsu0 = v0cols + u0;
+			pointer_cur = img_ptr + v0colsu0;
+		
+			I00 = *pointer_cur;
+			I10 = *(pointer_cur + 1);
+			I01 = *(pointer_cur += n_cols);
+			I11 = *(++pointer_cur);
+
+			*(res_img+i) = (ax*(ay*(-I01+I00-I10+I11) + (-I00+I10)) + ay*(-I00+I01) + I00);
+
+			pointer_cur = du_ptr + v0colsu0;
+			I00 = *pointer_cur;
+			I10 = *(pointer_cur + 1);
+			I01 = *(pointer_cur += n_cols);
+			I11 = *(++pointer_cur);
+
+			*(res_du+i) = (ax*(ay*(-I01+I00-I10+I11) + (-I00+I10)) + ay*(-I00+I01) + I00);
+
+			pointer_cur = dv_ptr + v0colsu0;
+			I00 = *pointer_cur;
+			I10 = *(pointer_cur + 1);
+			I01 = *(pointer_cur += n_cols);
+			I11 = *(++pointer_cur);
+
+			*(res_dv+i) = (ax*(ay*(-I01+I00-I10+I11) + (-I00+I10)) + ay*(-I00+I01) + I00);
 		}
     };
 

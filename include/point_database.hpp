@@ -7,6 +7,7 @@
 
 
 struct PointDB {
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     int state_;
     float depth_lidar_;           // LiDAR-based depths for 'points_constraints_'
     float depth_recon_;           // estimated depths for 'points_constraints_'

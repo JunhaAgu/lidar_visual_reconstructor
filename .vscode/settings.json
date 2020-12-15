@@ -55,7 +55,8 @@
         "cinttypes": "cpp",
         "utility": "cpp",
         "typeindex": "cpp",
-        "typeinfo": "cpp"
+        "typeinfo": "cpp",
+        "random": "cpp"
     },
     "python.autoComplete.extraPaths": [
         "/home/larrkchlaptop/catkin_ws/devel/lib/python2.7/dist-packages",

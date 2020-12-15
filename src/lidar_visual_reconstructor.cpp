@@ -42,7 +42,7 @@ LidarVisualReconstructor::LidarVisualReconstructor(ros::NodeHandle& nh)
     cdt_ = new ConstrainedDT(); // without initialization.
 
     // Epipolar KLT initialization
-    eklt_ = new EpipolarKLT(43,true);
+    eklt_ = new EpipolarKLT(33,true);
 };
 
 LidarVisualReconstructor::~LidarVisualReconstructor(){
@@ -953,8 +953,10 @@ bool LidarVisualReconstructor::run(){
 
         // Delaunay ... 
         int n_db_size = db_.size();
+        tic();
         cdt_->initializeDT(db_);
         cdt_->executeNormalDT();
+        cout << " DT time [ms]: "<< toc(0) <<"\n";
 
 
 
@@ -1004,7 +1006,7 @@ bool LidarVisualReconstructor::run(){
         // Normal Epipolar KLT (with barrier function)
         float alpha = 1.0f, beta = 0.0f;
         int MAX_ITER = 50;
-        int win_sz   = 43;
+        int win_sz   = 25;
         
         tic();
         eklt_->runEpipolarKLT(
@@ -1023,13 +1025,25 @@ bool LidarVisualReconstructor::run(){
         toc(1);
 
         // Affine constrained Epipolar KLT (with barrier function)
+        // tic();
+        // win_sz = 33;
+        // eklt_->runEpipolarAffineKLT(
+        //     frames_[0]->img_pyr(), frames_[1]->img_pyr(), 
+        //     frames_[0]->du(), frames_[0]->dv(),
+        //     frames_[1]->du(), frames_[1]->dv(),
+        //     win_sz, MAX_ITER, alpha, beta, db_);
+        // toc(1);
+
+        // Affine klt (SSE)
         tic();
-        eklt_->runEpipolarAffineKLT(
+        win_sz = 33;
+        eklt_->runEpipolarAffineKLT_SSE(
             frames_[0]->img_pyr(), frames_[1]->img_pyr(), 
             frames_[0]->du(), frames_[0]->dv(),
             frames_[1]->du(), frames_[1]->dv(),
             win_sz, MAX_ITER, alpha, beta, db_);
         toc(1);
+
 
         // Depth reconstruction via DLT (known R_c0c1 and t_c0c1.)    
 
@@ -1041,8 +1055,10 @@ bool LidarVisualReconstructor::run(){
         db_.emplace_back(); // super triangles
 
         vector<PointDB> db_addi_;
+        tic();
         cdt_->getCenterPointsOfTriangles(400, db_addi_);
         cdt_->addPointsIntoDT(db_addi_);
+        cout << "Densification time : "<< toc(0) << "[ms]\n";
 
         for(auto itr = db_addi_.begin(); itr != db_addi_.end(); ++itr) 
             db_.emplace_back(*itr);
@@ -1052,14 +1068,16 @@ bool LidarVisualReconstructor::run(){
             cv::Scalar orange(0, 165, 255), blue(255, 0, 0), magenta(255, 0, 255);
             cv::Mat img_8u;
             cv::cvtColor(frames_[0]->imgu(), img_8u, CV_GRAY2BGR);
+            cv::namedWindow("Delaunay results", CV_WINDOW_AUTOSIZE);
+ 
             for(auto itr  = cdt_->getTriangleMap().begin();
                      itr != cdt_->getTriangleMap().end();  ++itr){
                 int i0 = itr->second->idx[0];
                 int i1 = itr->second->idx[1];
                 int i2 = itr->second->idx[2];
-                if(i0 != n_db_size-1 && i1 != n_db_size-1 && i2 != n_db_size-1 &&
-                   i0 != n_db_size && i1 != n_db_size && i2 != n_db_size &&
-                   i0 != n_db_size+1 && i1 != n_db_size+1 && i2 != n_db_size+1){
+                if(i0 != n_db_size && i1 != n_db_size && i2 != n_db_size &&
+                   i0 != n_db_size+1 && i1 != n_db_size+1 && i2 != n_db_size+1 &&
+                   i0 != n_db_size+2 && i1 != n_db_size+2 && i2 != n_db_size+2){
                     cv::line(img_8u, 
                         cv::Point(db_[i0].pts_(0), db_[i0].pts_(1)),
                         cv::Point(db_[i1].pts_(0), db_[i1].pts_(1)), blue, 3, CV_AA);
@@ -1074,7 +1092,6 @@ bool LidarVisualReconstructor::run(){
             for(auto itr = db_.begin(); itr != db_.end(); ++itr)
                 cv::circle(img_8u, cv::Point(itr->pts_(0),itr->pts_(1)), 1, magenta);
             
-            cv::namedWindow("Delaunay results", CV_WINDOW_AUTOSIZE);
             cv::imshow("Delaunay results", img_8u);
             cv::waitKey(0);
         }

@@ -68,7 +68,8 @@ include_directories( ${includeDirs} )
 include_directories( ${catkin_INCLUDE_DIRS} )
 include_directories( ${Eigen_INCLUDE_DIRS} )
 
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -std=c++11 -pg -O2 -m64 -Ofast -flto -msse3 -march=native -mfpmath=sse")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -std=c++11 -pg -O3 -m64 -Ofast -flto -msse -msse2 -msse3 -march=native -mfpmath=sse")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -pg -O3 -m64 -Ofast -flto -msse -msse2 -msse3 -march=native -mfpmath=sse")
 
 # executables
 add_executable (reconstruction_node src/main_reconstruction.cpp ${SRC})

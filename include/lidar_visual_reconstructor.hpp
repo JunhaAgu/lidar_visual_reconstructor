@@ -62,6 +62,7 @@ typedef Eigen::Vector4i EVec4i;
 using namespace std;
 class LidarVisualReconstructor {
 public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     LidarVisualReconstructor(ros::NodeHandle& nh);
     ~LidarVisualReconstructor();
 

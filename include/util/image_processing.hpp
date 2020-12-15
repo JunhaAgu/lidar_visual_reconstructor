@@ -27,6 +27,8 @@ namespace improc{
     void interpImageSingle3(const cv::Mat& img, const cv::Mat& du, const cv::Mat& dv, const float& u, const float& v, Eigen::Vector3f& interp_);
     void interpImageSingle3RegularPatch(const cv::Mat& img, const cv::Mat& du, const cv::Mat& dv,
 	 	 const float& ur, const float& vr, const vector<cv::Point2f>& patch, float* res_img, float* res_du, float* res_dv);
+    void interpImageSingle3ArbitraryPatch(const cv::Mat& img, const cv::Mat& du, const cv::Mat& dv,
+	 	 const vector<cv::Point2f>& patch, float* res_img, float* res_du, float* res_dv);
     void sampleImage(const cv::Mat& img, const vector<chk::Point2f>& pts, chk::Point2f& pt_offset, float* brightness,int* valid_vec);
     void diffImage(const cv::Mat& img, cv::Mat& dimg, bool flag_dx, bool flag_dy);
     float calcZNCC(float* a, float* b, int len);
