@@ -2020,3 +2020,36 @@ void ConstrainedDT::getCenterPointsOfTriangles(const float& thres_area, vector<P
         }
     }
 };
+
+
+void ConstrainedDT::getCenterPointsOfTrianglesAndFillDepth(const float& thres_area, const vector<PointDB>& db, vector<PointDB>& db_addi) {
+    db_addi.resize(0);
+
+    this->thres_area_ = thres_area;
+    denom_ = std::fmaxf(x_max_ - x_min_, y_max_ - y_min_);
+
+    for (auto iter = tri_map_.begin(); iter != tri_map_.end(); ++iter){
+        Triangle* tri_cur = iter->second;
+        Vertex& pa = this->points_[tri_cur->idx[0]];
+        Vertex& pb = this->points_[tri_cur->idx[1]];
+        Vertex& pc = this->points_[tri_cur->idx[2]];
+
+        float area = calcTriArea(pa,pb,pc)*denom_*denom_;
+
+        if (area > this->thres_area_ && area < 10000){
+            db_addi.emplace_back();
+            db_addi[db_addi.size()-1].pts_ <<
+                0.33333f*(pa.x + pb.x + pc.x)*denom_ + x_min_,
+                0.33333f*(pa.y + pb.y + pc.y)*denom_ + y_min_;
+
+            float depth_interp = db[tri_cur->idx[0]].depth_recon_
+                            + db[tri_cur->idx[1]].depth_recon_
+                            + db[tri_cur->idx[2]].depth_recon_;
+            depth_interp *= 0.33333333f;
+
+            depth_interp = db[tri_cur->idx[0]].depth_recon_;
+            // cout <<"recon func depth: " << depth_interp << "\n";
+            db_addi[db_addi.size()-1].depth_lidar_ = depth_interp;
+        }
+    }
+};

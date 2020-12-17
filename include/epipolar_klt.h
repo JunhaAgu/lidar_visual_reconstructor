@@ -41,6 +41,14 @@ public:
         const float& alpha, const float& beta, 
         vector<PointDB>& db);
 
+    void runEpipolarKLT_SSE(
+            const vector<cv::Mat>& Ik, const vector<cv::Mat>& Ic, 
+            const vector<cv::Mat>& du_k, const vector<cv::Mat>& dv_k,
+            const vector<cv::Mat>& du_c, const vector<cv::Mat>& dv_c,
+            const int& win_sz, const int& MAX_ITER,
+            const float& logalpha, const float& beta, 
+            vector<PointDB>& db);
+
     void runAffineBrightnessCompensation(
         const vector<cv::Mat>& Ik, const vector<cv::Mat>& Ic, 
         const vector<PointDB>& db,
@@ -55,6 +63,14 @@ public:
         vector<PointDB>& db);
 
     void runEpipolarAffineKLT_SSE(
+        const vector<cv::Mat>& Ik,   const vector<cv::Mat>& Ic, 
+        const vector<cv::Mat>& du_k, const vector<cv::Mat>& dv_k,
+        const vector<cv::Mat>& du_c, const vector<cv::Mat>& dv_c,
+        const int& win_sz, const int& MAX_ITER,
+        const float& alpha, const float& beta, 
+        vector<PointDB>& db);
+
+    void runEpipolarAffineKLT_AVX(
         const vector<cv::Mat>& Ik,   const vector<cv::Mat>& Ic, 
         const vector<cv::Mat>& du_k, const vector<cv::Mat>& dv_k,
         const vector<cv::Mat>& du_c, const vector<cv::Mat>& dv_c,
@@ -78,23 +94,25 @@ private:
     // JtWJ matrix is guaranteed to be P.S.D and symmetric matrix.
     // Thus, we can efficiently solve this equation by Cholesky decomposition.
     // --> JtWJ.ldlt().solve(mJtWr);
-    // JtWJ_sse_ = [
+    // JtWJ_simd_ = [
     // 0, *, *, *, *;
     // 1, 5, *, *, *;
     // 2, 6, 9, *, *;
     // 3, 7,10,12, *;
     // 4, 8,11,13,14;
-    // mJtWr_sse_ = [15,16,17,18,19]^t
+    // JtWJ_simd_ = [15,16,17,18,19]^t
     // err = [20];
-
-    Mat55 JtWJ_sse_;
-    Vec5 mJtWr_sse_;
 
     int n_patch_;
     int n_ssesteps_; // == floor(n_patch_ / 4)
     int n_patch_trunc_ ; // == 4* n_ssesteps_ <= n_patch_
 
-    float* err_sse_;
+    Mat55 JtWJ_simd_;
+    Vec5 mJtWr_simd_;
+    
+    float JtWJ_normal_;
+    float mJtWr_normal_;
+
     float* upattern_;
     float* vpattern_;
 
@@ -111,7 +129,8 @@ private:
     float* buf_residual_;
     float* buf_weight_;
 
-    float* SSEData_; // [4 * 21] (for make "JtWJ_sse_" and "mJtWR_sse_")
+    float* SSEData_; // [4 * 21] (for make "JtWJ_simd_" and "JtWJ_simd_")
+    float* AVXData_; // [8 * 21] (for make "JtWJ_simd_" and "JtWJ_simd_")
 
     // for interpolation SIMD version
     float* I00_;
@@ -125,26 +144,43 @@ private:
     float* mask_duc_;
     float* mask_dvc_;
 
-    void sse_setPatchPattern(const vector<cv::Point2f>& patch);
-    void sse_generateReferencePoints(const float& u, const float& v); // 
-    void sse_warpAffine(const Vec5& params, const float& lx, const float& ly, const float& u, const float& v);
-    void sse_interpReferenceImage(const cv::Mat& Ik);
-    void sse_calcResidualAndWeight(const cv::Mat& Ic, const cv::Mat& du_c, const cv::Mat& dv_c, const float& alpha, const float& beta,  const float& thres_huber);
-    void sse_calcHessianAndJacobian(const Vec5& params, const float& lx, const float& ly, float& err_sse);
-    void sse_update(const __m128& J1, const __m128& J2, const __m128& J3, const __m128& J4, const __m128& J5,
-        const __m128& res, const __m128& weight, float& err_sse);
-    void sse_solveGaussNewtonStep(Vec5& params_updated);
+    bool* mask_valid_;
 
+    void simd_setPatchPattern(const vector<cv::Point2f>& patch, int stepsize);
+    
+    void simd_generateReferencePoints_SSE(const float& u, const float& v); // commonly used.
+    void simd_generateReferencePoints_AVX(const float& u, const float& v); // commonly used.
 
-    void sse_interpImage_simd(const cv::Mat& img, float* buf_u, float* buf_v,  float* res_img, float* mask);
-    void sse_calcResidualAndWeight_simd(const cv::Mat& Ic, const cv::Mat& du_c, const cv::Mat& dv_c,
+    void simd_warpNormal_SSE(const float& s,     const float& lx, const float& ly, const float& u, const float& v);
+    void simd_warpAffine_SSE(const Vec5& params, const float& lx, const float& ly, const float& u, const float& v);
+    void simd_warpAffine_AVX(const Vec5& params, const float& lx, const float& ly, const float& u, const float& v);
+
+    void simd_interpImage(const cv::Mat& Ik); // non simd version
+    void simd_interpImage_SSE(const cv::Mat& img, float* buf_u, float* buf_v,  float* res_img, float* mask);
+    void simd_interpImage_AVX(const cv::Mat& img, float* buf_u, float* buf_v,  float* res_img, float* mask);
+
+    void simd_calcResidualAndWeight    (const cv::Mat& Ic, const cv::Mat& du_c, const cv::Mat& dv_c, 
+        const float& alpha, const float& beta,  const float& thres_huber);
+    void simd_calcResidualAndWeight_SSE(const cv::Mat& Ic, const cv::Mat& du_c, const cv::Mat& dv_c,
         const float& alpha, const float& beta, const float& thres_huber);
-private:
-    void calcEpipolarAffineKLTSingle(
-        const cv::Mat& img_k, const cv::Mat& img_c, 
-        const cv::Mat& du_c, const cv::Mat& dv_c, const Vec2& pt_k,
-        Vec2& pt_c_tracked, Vec5& point_params,
-        float& err_ssd_, float& err_ncc_, int& mask_);
+    void simd_calcResidualAndWeight_AVX(const cv::Mat& Ic, const cv::Mat& du_c, const cv::Mat& dv_c,
+        const float& alpha, const float& beta, const float& thres_huber);
+
+    void simd_calcHessianAndJacobianNormal_SSE(const float& s, const float& lx, const float& ly, float& err_sse);
+    void simd_calcHessianAndJacobianAffine_SSE(const Vec5& params, const float& lx, const float& ly, float& err_sse);
+    void simd_calcHessianAndJacobianAffine_AVX(const Vec5& params, const float& lx, const float& ly, float& err_sse);
+
+    void simd_updateNormal_SSE(const __m128& J1,
+        const __m128& res, const __m128& weight, float& err_sse);
+    void simd_updateAffine_SSE(const __m128& J1, const __m128& J2, const __m128& J3, const __m128& J4, const __m128& J5,
+        const __m128& res, const __m128& weight, float& err_sse);
+    void simd_updateAffine_AVX(const __m256& J1, const __m256& J2, const __m256& J3, const __m256& J4, const __m256& J5,
+        const __m256& res, const __m256& weight, float& err_sse);
+    
+    void simd_solveGaussNewtonStepNormal(float& delta_s);
+    void simd_solveGaussNewtonStepAffine(Vec5& delta_params);
+
+
 
 private: 
     void generatePattern(

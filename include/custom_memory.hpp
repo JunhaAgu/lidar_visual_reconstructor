@@ -9,6 +9,7 @@
 * (256 bits) two LSB addresses of 32 bytes-aligned : 00, 20, 40, 60, 80, A0, C0, E0
 * (128 bits) two LSB addresses of 16 bytes-aligned : 00, 10, 20, 30, 40, 50, 60, 70, 80, 90, A0, B0, C0, D0, E0, F0
 */
+// NOT USED!!!! in Linux, 'aligned_alloc' can be used.
 inline void* custom_aligned_malloc(std::size_t size)
 {
     void* original = std::malloc(size + ALIGN_BYTES); //size+ALIGN_BYTESžžÅ­ ÇÒŽçÇÏ°í,

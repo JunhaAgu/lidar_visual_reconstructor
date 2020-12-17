@@ -7,7 +7,6 @@
 
 #include "lidar_visual_reconstructor.hpp"
 
-
 using namespace std;
 int main(int argc, char **argv) {
     ros::init(argc, argv, "reconstruction_node");

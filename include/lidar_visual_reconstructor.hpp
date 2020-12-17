@@ -104,10 +104,24 @@ private:
     int n_lidars_;  // 2
     vector<LidarPcl*> pcls_;
 
+
 // Extracted points & Delaunay triangles.
 private:
     vector<PointDB> db_; // Points to be reconstructed.
     ConstrainedDT* cdt_;
+    cv::Mat tri_id_image_; // have triangle index. (CV_32SC1) with same size of image.
+    cv::Mat coef_tri_; // coefficient matrix.
+    cv::Mat img_depth_; // depth image.
+    cv::Mat tri_id_image_color_;
+
+    int n_db_org_size_;
+
+
+private:
+    void generateTriangleIndexImage();
+    void generateDepthImage();
+    inline float findMinValue(const float& a, const float& b, const float& c);
+    inline float findMaxValue(const float& a, const float& b, const float& c);
 
 
 // cams & frames

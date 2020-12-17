@@ -272,7 +272,11 @@ bool LidarVisualReconstructor::run(){
     srv_lidarimagedata_.request.header.frame_id = "Origin: recon_node";
     srv_lidarimagedata_.request.request_type    = 0;
 
-    if(client_lidarimagedata_.call(srv_lidarimagedata_)){
+    if(!client_lidarimagedata_.call(srv_lidarimagedata_)){
+        ROS_ERROR("Failed to call service 'GCS:lidar image data' by 'Recon node'.\n");
+        return false;
+    }
+    else { // received.
         ROS_INFO("'GCS:lidar image data': OK. by 'Recon node'.\n");
         cv_bridge::CvImagePtr cv_ptr;
         cv_ptr = cv_bridge::toCvCopy(srv_lidarimagedata_.response.img0,
@@ -292,13 +296,17 @@ bool LidarVisualReconstructor::run(){
             cv::imshow("0 image", frames_[0]->imgu_raw());
             cv::imshow("1 image", frames_[1]->imgu_raw());
             cv::waitKey(1000); // both imshow s are independently affected by waitKey.
-            // If there are two windows, total waiting time becomes 1000*2 = 2000 ms.
         }
 
         // initialize all containers 
         db_.resize(0);
 
-       
+        // initialize 'tri_id_image_'
+        tri_id_image_ = -cv::Mat::ones(frames_[0]->imgu_raw().rows,frames_[0]->imgu_raw().cols, CV_32SC1);
+        coef_tri_     = -cv::Mat::ones(frames_[0]->imgu_raw().rows,frames_[0]->imgu_raw().cols, CV_32FC3);
+        img_depth_    = -cv::Mat::ones(cams_[0]->rows(),cams_[0]->cols(), CV_32FC1);
+        tri_id_image_color_    = -cv::Mat::ones(cams_[0]->rows(),cams_[0]->cols(), CV_8UC3);
+
         // fill out LidarPcl.
         hce_autoexcavator::lidarImageDataStamped::Response& res_lidarimage = srv_lidarimagedata_.response;
         if(pcls_[0]->n_channels != res_lidarimage.n_channels0) throw std::runtime_error("Not matched dimension (recon node)\n");
@@ -501,7 +509,7 @@ bool LidarVisualReconstructor::run(){
             }
         }
         // cout << "idxs_cross0:\n" << idxs_cross[0]<<"\n\n";
-        // cout << "idxs_cross1:\n" << idxs_cross[1]<<"\n\n";
+        // cout << "idxs_cross1:\n" << idxs_cross[1]<<"\n\n"; // ok
 
 
         // equidistant points insertions.
@@ -952,7 +960,7 @@ bool LidarVisualReconstructor::run(){
         } //end if  
 
         // Delaunay ... 
-        int n_db_size = db_.size();
+        n_db_org_size_ = db_.size();
         tic();
         cdt_->initializeDT(db_);
         cdt_->executeNormalDT();
@@ -963,7 +971,6 @@ bool LidarVisualReconstructor::run(){
         // KLT ...
         // Get initial guesses. (2 m ~ 40 m)
         float std_depth = 1.0f; // 1.0 m uncertainty.
-        int cntt = 0;
         for(auto itr = db_.begin(); itr != db_.end(); ++itr){
             itr->X_     = T_cl0_[0].block<3,3>(0,0) * itr->X_ + T_cl0_[0].block<3,1>(0,3);
             itr->depth_lidar_ = itr->X_(2);
@@ -1014,54 +1021,202 @@ bool LidarVisualReconstructor::run(){
             frames_[0]->du(), frames_[0]->dv(),
             frames_[1]->du(), frames_[1]->dv(),
             win_sz, MAX_ITER, alpha, beta, db_);
-        toc(1);
-
+        cout << " normal KLT: "<< toc(0) << " [ms]\n"; // 170 ms !!
 
         // Calculate affine illumination changes
         tic();
         eklt_->runAffineBrightnessCompensation(
             frames_[0]->img_pyr(), frames_[1]->img_pyr(),
             db_, alpha, beta);
-        toc(1);
+        cout << " Brightness compensation: "<< toc(0) << " [ms]\n"; // 170 ms !!
 
         // Affine constrained Epipolar KLT (with barrier function)
-        // tic();
-        // win_sz = 33;
-        // eklt_->runEpipolarAffineKLT(
-        //     frames_[0]->img_pyr(), frames_[1]->img_pyr(), 
-        //     frames_[0]->du(), frames_[0]->dv(),
-        //     frames_[1]->du(), frames_[1]->dv(),
-        //     win_sz, MAX_ITER, alpha, beta, db_);
-        // toc(1);
-
-        // Affine klt (SSE)
+        // Affine klt (AVX)
         tic();
         win_sz = 33;
-        eklt_->runEpipolarAffineKLT_SSE(
+        eklt_->runEpipolarAffineKLT_AVX(
             frames_[0]->img_pyr(), frames_[1]->img_pyr(), 
             frames_[0]->du(), frames_[0]->dv(),
             frames_[1]->du(), frames_[1]->dv(),
             win_sz, MAX_ITER, alpha, beta, db_);
-        toc(1);
+        cout << " Affine KLT: "<< toc(0) << " [ms]\n"; // 170 ms !!
 
 
         // Depth reconstruction via DLT (known R_c0c1 and t_c0c1.)    
+        for(int i = 0; i < db_.size(); ++i) {
+            db_[i].recon3D(
+                cams_[0]->K(), cams_[1]->K(), 
+                T_c1c0_[0].block<3,3>(0,0), T_c1c0_[0].block<3,1>(0,3));
+        }
+
+        if(1){
+            cv::Scalar orange(0, 165, 255), blue(255, 0, 0), magenta(255, 0, 255);
+            cv::Scalar cyan(0,255,255), black(20,20,20);
+            cv::Mat img_8u;
+            cv::cvtColor(frames_[1]->imgu(),img_8u,CV_GRAY2BGR);
+            for(auto itr = db_.begin(); itr != db_.end(); ++itr) {
+                cv::circle(img_8u, cv::Point(itr->pts_tracked_(0), itr->pts_tracked_(1)), 2, blue);
+            }
+            cv::namedWindow("db org", CV_WINDOW_AUTOSIZE);
+            cv::imshow("db org", img_8u);
+            cv::waitKey(0);
+        }
+        
 
 
         // Densification ...
-        cout << " Densification!! \n";
-        db_.emplace_back(); // super triangles
-        db_.emplace_back(); // super triangles
-        db_.emplace_back(); // super triangles
+        cout << " Start densification... \n\n\n";
+        db_.emplace_back(); // super triangles (n_db_org_size_),    index: n_db_org_size_ - 1
+        db_.emplace_back(); // super triangles (n_db_org_size_ + 1) index: n_db_org_size_ 
+        db_.emplace_back(); // super triangles (n_db_org_size_ + 2) index: n_db_org_size_ + 1
+        
 
-        vector<PointDB> db_addi_;
-        tic();
-        cdt_->getCenterPointsOfTriangles(400, db_addi_);
-        cdt_->addPointsIntoDT(db_addi_);
-        cout << "Densification time : "<< toc(0) << "[ms]\n";
+        int DEPTH_DENSIFICATION = 1; // 0: no densification, 
+        for(int dep = 0; dep < DEPTH_DENSIFICATION; ++dep) {
+            vector<PointDB> db_addi_;
+            db_addi_.resize(0);
+            tic();
+            cdt_->getCenterPointsOfTrianglesAndFillDepth(300, db_, db_addi_);  // make points.
 
-        for(auto itr = db_addi_.begin(); itr != db_addi_.end(); ++itr) 
-            db_.emplace_back(*itr);
+            cout << "Densification depth: " << dep << ", " 
+                 << "elapsed time : " << toc(0) << " [ms]\n";
+
+            // Fill out depths by using triangles.
+            // KLT ...
+            // Get initial guesses. (2 m ~ 40 m)
+            cout << " fill near and far ...... ";
+            float std_depth = 1.5f; // 0.5 m uncertainty.
+            for(auto itr = db_addi_.begin(); itr != db_addi_.end(); ++itr){
+                // guess nearest & farthest points
+                EVec3f X_near, X_far, X_subcam;
+                itr->X_ << itr->pts_(0), itr->pts_(1), 1.0f;
+                itr->X_ *= itr->depth_lidar_;
+                itr->X_ = cams_[0]->Kinv()*itr->X_;
+
+                X_near << itr->pts_(0), itr->pts_(1), 1.0f;
+                X_near *= 1.5;
+                X_subcam = T_c1c0_[0].block<3,3>(0,0)*cams_[0]->Kinv()*X_near + T_c1c0_[0].block<3,1>(0,3);
+                X_subcam = cams_[1]->K()*X_subcam;
+                itr->pts_guess_near_ << X_subcam(0)/X_subcam(2), X_subcam(1)/X_subcam(2);
+
+                X_far << itr->pts_(0), itr->pts_(1), 1.0f;
+                X_far *= 15;
+                X_subcam = T_c1c0_[0].block<3,3>(0,0)*cams_[0]->Kinv()*X_far + T_c1c0_[0].block<3,1>(0,3);
+                X_subcam = cams_[1]->K()*X_subcam;
+                itr->pts_guess_far_ << X_subcam(0)/X_subcam(2), X_subcam(1)/X_subcam(2);
+
+                itr->pts_prior_ = (itr->pts_guess_near_ + itr->pts_guess_far_)*0.5f;
+            }
+            cout << " DONE!\n";
+
+            if(1){
+                cv::Scalar orange(0, 165, 255), blue(255, 0, 0), magenta(255, 0, 255);
+                cv::Scalar cyan(0,255,255);
+                cv::Mat img_8u;
+                cv::cvtColor(frames_[1]->imgu(), img_8u, CV_GRAY2BGR);
+                cv::namedWindow("Dense1", CV_WINDOW_AUTOSIZE);
+                for(auto itr = db_addi_.begin(); itr != db_addi_.end(); ++itr){
+                    cv::line(img_8u, 
+                            cv::Point(itr->pts_guess_far_(0), itr->pts_guess_far_(1)),
+                            cv::Point(itr->pts_guess_near_(0), itr->pts_guess_near_(1)), cyan, 1, CV_AA);
+                    cv::circle(img_8u, cv::Point(itr->pts_guess_far_(0),itr->pts_guess_far_(1)), 1, magenta);
+                    cv::circle(img_8u, cv::Point(itr->pts_guess_near_(0),itr->pts_guess_near_(1)), 1, blue);
+                }
+                cv::imshow("Dense1", img_8u);
+                cv::waitKey(0);
+            }
+            
+            // Do KLT.
+            cout << " Additional, normal KLT.....";
+            tic();
+            win_sz = 43;
+            eklt_->runEpipolarKLT(
+                frames_[0]->img_pyr(), frames_[1]->img_pyr(), 
+                frames_[0]->du(), frames_[0]->dv(),
+                frames_[1]->du(), frames_[1]->dv(),
+                win_sz, MAX_ITER, alpha, beta, db_addi_);
+            toc(1);
+            cout << " DONE!\n";
+
+            cout << " Additional, affine KLT.....";
+            tic();
+            win_sz = 33;
+            eklt_->runEpipolarAffineKLT_AVX(
+                frames_[0]->img_pyr(), frames_[1]->img_pyr(), 
+                frames_[0]->du(), frames_[0]->dv(),
+                frames_[1]->du(), frames_[1]->dv(),
+                win_sz, MAX_ITER, alpha, beta, db_addi_);
+            toc(1);
+            cout << " DONE!\n";
+
+            cout << " Recon 3D... ";
+            // Depth reconstruction via DLT (known R_c0c1 and t_c0c1.)    
+            for(int i = 0; i < db_addi_.size(); ++i) {
+                db_addi_[i].recon3D(cams_[0]->K(), cams_[1]->K(), 
+                    T_c1c0_[0].block<3,3>(0,0), T_c1c0_[0].block<3,1>(0,3));
+            }   
+            cout <<" DONE!\n";
+
+            cout << " Fill db_ ... ";
+            for(auto itr = db_addi_.begin(); itr != db_addi_.end(); ++itr)
+                db_.emplace_back(*itr);
+            cout <<" DONE!\n";
+
+            cout << " FillDT with new points ... ";
+            cdt_->addPointsIntoDT(db_addi_); // insert points into Delaunay triangulation.
+            cout <<" DONE!\n";
+
+            if(1){
+                cv::Scalar orange(0, 165, 255), blue(255, 0, 0), magenta(255, 0, 255);
+                cv::Scalar cyan(0,255,255), black(20,20,20);
+                cv::Mat img_8u;
+                cv::cvtColor(frames_[0]->imgu(),img_8u,CV_GRAY2BGR);
+                for(auto itr = db_addi_.begin(); itr != db_addi_.end(); ++itr) {
+                    cv::circle(img_8u, cv::Point(itr->pts_(0), itr->pts_(1)), 2, magenta);
+                }
+                cv::namedWindow("db addi0", CV_WINDOW_AUTOSIZE);
+                cv::imshow("db addi0", img_8u);
+                cv::waitKey(10);
+            }
+            if(1){
+                cv::Scalar orange(0, 165, 255), blue(255, 0, 0), magenta(255, 0, 255);
+                cv::Scalar cyan(0,255,255), black(20,20,20);
+                cv::Mat img_8u;
+                cv::cvtColor(frames_[1]->imgu(),img_8u,CV_GRAY2BGR);
+                for(auto itr = db_addi_.begin(); itr != db_addi_.end(); ++itr) {
+                    cv::line(img_8u, cv::Point(itr->pts_guess_near_(0), itr->pts_guess_near_(1)), 
+                            cv::Point(itr->pts_tracked_(0), itr->pts_tracked_(1)), cyan, 1, CV_AA);
+                    cv::circle(img_8u, cv::Point(itr->pts_prior_(0), itr->pts_prior_(1)), 2, black);
+                    cv::circle(img_8u, cv::Point(itr->pts_guess_near_(0), itr->pts_guess_near_(1)), 2, blue);
+                    cv::circle(img_8u, cv::Point(itr->pts_guess_far_(0), itr->pts_guess_far_(1)), 2, orange);
+                    cv::circle(img_8u, cv::Point(itr->pts_tracked_(0), itr->pts_tracked_(1)), 2, magenta);
+                }
+                cv::namedWindow("db addi1", CV_WINDOW_AUTOSIZE);
+                cv::imshow("db addi1", img_8u);
+                cv::waitKey(0);
+            }
+        }
+
+       
+
+        // Make triangle id image
+        this->generateTriangleIndexImage();
+        cv::namedWindow("color tri",CV_WINDOW_AUTOSIZE);
+        cv::imshow("color tri", tri_id_image_color_);
+        cv::waitKey(0);
+
+        // Interpolate depth image
+        this->generateDepthImage();
+
+        cv::Mat img_depth_single;
+        cv::Mat img_depth_1000;
+        img_depth_1000 = img_depth_*1000;
+
+        img_depth_1000.convertTo(img_depth_single, CV_16UC1);
+        vector<int> static png_parameters;
+		png_parameters.push_back(CV_IMWRITE_PNG_COMPRESSION); // We save with no compression for faster processing
+	    cv::imwrite("/home/larrkchlaptop/interp_depth.png", img_depth_single, png_parameters);
+        
 
 //#ifdef _FLAG_DRAW_
         if(1){
@@ -1075,18 +1230,18 @@ bool LidarVisualReconstructor::run(){
                 int i0 = itr->second->idx[0];
                 int i1 = itr->second->idx[1];
                 int i2 = itr->second->idx[2];
-                if(i0 != n_db_size && i1 != n_db_size && i2 != n_db_size &&
-                   i0 != n_db_size+1 && i1 != n_db_size+1 && i2 != n_db_size+1 &&
-                   i0 != n_db_size+2 && i1 != n_db_size+2 && i2 != n_db_size+2){
+                if(i0 != n_db_org_size_ && i1 != n_db_org_size_ && i2 != n_db_org_size_ &&
+                   i0 != n_db_org_size_+1 && i1 != n_db_org_size_+1 && i2 != n_db_org_size_+1 &&
+                   i0 != n_db_org_size_+2 && i1 != n_db_org_size_+2 && i2 != n_db_org_size_+2){
                     cv::line(img_8u, 
                         cv::Point(db_[i0].pts_(0), db_[i0].pts_(1)),
-                        cv::Point(db_[i1].pts_(0), db_[i1].pts_(1)), blue, 3, CV_AA);
+                        cv::Point(db_[i1].pts_(0), db_[i1].pts_(1)), blue, 1, CV_AA);
                     cv::line(img_8u, 
                         cv::Point(db_[i1].pts_(0), db_[i1].pts_(1)),
-                        cv::Point(db_[i2].pts_(0), db_[i2].pts_(1)), blue, 3, CV_AA);
+                        cv::Point(db_[i2].pts_(0), db_[i2].pts_(1)), blue, 1, CV_AA);
                     cv::line(img_8u, 
                         cv::Point(db_[i0].pts_(0), db_[i0].pts_(1)),
-                        cv::Point(db_[i2].pts_(0), db_[i2].pts_(1)), blue, 3, CV_AA);
+                        cv::Point(db_[i2].pts_(0), db_[i2].pts_(1)), blue, 1, CV_AA);
                 }
             }
             for(auto itr = db_.begin(); itr != db_.end(); ++itr)
@@ -1097,7 +1252,26 @@ bool LidarVisualReconstructor::run(){
         }
 //#endif
 
+        string file_name = "/home/larrkchlaptop/points.txt";
+        std::ofstream output_file(file_name, std::ios::trunc);
+        output_file.precision(4);
+        output_file.setf(std::ios_base::fixed, std::ios_base::floatfield);
+        if(output_file.is_open()){
+           for(int i = 0; i < db_.size(); ++i){
+                if(i != n_db_org_size_ && i != n_db_org_size_ + 1 && i != n_db_org_size_ + 2 ){
+                    
+                    output_file 
+                    << db_[i].X_recon_(0) << " " 
+                    << db_[i].X_recon_(1) << " " 
+                    << db_[i].X_recon_(2) << " "
+                    << db_[i].err_klt_affine_ << "\n"; 
+                }
+            } // why three layers ???
+        }
+        
+
         // Extract profile 3D points ... 
+
         
 
         // Respond to 'GCS' node.
@@ -1105,8 +1279,156 @@ bool LidarVisualReconstructor::run(){
 
         return true;
     }
-    else{
-        ROS_ERROR("Failed to call service 'GCS:lidar image data' by 'Recon node'.\n");
-        return false;
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+inline float LidarVisualReconstructor::findMinValue(const float& a, const float& b, const float& c){
+    float min_value = 0;
+    if(a < b)
+    { // a < b
+        if(a < c) min_value = a; // a < c and b
+        else min_value = c; // c < a < b
+    }
+    else if(b < a)
+    { // b < a
+        if(b < c) min_value = b; // b < a and c
+        else min_value = c; // c < b < a
+    }
+    else throw std::runtime_error("findMinValue error: a==b or b==c or c==a !\n");
+    return min_value;
+};
+
+inline float LidarVisualReconstructor::findMaxValue(const float& a, const float& b, const float& c){
+    float max_value = 0;
+    if(a > b)
+    { // a < b
+        if(a > c) max_value = a; // a > c and b
+        else max_value = c; // c > a > b
+    }
+    else if(b > a)
+    { // b < a
+        if(b > c) max_value = b; // b > a and c
+        else max_value = c; // c > b > a
+    }
+    else throw std::runtime_error("findMaxValue error: a==b or b==c or c==a !\n");
+    return max_value;
+};
+
+void LidarVisualReconstructor::generateDepthImage(){
+    int n_cols = cams_[0]->cols();
+    int n_rows = cams_[0]->rows();
+    cout << " generate Depth iamge- rows cols : " << n_rows << "," << n_cols << "\n";
+    img_depth_ = -cv::Mat::ones(n_rows, n_cols, CV_32FC1);
+
+    float* ptr_depth_  = nullptr;
+    int*   ptr_tri_img = nullptr;
+    auto tri = cdt_->getTriangleMap();
+
+    for(int v = 0; v < n_rows; ++v){
+        ptr_depth_  = img_depth_.ptr<float>(v);
+        ptr_tri_img = tri_id_image_.ptr<int>(v);
+        for(int u = 0; u < n_cols; ++u){
+            int id_tri = *(ptr_tri_img + u);
+
+            if(id_tri > -1){
+                auto tri_cur = tri.find(id_tri);
+                int i0 = tri_cur->second->idx[0];
+                int i1 = tri_cur->second->idx[1];
+                int i2 = tri_cur->second->idx[2];
+
+                *(ptr_depth_ + u) =
+                      coef_tri_.at<cv::Vec3f>(v,u)[0] * db_[i0].depth_recon_
+                    + coef_tri_.at<cv::Vec3f>(v,u)[1] * db_[i1].depth_recon_
+                    + coef_tri_.at<cv::Vec3f>(v,u)[2] * db_[i2].depth_recon_;
+            }
+        }
+    }
+};
+
+void LidarVisualReconstructor::generateTriangleIndexImage(){
+    //   initialize 'tri_id_image_' with -1.
+    tri_id_image_ = cv::Scalar(-1);
+    coef_tri_     = cv::Mat::ones(cams_[0]->rows(),cams_[0]->cols(), CV_32FC3);
+
+    int ndb_tmp = n_db_org_size_;
+    //   generate 
+    cout << " Triangle Image ... # of triangles : [" << cdt_->getTriangleMap().size() << "]\n";
+    cv::Scalar orange(0, 165, 255), blue(255, 0, 0), magenta(255, 0, 255);
+    int color[3][3] = {{20,20,20},{100,60,150},{0,150,60}};
+    
+    int cnt_tri = 0;
+
+    int rind =0;
+    for(auto itr  = cdt_->getTriangleMap().begin();
+             itr != cdt_->getTriangleMap().end();  ++itr, ++cnt_tri){
+        int i0 = itr->second->idx[0];
+        int i1 = itr->second->idx[1];
+        int i2 = itr->second->idx[2];
+
+        if(i0 != ndb_tmp   && i1 != ndb_tmp   && i2 != ndb_tmp   &&
+           i0 != ndb_tmp+1 && i1 != ndb_tmp+1 && i2 != ndb_tmp+1 &&
+           i0 != ndb_tmp+2 && i1 != ndb_tmp+2 && i2 != ndb_tmp+2   )
+        {
+            EVec2f pa, pb, pc;
+            pa = db_[i0].pts_;
+            pb = db_[i1].pts_;
+            pc = db_[i2].pts_;
+            
+            // 1) find min max coordinate pixel of triangle.
+            int u_min = (int)std::floor(findMinValue(pa(0), pb(0), pc(0)));
+            int u_max = (int)std::ceil( findMaxValue(pa(0), pb(0), pc(0)));
+            
+            int v_min = (int)std::floor(findMinValue(pa(1), pb(1), pc(1)));
+            int v_max = (int)std::ceil( findMaxValue(pa(1), pb(1), pc(1)));
+
+            // 2) calculate Barycentric coordinates 
+            // to check whether each pixel is included by this triangle.
+            EVec2f MM = pb-pa;
+            EVec2f NN = pc-pa;
+            EMat2f A, Ainv, B, ab_tmp;
+            A << MM(0), NN(0), MM(1), NN(1);
+            Ainv = A.inverse();
+            for(int v = v_min; v < v_max + 1; ++v){
+                for(int u = u_min; u < u_max + 1; ++u){
+                    B(0) = (float)u - pa(0);
+                    B(1) = (float)v - pa(1);
+
+                    ab_tmp = Ainv*B;
+                    float sum_ab = (ab_tmp(0) + ab_tmp(1));
+                    if(ab_tmp(0) >= 0 && ab_tmp(1) >= 0 && sum_ab >= 0 && sum_ab <= 1){
+                        // inside the triangle.
+                        tri_id_image_.at<int>(v,u) = itr->second->id;
+                        tri_id_image_color_.at<cv::Vec3b>(v,u)[0] = color[rind][0];
+                        tri_id_image_color_.at<cv::Vec3b>(v,u)[1] = color[rind][1];
+                        tri_id_image_color_.at<cv::Vec3b>(v,u)[2] = color[rind][2];
+
+                        coef_tri_.at<cv::Vec3f>(v,u)[0] = 1.0f - ab_tmp(0) - ab_tmp(1);
+                        coef_tri_.at<cv::Vec3f>(v,u)[1] = ab_tmp(0);
+                        coef_tri_.at<cv::Vec3f>(v,u)[2] = ab_tmp(1);
+                    }
+                }
+            }     
+
+            rind++;
+            if(rind > 2) rind=0;       
+        }
     }
 };
