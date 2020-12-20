@@ -396,6 +396,8 @@ void EpipolarKLT::runEpipolarKLT_LM(
                 if(a_test <-5) a_test =-5;
 
                 float s_test = s_far*0.5f*(a_test / sqrtf(1.0f + a_test*a_test) + 1.0f);
+                improc::interpImageSingleRegularPatch(Ic[lvl], 
+                    pt_near(0) + s_test*l(0), pt_near(1) + s_test*l(1), patch,  Ic_vector);
 
                 float r2_sum = 0;               
                 int cnt_valid = 0;
@@ -1278,7 +1280,7 @@ void EpipolarKLT::simd_calcResidual_AVX(const cv::Mat& Ic,
     for(int i = 0; i < this->n_patch_trunc_; ++i){
         if(*(mask_valid_ + i)){
             float r = *(buf_residual_ + i);
-            res += r;
+            res += r*r;
             ++cnt_valid;
         }
     }
@@ -2048,9 +2050,6 @@ void EpipolarKLT::runEpipolarAffineKLT_AVX_LM(
                 JtWJ_simd_.setZero();
                 mJtWr_simd_.setZero();
 
-                float sigmoid = 0.5f * (a / sqrtf(1.0f + a*a) + 1.0f);
-                abcdq(4) = a; // s_far
-
                 this->simd_warpAffine_AVX_LM(abcdq, s_far, l(0), l(1), pt_near(0), pt_near(1));
                 this->simd_calcResidualAndWeight_AVX(Ic[lvl], du_c[lvl], dv_c[lvl], alpha, beta, thres_huber);
                 this->simd_calcHessianAndJacobianAffine_AVX_LM(abcdq, s_far, l(0), l(1), db[i].err_klt_affine_);
@@ -2063,6 +2062,7 @@ void EpipolarKLT::runEpipolarAffineKLT_AVX_LM(
                 if(abcdq_test(4) < -5) abcdq_test(4) = -5;
                 
                 float r_test;
+                this->simd_warpAffine_AVX_LM(abcdq_test, s_far, l(0), l(1), pt_near(0), pt_near(1));
                 this->simd_calcResidual_AVX(Ic[lvl], alpha, beta, thres_huber, r_test);
 
                 // decide whether we need to accept this step.
@@ -2073,14 +2073,13 @@ void EpipolarKLT::runEpipolarAffineKLT_AVX_LM(
                         abcdq = abcdq_test;
                         r_old = r_test;
                         lam *= 0.2;
-                        if( lam < LAM_MIN) lam = LAM_MIN;
+                        if(lam < LAM_MIN) lam = LAM_MIN;
                     }
                     else{
                         lam *= 6.0f;
                         if(lam > LAM_MAX) lam = LAM_MAX;
                     }
                 }
-
 
                 if(lvl == 0) {
                     float s = s_far*0.5f*(abcdq(4) / sqrt(1.0f + abcdq(4)*abcdq(4)) + 1.0f);

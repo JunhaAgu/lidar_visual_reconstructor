@@ -1034,7 +1034,7 @@ bool LidarVisualReconstructor::run(){
         // Affine klt (AVX)
         tic();
         win_sz = 33;
-        eklt_->runEpipolarAffineKLT_AVX(
+        eklt_->runEpipolarAffineKLT_AVX_LM(
             frames_[0]->img_pyr(), frames_[1]->img_pyr(), 
             frames_[0]->du(), frames_[0]->dv(),
             frames_[1]->du(), frames_[1]->dv(),
@@ -1141,7 +1141,7 @@ bool LidarVisualReconstructor::run(){
             cout << " Additional, affine KLT.....";
             tic();
             win_sz = 33;
-            eklt_->runEpipolarAffineKLT_AVX(
+            eklt_->runEpipolarAffineKLT_AVX_LM(
                 frames_[0]->img_pyr(), frames_[1]->img_pyr(), 
                 frames_[0]->du(), frames_[0]->dv(),
                 frames_[1]->du(), frames_[1]->dv(),
