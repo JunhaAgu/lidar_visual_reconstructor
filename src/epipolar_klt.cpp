@@ -130,7 +130,6 @@ void EpipolarKLT::runEpipolarKLT(
     // In this function, MAX_LVL, n_cols, n_rows are set.
     int MAX_PYR_LVL = Ik.size();
     n_pts_ = db.size();
-    
 
     int win_half = (win_sz - 1)/2; // my convention! 
     vector<cv::Point2f> patch; 
@@ -167,14 +166,14 @@ void EpipolarKLT::runEpipolarKLT(
 
         float Ic_warp, dx_warp, dy_warp, Ik_single, r, w, J;
         float JtwJ_scalar = 0, Jtwr_scalar = 0;
-        float delta_s = 0, r2_sum = 0;
+        float delta_s = 0, r2_sum = 0;        
         for(int lvl = MAX_PYR_LVL-1; lvl > -1; --lvl){
             // calculate reference image brightness
             improc::interpImageSingleRegularPatch(Ik[lvl], pt_k(0), pt_k(1), patch,  Ik_vector);
             // for(int j = 0; j < M; ++j)
             //     *(Ik_vector + j) = improc::interpImageSingle(Ik[lvl], patch[j].x + pt_k(0),  patch[j].y + pt_k(1));
 
-            
+            float r_old = 1e9, r_new = 0;
             // ITERATION!!!
             for(int iter = 0; iter < MAX_ITER; ++iter){
                 delta_pt = s*l;
@@ -249,8 +248,10 @@ void EpipolarKLT::runEpipolarKLT(
                 Jtwr_scalar += J*w*r;
 
                 // Calculate step size!
-                delta_s = -0.5*Jtwr_scalar/JtwJ_scalar;
-                s += delta_s;
+                delta_s = -0.5*Jtwr_scalar/(JtwJ_scalar);
+                // calculate next residual
+
+                s += delta_s ;
                 if(s < 0.01f) s = 0.01f;
                 if(s > s_far) s = s_far - 0.01f;
                 if(std::isnan(delta_s)) s = 0.1f;
@@ -269,15 +270,189 @@ void EpipolarKLT::runEpipolarKLT(
             }
             
             // resolution up.
-            pt_k    *= 2;
-            pt_near *= 2;
-            pt_far  *= 2;
-            s_far   *= 2;
-            s       *= 2;
+            if(lvl > 0){
+                pt_k    *= 2;   
+                pt_near *= 2;
+                pt_far  *= 2;
+                s_far   *= 2;
+                s       *= 2;
+            }
         }
 //#ifdef _VERBOSE_
         cout << "[" << i <<"]: s.. [" << 0 << "   " << db[i].s_normal_ << "   "  << s_far << "]\n";
 //#endif
+    }
+
+    delete[] Ik_vector;
+    delete[] Ic_vector;
+    delete[] duc_vector;
+    delete[] dvc_vector;
+
+};
+
+
+void EpipolarKLT::runEpipolarKLT_LM(
+            const vector<cv::Mat>& Ik, const vector<cv::Mat>& Ic, 
+            const vector<cv::Mat>& du_k, const vector<cv::Mat>& dv_k,
+            const vector<cv::Mat>& du_c, const vector<cv::Mat>& dv_c,
+            const int& win_sz, const int& MAX_ITER,
+            const float& logalpha, const float& beta, 
+            vector<PointDB>& db) {
+    
+#ifdef _VERBOSE_
+    cout << " EKLT: registered image lvl: " << MAX_PYR_LVL <<"\n";
+    cout << " EKLT: # of input points: " << n_pts_ << "\n";
+#endif
+    if(win_sz % 2 == 1) std::runtime_error("EKLT: a window size must be odd number!\n");
+
+    // In this function, MAX_LVL, n_cols, n_rows are set.
+    int MAX_PYR_LVL = Ik.size();
+    n_pts_ = db.size();
+
+    int win_half = (win_sz - 1)/2; // my convention! 
+    vector<cv::Point2f> patch; 
+    this->generatePattern(win_half, patch, true);
+    int M = patch.size();
+
+    float* Ik_vector  = new float[M];
+    float* Ic_vector  = new float[M];
+    float* duc_vector = new float[M];
+    float* dvc_vector = new float[M];
+
+    // Do EKLT. for all points!
+    float thres_huber = 10.0;
+    float SCALER      = 2.0;
+
+    float LAM_MAX = 1000.0f;
+    float LAM_MIN = 0.001f;
+
+    float r;
+    Vec2 pt_near, pt_far, l, pt_k;
+    Vec2 delta_pt;
+    Vec3 interp_tmp;
+    for(int i = 0; i < n_pts_; ++i) {
+        db[i].err_klt_normal_ = -1.0; // error initialization
+
+        // Get points.
+        float invpow = 1.0 / (pow(2,MAX_PYR_LVL-1));
+        pt_near = db[i].pts_guess_near_*invpow;
+        pt_far  = db[i].pts_guess_far_ *invpow;
+        l       = pt_far - pt_near;
+        float s_far = l.norm();
+        l /= s_far;
+        float s = (db[i].pts_prior_*invpow- pt_near).norm(); // from prior information.
+        float a = sqrt(s*s / (s_far*s_far - s*s));
+        if(a >  5) a =  5; 
+        if(a < -5) a = -5;
+
+        pt_k << db[i].pts_(0), db[i].pts_(1);
+        pt_k *= invpow;
+
+        float Ic_warp, dx_warp, dy_warp, Ik_single, r, w, J;
+        for(int lvl = MAX_PYR_LVL-1; lvl > -1; --lvl){
+            // calculate reference image brightness
+            improc::interpImageSingleRegularPatch(Ik[lvl], pt_k(0), pt_k(1), patch,  Ik_vector);
+
+            // ITERATION!!!
+            float lam = 0.5; 
+            float lam_prev = 1e9;
+            float r_old = 1e15;
+            for(int iter = 0; iter < MAX_ITER; ++iter){
+                float sigmoid = 0.5f * (a / sqrtf(1.0f + a*a) + 1.0f);
+                s = s_far*sigmoid;
+                delta_pt = s*l;
+
+                // Generate reference patch. (M+1) residual.
+                improc::interpImageSingle3RegularPatch(Ic[lvl], du_c[lvl], dv_c[lvl],
+	 	            pt_near(0) + delta_pt(0), pt_near(1) + delta_pt(1), patch, Ic_vector, duc_vector, dvc_vector);
+               
+                float JtwJ_scalar = 0;
+                float Jtwr_scalar = 0;
+                for(int j = 0; j < M; ++j){
+                    float Ik_now  = *(Ik_vector + j);
+                    float Ic_warp = *(Ic_vector + j);
+
+                    if(Ic_warp < 0 || Ik_now < 0) continue;
+                    dx_warp = *(duc_vector + j);
+                    dy_warp = *(dvc_vector + j);
+                   
+                    // calculate and push edge residual, Huber weight, Jacobian, and Hessian
+                     // valid pixel!
+                    r = Ic_warp - Ik_now;
+                    w = fabs(r) < thres_huber ? 1.0f : thres_huber / fabs(r);
+                    J = dx_warp*l(0) + dy_warp*l(1);
+
+                    float Jw = J*w;
+                    JtwJ_scalar += Jw*J;
+                    Jtwr_scalar += Jw*r;
+                }
+
+                // Calculate step size!
+                float delta_a = -Jtwr_scalar/((1.0f + lam)*JtwJ_scalar);
+
+                // is valid step?
+                float a_test = a + delta_a;
+                if(a_test > 5) a_test = 5;
+                if(a_test <-5) a_test =-5;
+
+                float s_test = s_far*0.5f*(a_test / sqrtf(1.0f + a_test*a_test) + 1.0f);
+
+                float r2_sum = 0;               
+                int cnt_valid = 0;
+                for(int j = 0; j < M; ++j){
+                    float Ik_now  = *(Ik_vector + j);
+                    float Ic_warp = *(Ic_vector + j);
+
+                    if(Ic_warp < 0 || Ik_now < 0) continue;                   
+                    // calculate and push edge residual, Huber weight, Jacobian, and Hessian
+                     // valid pixel!
+                    ++cnt_valid;
+                    
+                    r = Ic_warp - Ik_now;
+                    r2_sum += r*r;
+                }
+                float r_test = sqrtf(r2_sum / cnt_valid);
+                bool is_decreasing = r_test < r_old ? true : false;
+                if(iter > 0 ){
+                    if(is_decreasing){
+                        a        = a_test;
+                        delta_pt = s_test*l;
+                        r_old    = r_test;
+                        lam *= 0.2f;
+                        if(lam < LAM_MIN) lam = LAM_MIN;
+                    }
+                    else {
+                        lam *= 6.0f;
+                        if(lam > LAM_MAX) lam = LAM_MAX;
+                    }
+                }
+
+                if(lvl == 0) {
+                    s = s_far*0.5f*(a / sqrtf(1.0f + a*a) + 1.0f);
+                    db[i].pts_tracked_ << s*l(0) + pt_near(0), s*l(1) + pt_near(1);
+                    db[i].err_klt_normal_ = r_old;
+                    db[i].s_normal_ = s;
+                }
+                if( (!is_decreasing) && abs(lam_prev - lam) < 1e-5){
+                    if(lvl == 0){
+                        if(db[i].err_klt_normal_ > 20.0f) db[i].klt_valid_ = false;
+                    }
+                    break;
+                }
+                lam_prev = lam;
+            }
+            
+            // resolution up.
+            if(lvl > 0){
+                pt_k    *= 2;
+                pt_near *= 2;
+                pt_far  *= 2;
+                s_far   *= 2;
+            }
+        }
+#ifdef _VERBOSE_
+        cout << "[" << i <<"]: s.. [" << 0 << "   " << db[i].s_normal_ << "   "  << s_far << "]\n";
+#endif
     }
 
     delete[] Ik_vector;
@@ -546,11 +721,14 @@ void EpipolarKLT::runEpipolarAffineKLT(
             }
             
             // resolution up.
-            pt_k     *= 2;
-            pt_near  *= 2;
-            pt_far   *= 2;
-            s_far    *= 2;
-            abcds(4) *= 2;
+            if(lvl > 0){
+                pt_k     *= 2;
+                pt_near  *= 2;
+                pt_far   *= 2;
+                s_far    *= 2;
+                abcds(4) *= 2;
+            }
+            
         }
 //#ifdef _VERBOSE_
         cout << "affine [" << i <<"]: s.. [" << 0 << "   " << db[i].s_affine_ << "   "  << s_far << "]\n";
@@ -684,6 +862,36 @@ void EpipolarKLT::simd_warpAffine_AVX(const Vec5& params, const float& lx, const
     
     __m256 uplusu4 = _mm256_set1_ps(params(4)*lx + u);
     __m256 vplusv4 = _mm256_set1_ps(params(4)*ly + v);
+    
+    __m256 upat, vpat;
+    
+    for(int idx = 0; idx < this->n_patch_trunc_; idx += 8){
+        upat = _mm256_load_ps(upattern_ + idx);
+        vpat = _mm256_load_ps(vpattern_ + idx);
+
+        _mm256_store_ps(buf_u_warp_ + idx,
+            _mm256_add_ps(
+                    _mm256_add_ps(_mm256_mul_ps(upat,expa4),_mm256_mul_ps(vpat,bbbb)), uplusu4));
+       
+        _mm256_store_ps(buf_v_warp_ + idx,
+            _mm256_add_ps(
+                    _mm256_add_ps(_mm256_mul_ps(upat,cccc), _mm256_mul_ps(vpat,expd4)),vplusv4));    
+    }
+};
+
+
+void EpipolarKLT::simd_warpAffine_AVX_LM(const Vec5& params, const float& s_far, const float& lx, const float& ly, const float& u, const float& v){
+    __m256 expa4 = _mm256_set1_ps(exp(params(0))); // exp(a)
+    __m256 bbbb  = _mm256_set1_ps(params(1));  // b
+    __m256 cccc  = _mm256_set1_ps(params(2));  // c 
+    __m256 expd4 = _mm256_set1_ps(exp(params(3))); // exp(d)
+
+    float a = params(4);
+    float sigmoid = 0.5f * (a / sqrtf(1.0f + a*a) + 1.0f);
+    float s = s_far*sigmoid;
+    
+    __m256 uplusu4 = _mm256_set1_ps(s*lx + u);
+    __m256 vplusv4 = _mm256_set1_ps(s*ly + v);
     
     __m256 upat, vpat;
     
@@ -1049,6 +1257,35 @@ void EpipolarKLT::simd_calcResidualAndWeight_AVX(const cv::Mat& Ic, const cv::Ma
 };
 
 
+void EpipolarKLT::simd_calcResidual_AVX(const cv::Mat& Ic,
+    const float& alpha, const float& beta, const float& thres_huber, float& res)
+{
+    res = 0;
+    // calculate warped brightness, du, dv.
+    this->simd_interpImage_AVX(Ic,  buf_u_warp_, buf_v_warp_, buf_Ic_warp_, mask_Ic_ );
+    for(int i = 0; i < this->n_patch_trunc_; ++i) {
+        if(*(buf_Ic_warp_ + i) < 0 || *(buf_Ik_ + i) < 0){
+            *(mask_valid_ + i) = false;
+            continue;
+        }
+        *(mask_valid_ + i)     = true;
+    }
+    for(int idx = 0; idx < this->n_patch_trunc_; idx += 8){
+        _mm256_store_ps(buf_residual_ + idx, 
+                _mm256_sub_ps(_mm256_load_ps(buf_Ic_warp_ + idx), _mm256_load_ps(buf_Ik_ + idx)) );
+    }
+    int cnt_valid = 0;
+    for(int i = 0; i < this->n_patch_trunc_; ++i){
+        if(*(mask_valid_ + i)){
+            float r = *(buf_residual_ + i);
+            res += r;
+            ++cnt_valid;
+        }
+    }
+    
+    res = sqrt(res/cnt_valid);
+};
+
 void EpipolarKLT::simd_calcHessianAndJacobianNormal_SSE(const float& s, const float& lx, const float& ly, float& err_sse){
     __m128 J1; // four data at once
     __m128 du_warp4, dv_warp4, upattern4, vpattern4;
@@ -1151,6 +1388,41 @@ void EpipolarKLT::simd_calcHessianAndJacobianAffine_AVX(const Vec5& params, cons
         J4 = _mm256_mul_ps(_mm256_mul_ps(dv_warp4, expd4), vpattern4);
         //J(4) = dx_warp*l(0) + dy_warp*l(1);
         J5 = _mm256_add_ps(_mm256_mul_ps(du_warp4, lxlxlxlx) ,_mm256_mul_ps(dv_warp4, lylylyly) );        
+    
+        this->simd_updateAffine_AVX(J1, J2, J3, J4, J5, _mm256_load_ps(buf_residual_ + idx), _mm256_load_ps(buf_weight_ + idx), err_sse);
+    }
+};
+
+
+void EpipolarKLT::simd_calcHessianAndJacobianAffine_AVX_LM(const Vec5& params, const float& s_far, const float& lx, const float& ly, float& err_sse){
+    __m256 J1, J2, J3, J4, J5; // four data at once
+    __m256 du_warp4, dv_warp4, upattern4, vpattern4;
+    __m256 expa4 = _mm256_set1_ps(exp(params(0)));
+    __m256 expd4 = _mm256_set1_ps(exp(params(3)));
+
+    float a = params(4);
+    float jacob_sigmoid_part = 0.5f * s_far / pow((1.0f + a*a),1.5);
+    __m256 jac_sig = _mm256_set1_ps(jacob_sigmoid_part);
+
+    __m256 lxlxlxlx = _mm256_set1_ps(lx);
+    __m256 lylylyly = _mm256_set1_ps(ly);
+
+    for(int idx = 0; idx < this->n_patch_trunc_; idx += 8) {
+        du_warp4  = _mm256_load_ps(buf_du_c_warp_ + idx);
+        dv_warp4  = _mm256_load_ps(buf_dv_c_warp_ + idx);
+        upattern4 = _mm256_load_ps(upattern_ + idx);
+        vpattern4 = _mm256_load_ps(vpattern_ + idx);
+
+        //J(0) = exp_a*dx_warp * patch_lvl[lvl][j].x;
+        J1 = _mm256_mul_ps(_mm256_mul_ps(du_warp4, expa4), upattern4); 
+        //J(1) =       dx_warp * patch_lvl[lvl][j].y;
+        J2 = _mm256_mul_ps(du_warp4, vpattern4);
+        //J(2) =       dy_warp * patch_lvl[lvl][j].x;
+        J3 = _mm256_mul_ps(dv_warp4, upattern4);
+        //J(3) = exp_d*dy_warp * patch_lvl[lvl][j].y;
+        J4 = _mm256_mul_ps(_mm256_mul_ps(dv_warp4, expd4), vpattern4);
+        //J(4) = dx_warp*l(0) + dy_warp*l(1);
+        J5 = _mm256_mul_ps(jac_sig,_mm256_add_ps(_mm256_mul_ps(du_warp4, lxlxlxlx) ,_mm256_mul_ps(dv_warp4, lylylyly) ) );        
     
         this->simd_updateAffine_AVX(J1, J2, J3, J4, J5, _mm256_load_ps(buf_residual_ + idx), _mm256_load_ps(buf_weight_ + idx), err_sse);
     }
@@ -1349,6 +1621,13 @@ void EpipolarKLT::simd_solveGaussNewtonStepNormal(float& delta_s){
 
 void EpipolarKLT::simd_solveGaussNewtonStepAffine(Vec5& delta_params){
     for(int i = 0; i < 5; ++i) JtWJ_simd_(i,i) += 0.1; // weight!
+    delta_params = JtWJ_simd_.ldlt().solve(mJtWr_simd_);
+    delta_params *= 0.5; // downstep.
+};
+
+
+void EpipolarKLT::simd_solveGaussNewtonStepAffine_LM(const float& lam, Vec5& delta_params){
+    for(int i = 0; i < 5; ++i) JtWJ_simd_(i,i) *= (1.0f + lam); // weight!
     delta_params = JtWJ_simd_.ldlt().solve(mJtWr_simd_);
     delta_params *= 0.5; // downstep.
 };
@@ -1678,14 +1957,157 @@ void EpipolarKLT::runEpipolarAffineKLT_AVX(
             }
             
             // resolution up.
-            pt_k     *= 2;
-            pt_near  *= 2;
-            pt_far   *= 2;
-            s_far    *= 2;
-            abcds(4) *= 2;
+            if(lvl > 0){
+                pt_k     *= 2;
+                pt_near  *= 2;
+                pt_far   *= 2;
+                s_far    *= 2;
+                abcds(4) *= 2;
+            }
         }
 //#ifdef _VERBOSE_
         cout << "(AVX) affine [" << i <<"]: s.. [" << db[i].s_normal_ << "   " << db[i].s_affine_ << "   "  << s_far << "]\n";
 //#endif
+    }
+};
+
+
+
+
+
+void EpipolarKLT::runEpipolarAffineKLT_AVX_LM(
+            const vector<cv::Mat>& Ik, const vector<cv::Mat>& Ic, 
+            const vector<cv::Mat>& du_k, const vector<cv::Mat>& dv_k,
+            const vector<cv::Mat>& du_c, const vector<cv::Mat>& dv_c,
+            const int& win_sz, const int& MAX_ITER,
+            const float& alpha, const float& beta, 
+            vector<PointDB>& db) {
+#ifdef _VERBOSE_
+    cout << " EKLT: registered image lvl: " << MAX_PYR_LVL <<"\n";
+    cout << " EKLT: # of input points: " << n_pts_ << "\n";
+#endif
+    if(win_sz % 2 == 1) std::runtime_error("EKLT: a window size must be odd number!\n");
+
+    // In this function, MAX_LVL, n_cols, n_rows are set.
+    int MAX_PYR_LVL = 2;
+    n_pts_          = db.size();
+
+    int win_half = (win_sz - 1)/2; // my convention! 
+    
+    vector<vector<cv::Point2f>> patch_lvl(MAX_PYR_LVL,vector<cv::Point2f>()); // scaled pattern for each levels.
+    for(int lvl = 0; lvl < MAX_PYR_LVL; ++lvl){
+        float pattern_scaler = 1.0f/pow(1.2, lvl);
+        this->generatePattern(win_half, patch_lvl[lvl], true);
+        for(auto itr = patch_lvl[lvl].begin(); itr != patch_lvl[lvl].end(); ++itr){
+            itr->x *= pattern_scaler;
+            itr->y *= pattern_scaler;
+        }
+    }
+    int M = patch_lvl[0].size();
+
+    // Do EKLT. for all points!
+    float thres_huber = 10.0;
+    float SCALER      = 0.1;
+
+    float LAM_MAX = 1000.0f;
+    float LAM_MIN = 0.001f;
+
+    Vec2 pt_k;
+    Vec5 abcdq, abcdq_test;
+    Vec5 J, delta_abcdq;
+    for(int i = 0; i < n_pts_; ++i) {
+        db[i].err_klt_affine_ = 0.0; // error initialization
+
+        // Get points.
+        float invpow = 1.0 / (pow(2.0f, MAX_PYR_LVL-1));
+        Vec2 pt_near = db[i].pts_guess_near_*invpow;
+        Vec2 pt_far  = db[i].pts_guess_far_ *invpow;
+        Vec2 l       = pt_far - pt_near;
+        float s_far  = l.norm(); l /= s_far;
+        float s = (db[i].pts_tracked_*invpow - pt_near).norm(); // from prior information.
+        float a = sqrt(s*s / (s_far*s_far - s*s));
+        if(a >  5) a =  5; 
+        if(a < -5) a = -5;
+
+        pt_k << db[i].pts_(0), db[i].pts_(1);
+        pt_k *= invpow;
+
+        // initialize params.
+        abcdq.setZero();
+        abcdq(4) = a;
+        for(int lvl = MAX_PYR_LVL - 1; lvl > -1; --lvl) {
+            this->simd_setPatchPattern(patch_lvl[lvl], 8);
+            this->simd_generateReferencePoints_AVX(pt_k(0), pt_k(1));
+            this->simd_interpImage_AVX(Ik[lvl], buf_u_ref_, buf_v_ref_, buf_Ik_, mask_Ik_);
+
+            // ITERATION!!!
+            float lam      = 0.5; 
+            float lam_prev = 1e9;
+            float r_old    = 1e15;
+            for(int iter = 0; iter < MAX_ITER; ++iter){
+                JtWJ_simd_.setZero();
+                mJtWr_simd_.setZero();
+
+                float sigmoid = 0.5f * (a / sqrtf(1.0f + a*a) + 1.0f);
+                abcdq(4) = a; // s_far
+
+                this->simd_warpAffine_AVX_LM(abcdq, s_far, l(0), l(1), pt_near(0), pt_near(1));
+                this->simd_calcResidualAndWeight_AVX(Ic[lvl], du_c[lvl], dv_c[lvl], alpha, beta, thres_huber);
+                this->simd_calcHessianAndJacobianAffine_AVX_LM(abcdq, s_far, l(0), l(1), db[i].err_klt_affine_);
+
+                this->simd_solveGaussNewtonStepAffine_LM(lam, delta_abcdq);
+
+                // is valid step ? LM test.
+                abcdq_test = abcdq + delta_abcdq;
+                if(abcdq_test(4) >  5) abcdq_test(4) =  5;
+                if(abcdq_test(4) < -5) abcdq_test(4) = -5;
+                
+                float r_test;
+                this->simd_calcResidual_AVX(Ic[lvl], alpha, beta, thres_huber, r_test);
+
+                // decide whether we need to accept this step.
+                float delta_residual = r_test - r_old;
+                bool is_decreasing = delta_residual < 0.0f ? true : false;
+                if(iter > 0){
+                    if(is_decreasing){
+                        abcdq = abcdq_test;
+                        r_old = r_test;
+                        lam *= 0.2;
+                        if( lam < LAM_MIN) lam = LAM_MIN;
+                    }
+                    else{
+                        lam *= 6.0f;
+                        if(lam > LAM_MAX) lam = LAM_MAX;
+                    }
+                }
+
+
+                if(lvl == 0) {
+                    float s = s_far*0.5f*(abcdq(4) / sqrt(1.0f + abcdq(4)*abcdq(4)) + 1.0f);
+                    db[i].pts_tracked_ << s*l(0) + pt_near(0), s*l(1) + pt_near(1);
+                    db[i].err_klt_affine_ = sqrt(db[i].err_klt_affine_/M);
+                    db[i].s_affine_ = s;
+                    db[i].abcd_ << abcdq(0), abcdq(1), abcdq(2), abcdq(3);
+                }
+                if( (!is_decreasing) && abs(lam - lam_prev) < 1e-5 ){
+                    if(lvl == 0){
+                        if(db[i].err_klt_affine_ > 20.0f) db[i].klt_valid_ = false;
+                    }
+                    break;
+                }
+                lam_prev = lam;
+            }
+            
+            // resolution up.
+            if(lvl > 0){
+                pt_k     *= 2;
+                pt_near  *= 2;
+                pt_far   *= 2;
+                s_far    *= 2;
+            }
+        }
+#ifdef _VERBOSE_
+        cout << "(AVX) affine [" << i <<"]: s.. [" << db[i].s_normal_ << "   " << db[i].s_affine_ << "   "  << s_far << "]\n";
+#endif
     }
 };

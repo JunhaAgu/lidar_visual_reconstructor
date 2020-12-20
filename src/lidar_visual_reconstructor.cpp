@@ -1266,7 +1266,7 @@ bool LidarVisualReconstructor::run(){
                     << db_[i].X_recon_(2) << " "
                     << db_[i].err_klt_affine_ << "\n"; 
                 }
-            } // why three layers ???
+            }
         }
         
 

@@ -41,6 +41,14 @@ public:
         const float& alpha, const float& beta, 
         vector<PointDB>& db);
 
+    void runEpipolarKLT_LM(
+        const vector<cv::Mat>& Ik,   const vector<cv::Mat>& Ic, 
+        const vector<cv::Mat>& du_k, const vector<cv::Mat>& dv_k,
+        const vector<cv::Mat>& du_c, const vector<cv::Mat>& dv_c,
+        const int& win_sz, const int& MAX_ITER,
+        const float& alpha, const float& beta, 
+        vector<PointDB>& db);
+
     void runEpipolarKLT_SSE(
             const vector<cv::Mat>& Ik, const vector<cv::Mat>& Ic, 
             const vector<cv::Mat>& du_k, const vector<cv::Mat>& dv_k,
@@ -71,6 +79,14 @@ public:
         vector<PointDB>& db);
 
     void runEpipolarAffineKLT_AVX(
+        const vector<cv::Mat>& Ik,   const vector<cv::Mat>& Ic, 
+        const vector<cv::Mat>& du_k, const vector<cv::Mat>& dv_k,
+        const vector<cv::Mat>& du_c, const vector<cv::Mat>& dv_c,
+        const int& win_sz, const int& MAX_ITER,
+        const float& alpha, const float& beta, 
+        vector<PointDB>& db);
+
+    void runEpipolarAffineKLT_AVX_LM(
         const vector<cv::Mat>& Ik,   const vector<cv::Mat>& Ic, 
         const vector<cv::Mat>& du_k, const vector<cv::Mat>& dv_k,
         const vector<cv::Mat>& du_c, const vector<cv::Mat>& dv_c,
@@ -154,7 +170,8 @@ private:
     void simd_warpNormal_SSE(const float& s,     const float& lx, const float& ly, const float& u, const float& v);
     void simd_warpAffine_SSE(const Vec5& params, const float& lx, const float& ly, const float& u, const float& v);
     void simd_warpAffine_AVX(const Vec5& params, const float& lx, const float& ly, const float& u, const float& v);
-
+    void simd_warpAffine_AVX_LM(const Vec5& params, const float& s_far, const float& lx, const float& ly, const float& u, const float& v);
+    
     void simd_interpImage(const cv::Mat& Ik); // non simd version
     void simd_interpImage_SSE(const cv::Mat& img, float* buf_u, float* buf_v,  float* res_img, float* mask);
     void simd_interpImage_AVX(const cv::Mat& img, float* buf_u, float* buf_v,  float* res_img, float* mask);
@@ -165,10 +182,13 @@ private:
         const float& alpha, const float& beta, const float& thres_huber);
     void simd_calcResidualAndWeight_AVX(const cv::Mat& Ic, const cv::Mat& du_c, const cv::Mat& dv_c,
         const float& alpha, const float& beta, const float& thres_huber);
+    void simd_calcResidual_AVX(const cv::Mat& Ic,
+        const float& alpha, const float& beta, const float& thres_huber, float& res);
 
     void simd_calcHessianAndJacobianNormal_SSE(const float& s, const float& lx, const float& ly, float& err_sse);
     void simd_calcHessianAndJacobianAffine_SSE(const Vec5& params, const float& lx, const float& ly, float& err_sse);
     void simd_calcHessianAndJacobianAffine_AVX(const Vec5& params, const float& lx, const float& ly, float& err_sse);
+    void simd_calcHessianAndJacobianAffine_AVX_LM(const Vec5& params, const float& s_far, const float& lx, const float& ly, float& err_sse);
 
     void simd_updateNormal_SSE(const __m128& J1,
         const __m128& res, const __m128& weight, float& err_sse);
@@ -179,7 +199,7 @@ private:
     
     void simd_solveGaussNewtonStepNormal(float& delta_s);
     void simd_solveGaussNewtonStepAffine(Vec5& delta_params);
-
+    void simd_solveGaussNewtonStepAffine_LM(const float& lam, Vec5& delta_params);
 
 
 private: 
