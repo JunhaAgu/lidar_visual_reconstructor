@@ -341,7 +341,8 @@ void EpipolarKLT::runEpipolarKLT_LM(
         float s_far = l.norm();
         l /= s_far;
         float s = (db[i].pts_prior_*invpow- pt_near).norm(); // from prior information.
-        float a = sqrt(s*s / (s_far*s_far - s*s));
+        float a = (2.0f*s - s_far) / ( 2.0f * sqrt(s*(s_far - s)) );
+
         if(a >  5) a =  5; 
         if(a < -5) a = -5;
 
@@ -354,12 +355,11 @@ void EpipolarKLT::runEpipolarKLT_LM(
             improc::interpImageSingleRegularPatch(Ik[lvl], pt_k(0), pt_k(1), patch,  Ik_vector);
 
             // ITERATION!!!
-            float lam = 0.5; 
+            float lam = 0.05; 
             float lam_prev = 1e9;
             float r_old = 1e15;
             for(int iter = 0; iter < MAX_ITER; ++iter){
-                float sigmoid = 0.5f * (a / sqrtf(1.0f + a*a) + 1.0f);
-                s = s_far*sigmoid;
+                s = s_far * 0.5f * (a / sqrtf(1.0f + a*a) + 1.0f);
                 delta_pt = s*l;
 
                 // Generate reference patch. (M+1) residual.
@@ -368,6 +368,7 @@ void EpipolarKLT::runEpipolarKLT_LM(
                
                 float JtwJ_scalar = 0;
                 float Jtwr_scalar = 0;
+                float dsda = 0.5f * s_far * pow(1.0f + a*a, -1.5f);
                 for(int j = 0; j < M; ++j){
                     float Ik_now  = *(Ik_vector + j);
                     float Ic_warp = *(Ic_vector + j);
@@ -380,7 +381,7 @@ void EpipolarKLT::runEpipolarKLT_LM(
                      // valid pixel!
                     r = Ic_warp - Ik_now;
                     w = fabs(r) < thres_huber ? 1.0f : thres_huber / fabs(r);
-                    J = dx_warp*l(0) + dy_warp*l(1);
+                    J = ( dx_warp*l(0) + dy_warp*l(1) ) * dsda;
 
                     float Jw = J*w;
                     JtwJ_scalar += Jw*J;
@@ -421,11 +422,11 @@ void EpipolarKLT::runEpipolarKLT_LM(
                         delta_pt = s_test*l;
                         r_old    = r_test;
                         lam *= 0.2f;
-                        if(lam < LAM_MIN) lam = LAM_MIN;
+                        lam = (lam < LAM_MIN) ? LAM_MIN : lam;
                     }
                     else {
                         lam *= 6.0f;
-                        if(lam > LAM_MAX) lam = LAM_MAX;
+                        lam = (lam > LAM_MAX) ? LAM_MAX : lam;
                     }
                 }
 
@@ -445,7 +446,7 @@ void EpipolarKLT::runEpipolarKLT_LM(
             }
             
             // resolution up.
-            if(lvl > 0){
+            if(lvl > 0) {
                 pt_k    *= 2;
                 pt_near *= 2;
                 pt_far  *= 2;
@@ -1403,7 +1404,7 @@ void EpipolarKLT::simd_calcHessianAndJacobianAffine_AVX_LM(const Vec5& params, c
     __m256 expd4 = _mm256_set1_ps(exp(params(3)));
 
     float a = params(4);
-    float jacob_sigmoid_part = 0.5f * s_far / pow((1.0f + a*a),1.5);
+    float jacob_sigmoid_part = 0.5f * s_far * pow((1.0f + a*a),-1.5);
     __m256 jac_sig = _mm256_set1_ps(jacob_sigmoid_part);
 
     __m256 lxlxlxlx = _mm256_set1_ps(lx);
@@ -2027,7 +2028,7 @@ void EpipolarKLT::runEpipolarAffineKLT_AVX_LM(
         Vec2 l       = pt_far - pt_near;
         float s_far  = l.norm(); l /= s_far;
         float s = (db[i].pts_tracked_*invpow - pt_near).norm(); // from prior information.
-        float a = sqrt(s*s / (s_far*s_far - s*s));
+        float a = (2.0f*s - s_far) / ( 2.0f * sqrt(s*(s_far-s)) );
         if(a >  5) a =  5; 
         if(a < -5) a = -5;
 

@@ -1016,7 +1016,7 @@ bool LidarVisualReconstructor::run(){
         int win_sz   = 25;
         
         tic();
-        eklt_->runEpipolarKLT(
+        eklt_->runEpipolarKLT_LM(
             frames_[0]->img_pyr(), frames_[1]->img_pyr(), 
             frames_[0]->du(), frames_[0]->dv(),
             frames_[1]->du(), frames_[1]->dv(),
@@ -1130,7 +1130,7 @@ bool LidarVisualReconstructor::run(){
             cout << " Additional, normal KLT.....";
             tic();
             win_sz = 43;
-            eklt_->runEpipolarKLT(
+            eklt_->runEpipolarKLT_LM(
                 frames_[0]->img_pyr(), frames_[1]->img_pyr(), 
                 frames_[0]->du(), frames_[0]->dv(),
                 frames_[1]->du(), frames_[1]->dv(),
