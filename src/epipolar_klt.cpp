@@ -393,10 +393,10 @@ void EpipolarKLT::runEpipolarKLT_LM(
 
                 // is valid step?
                 float a_test = a + delta_a;
-                if(a_test > 5) a_test = 5;
-                if(a_test <-5) a_test =-5;
+                if(a_test >  5) a_test =  5;
+                if(a_test < -5) a_test = -5;
 
-                float s_test = s_far*0.5f*(a_test / sqrtf(1.0f + a_test*a_test) + 1.0f);
+                float s_test = s_far * 0.5f * (a_test / sqrtf(1.0f + a_test*a_test) + 1.0f);
                 improc::interpImageSingleRegularPatch(Ic[lvl], 
                     pt_near(0) + s_test*l(0), pt_near(1) + s_test*l(1), patch,  Ic_vector);
 

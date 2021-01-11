@@ -189,7 +189,7 @@ private:
     void simd_calcHessianAndJacobianAffine_SSE(const Vec5& params, const float& lx, const float& ly, float& err_sse);
     void simd_calcHessianAndJacobianAffine_AVX(const Vec5& params, const float& lx, const float& ly, float& err_sse);
     void simd_calcHessianAndJacobianAffine_AVX_LM(const Vec5& params, const float& s_far, const float& lx, const float& ly, float& err_sse);
-
+ 
     void simd_updateNormal_SSE(const __m128& J1,
         const __m128& res, const __m128& weight, float& err_sse);
     void simd_updateAffine_SSE(const __m128& J1, const __m128& J2, const __m128& J3, const __m128& J4, const __m128& J5,

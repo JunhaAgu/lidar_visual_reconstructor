@@ -26,6 +26,8 @@ find_package(catkin REQUIRED COMPONENTS
 add_message_files(
   FILES
   controlInputsStamped.msg
+  packetsFromExcavator.msg
+  packetsToExcavator.msg
 )
 
 add_service_files(
@@ -61,6 +63,8 @@ set(SRC ${SRC}
 
   src/cdt/adjacent_map.cpp
   src/cdt/constrained_delaunay.cpp
+
+  src/can/can_communicator.cpp
 )
 
 set(includeDirs ${includeDirs} ${CMAKE_CURRENT_BINARY_DIR})

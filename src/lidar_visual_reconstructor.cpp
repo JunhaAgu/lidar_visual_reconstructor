@@ -270,7 +270,7 @@ bool LidarVisualReconstructor::run(){
     srv_lidarimagedata_.request.header.stamp = ros::Time::now();
     srv_lidarimagedata_.request.header.seq   = -1;
     srv_lidarimagedata_.request.header.frame_id = "Origin: recon_node";
-    srv_lidarimagedata_.request.request_type    = 0;
+    srv_lidarimagedata_.request.request_type = 0;
 
     if(!client_lidarimagedata_.call(srv_lidarimagedata_)){
         ROS_ERROR("Failed to call service 'GCS:lidar image data' by 'Recon node'.\n");
@@ -287,10 +287,10 @@ bool LidarVisualReconstructor::run(){
         frames_[1]->constructFrame(cv_ptr->image);
 
         if(0) {
-            cv::imwrite("/home/larrkchlaptop/imageraw0.png",frames_[0]->imgu_raw());
-            cv::imwrite("/home/larrkchlaptop/imageraw1.png",frames_[1]->imgu_raw());
-            cv::imwrite("/home/larrkchlaptop/image0.png",frames_[0]->imgu());
-            cv::imwrite("/home/larrkchlaptop/image1.png",frames_[1]->imgu());
+            cv::imwrite("/home/larrkchlaptop/imageraw0.png", frames_[0]->imgu_raw());
+            cv::imwrite("/home/larrkchlaptop/imageraw1.png", frames_[1]->imgu_raw());
+            cv::imwrite("/home/larrkchlaptop/image0.png",    frames_[0]->imgu());
+            cv::imwrite("/home/larrkchlaptop/image1.png",    frames_[1]->imgu());
             cv::namedWindow("0 image", CV_WINDOW_AUTOSIZE);
             cv::namedWindow("1 image", CV_WINDOW_AUTOSIZE);
             cv::imshow("0 image", frames_[0]->imgu_raw());
@@ -305,7 +305,7 @@ bool LidarVisualReconstructor::run(){
         tri_id_image_ = -cv::Mat::ones(frames_[0]->imgu_raw().rows,frames_[0]->imgu_raw().cols, CV_32SC1);
         coef_tri_     = -cv::Mat::ones(frames_[0]->imgu_raw().rows,frames_[0]->imgu_raw().cols, CV_32FC3);
         img_depth_    = -cv::Mat::ones(cams_[0]->rows(),cams_[0]->cols(), CV_32FC1);
-        tri_id_image_color_    = -cv::Mat::ones(cams_[0]->rows(),cams_[0]->cols(), CV_8UC3);
+        tri_id_image_color_ = -cv::Mat::ones(cams_[0]->rows(),cams_[0]->cols(), CV_8UC3);
 
         // fill out LidarPcl.
         hce_autoexcavator::lidarImageDataStamped::Response& res_lidarimage = srv_lidarimagedata_.response;
@@ -508,9 +508,6 @@ bool LidarVisualReconstructor::run(){
                 }
             }
         }
-        // cout << "idxs_cross0:\n" << idxs_cross[0]<<"\n\n";
-        // cout << "idxs_cross1:\n" << idxs_cross[1]<<"\n\n"; // ok
-
 
         // equidistant points insertions.
         float dist_step = 0.3f; // 0.3 [m] equidistances
@@ -522,7 +519,6 @@ bool LidarVisualReconstructor::run(){
                 idxs_augment_l0.insert(std::pair<int,vector<int>>(ch1+ch0*(pcls_[1]->n_channels+1),vector<int>(0)));
             }
         }
-        
 
         // Find augment points
         EVec3f X_start, X_end;
@@ -558,7 +554,6 @@ bool LidarVisualReconstructor::run(){
                     }// end if
                 }// end if
             }// end for n_seg
-            
             
             // (2) Find front point. 
             int ch1_front = 0;
@@ -653,8 +648,6 @@ bool LidarVisualReconstructor::run(){
         //     cout << "\n";
         // }
 
-
-
         // For lidar1
         map<int, vector<int>> idxs_augment_l1;
         for(int ch1 = 0; ch1 < pcls_[1]->n_channels; ++ch1) {
@@ -662,7 +655,6 @@ bool LidarVisualReconstructor::run(){
                 idxs_augment_l1.insert(std::pair<int,vector<int>>(ch0+ch1*(pcls_[0]->n_channels+1),vector<int>(0)));
             }
         }
-        
 
         // Find augment points
         for(int ch1 = 0; ch1 < pcls_[1]->n_channels; ++ch1)
@@ -704,7 +696,6 @@ bool LidarVisualReconstructor::run(){
                     }// end if
                 }// end if
             }// end for n_seg
-            
             
             // (2) Find front point. 
             int ch0_front = 0;
@@ -785,21 +776,6 @@ bool LidarVisualReconstructor::run(){
                 }   
             }
         }// end for ch0
-
-        // // visualization idxs_augment_l0 and idxs_augment_l1
-        // for(int ch1 = 0; ch1 < pcls_[1]->n_channels; ++ch1){
-        //     for(int ch0 = 0; ch0 < pcls_[0]->n_channels+1; ++ch0){
-        //         int n_elem = idxs_augment_l1[ch0 + ch1*(pcls_[0]->n_channels+1)].size();
-        //         cout << "[";
-        //         //for(auto itr = idxs_augment_l1[ch0 + ch1*(pcls_[0]->n_channels+1)].begin(); itr != idxs_augment_l1[ch0 + ch1*(pcls_[0]->n_channels+1)].end(); ++itr)
-        //         //    cout << *itr <<", ";
-        //         cout <<idxs_augment_l1[ch0+ch1*(pcls_[0]->n_channels+1)].size();
-                
-        //         cout <<"],";
-        //     }
-        //     cout << "\n";
-        // }
-
 
         // Visualization on the figure.
         if(1){
@@ -948,7 +924,7 @@ bool LidarVisualReconstructor::run(){
         }
 
         // Visualization on the figure.
-        if(1){
+        if(1) {
             cv::Scalar orange(0, 165, 255), blue(255, 0, 0), magenta(255, 0, 255);
             cv::Mat img_8u;
             cv::cvtColor(frames_[0]->imgu(),img_8u,CV_GRAY2BGR);
@@ -959,13 +935,13 @@ bool LidarVisualReconstructor::run(){
             cv::waitKey(0);
         } //end if  
 
+
         // Delaunay ... 
         n_db_org_size_ = db_.size();
         tic();
         cdt_->initializeDT(db_);
         cdt_->executeNormalDT();
         cout << " DT time [ms]: "<< toc(0) <<"\n";
-
 
 
         // KLT ...
@@ -1010,10 +986,10 @@ bool LidarVisualReconstructor::run(){
             cv::waitKey(0);
         }   
 #endif
-        // Normal Epipolar KLT (with barrier function)
-        float alpha = 1.0f, beta = 0.0f;
-        int MAX_ITER = 50;
-        int win_sz   = 25;
+        // Normal Epipolar KLT (with logistic domain constraint)
+        float alpha  = 1.0f, beta = 0.0f;
+        int MAX_ITER = 40;
+        int win_sz   = 31;
         
         tic();
         eklt_->runEpipolarKLT_LM(
@@ -1030,8 +1006,7 @@ bool LidarVisualReconstructor::run(){
             db_, alpha, beta);
         cout << " Brightness compensation: "<< toc(0) << " [ms]\n"; // 170 ms !!
 
-        // Affine constrained Epipolar KLT (with barrier function)
-        // Affine klt (AVX)
+        // Epipolar Constrained Affine klt (AVX)
         tic();
         win_sz = 33;
         eklt_->runEpipolarAffineKLT_AVX_LM(
@@ -1071,12 +1046,12 @@ bool LidarVisualReconstructor::run(){
         db_.emplace_back(); // super triangles (n_db_org_size_ + 2) index: n_db_org_size_ + 1
         
 
-        int DEPTH_DENSIFICATION = 1; // 0: no densification, 
+        int DEPTH_DENSIFICATION = 0; // 0: no densification, 
         for(int dep = 0; dep < DEPTH_DENSIFICATION; ++dep) {
             vector<PointDB> db_addi_;
             db_addi_.resize(0);
             tic();
-            cdt_->getCenterPointsOfTrianglesAndFillDepth(300, db_, db_addi_);  // make points.
+            cdt_->getCenterPointsOfTrianglesAndFillDepth(150, db_, db_addi_);  // make points.
 
             cout << "Densification depth: " << dep << ", " 
                  << "elapsed time : " << toc(0) << " [ms]\n";

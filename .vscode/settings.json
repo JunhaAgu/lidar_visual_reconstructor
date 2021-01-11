@@ -56,7 +56,8 @@
         "utility": "cpp",
         "typeindex": "cpp",
         "typeinfo": "cpp",
-        "random": "cpp"
+        "random": "cpp",
+        "queue": "cpp"
     },
     "python.autoComplete.extraPaths": [
         "/home/larrkchlaptop/catkin_ws/devel/lib/python2.7/dist-packages",

@@ -49,6 +49,10 @@
 // custom libraries
 #include "util/sophus_lie.hpp" // Lie group & Lie algebra.
 
+
+// For CAN communications
+#include "can/can_communicator.hpp"
+
 using namespace std;
 
 class HCEGCS {
@@ -165,6 +169,9 @@ private:
     vector<int> buf_lidars_n_channels;
 
 
+// CAN communication related ...
+private:
+    CanCommunicator* can_comm_;
 
 private:
     string save_dir_;

@@ -102,6 +102,11 @@ HCEGCS::HCEGCS(ros::NodeHandle& nh,
         output_file << "\n";
     }
 
+    // CAN communicator
+    string tpcname_from_ardu = "/canpackets/ToExcavator";
+    string tpcname_to_ardu   = "/canpackets/FromExcavator";
+    can_comm_ = new CanCommunicator(nh, tpcname_from_ardu, tpcname_to_ardu);
+
 };
 
 HCEGCS::~HCEGCS() {
