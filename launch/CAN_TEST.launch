@@ -1,0 +1,6 @@
+<launch>
+    <node pkg="hce_autoexcavator" name="gcs_node" type="gcs_node" output="screen">
+    </node>
+    <node pkg="rosserial_python" type="serial_node.py" name="arduino_TCPIP" args=" tcp" output="screen">
+    </node>   
+</launch>
