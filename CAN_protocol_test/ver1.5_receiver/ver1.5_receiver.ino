@@ -57,7 +57,7 @@ void callbackToExcavator(const hce_autoexcavator::packetsToExcavator &msg_from_m
     //Serial.println(msg_from_mpc.bytes[j]); //test_jh
   }
   CAN.endPacket();
-  delayMicroseconds(300);
+  //delayMicroseconds(300);
 
   CAN.beginExtendedPacket(0x18FFC921); //0.2s Swing rate, (Velocity: Boom, Arm, Bucket)
   for (int j = 8; j < 16; ++j) {
@@ -65,7 +65,7 @@ void callbackToExcavator(const hce_autoexcavator::packetsToExcavator &msg_from_m
     //Serial.println(msg_from_mpc.bytes[j]); //test_jh
   }
   CAN.endPacket();
-  delayMicroseconds(300);
+  //delayMicroseconds(300);
 
   CAN.beginExtendedPacket(0x18FFC922); //0.2s Swing Torque, (Force: Boom, Arm, Bucket)
   for (int j = 16; j < 24; ++j) {
@@ -73,49 +73,49 @@ void callbackToExcavator(const hce_autoexcavator::packetsToExcavator &msg_from_m
     //Serial.println(msg_from_mpc.bytes[j]);
   }
   CAN.endPacket();
-  delayMicroseconds(300);
+  //delayMicroseconds(300);
 
   CAN.beginExtendedPacket(0x18FFC950); //0.5s Swing angle, (Length: Boom, Arm, Bucket)
   for (int j = 24; j < 32; ++j) {
     CAN.write(msg_from_mpc.bytes[j]);
   }
   CAN.endPacket();
-  delayMicroseconds(300);
+  //delayMicroseconds(300);
 
   CAN.beginExtendedPacket(0x18FFC951); //0.5s Swing rate, (Velocity: Boom, Arm, Bucket)
   for (int j = 32; j < 40; ++j) {
     CAN.write(msg_from_mpc.bytes[j]);
   }
   CAN.endPacket();
-  delayMicroseconds(300);
+  //delayMicroseconds(300);
 
   CAN.beginExtendedPacket(0x18FFC952); //0.5s Swing Torque, (Force: Boom, Arm, Bucket)
   for (int j = 40; j < 48; ++j) {
     CAN.write(msg_from_mpc.bytes[j]);
   }
   CAN.endPacket();
-  delayMicroseconds(300);
+  //delayMicroseconds(300);
 
   CAN.beginExtendedPacket(0x18FFC9A0); //1.0s Swing angle, (Length: Boom, Arm, Bucket)
   for (int j = 48; j < 56; ++j) {
     CAN.write(msg_from_mpc.bytes[j]);
   }
   CAN.endPacket();
-  delayMicroseconds(300);
+  //delayMicroseconds(300);
 
   CAN.beginExtendedPacket(0x18FFC9A1); //1.0s Swing rate, (Velocity: Boom, Arm, Bucket)
   for (int j = 56; j < 64; ++j) {
     CAN.write(msg_from_mpc.bytes[j]);
   }
   CAN.endPacket();
-  delayMicroseconds(300);
+  //delayMicroseconds(300);
 
   CAN.beginExtendedPacket(0x18FFC9A2); //1.0s Swing Torque, (Force: Boom, Arm, Bucket)
   for (int j = 64; j < 72; ++j) {
     CAN.write(msg_from_mpc.bytes[j]);
   }
   CAN.endPacket();
-  delayMicroseconds(300);
+  //delayMicroseconds(300);
 
   finish = micros();
   delta = finish - start;
