@@ -4,11 +4,11 @@
 #include <string>
 #include <sstream>
 #include <exception>
+#include <chrono>
 
 // keyboard input tool
 #include "util/keyinput.h"
 #include "hcegcs.h"
-
 
 using namespace std;
 // Get current data/time, format is yyyy-mm-dd.hh:mm:ss
@@ -45,6 +45,7 @@ int main(int argc, char **argv) {
         << "\n|      [s]  Query and save a snapshot." 
         << "\n|      [r]  Run All HCE algorithms" 
         << "\n|      [t]  Get test dataset" 
+        << "\n|      [c]  [TEST] test CAN 10 Hz signals publishing"
         << "\n| Select an input: \n";
         user_manual = ss.str();
         cout << user_manual;
@@ -82,6 +83,33 @@ int main(int argc, char **argv) {
                 Eigen::Matrix<float,6,1> xi_bf;
                 xi_bf << 0.855383628, 0.834228799, 1.503234857, -1.57548926, 0.318537783, -0.08536957;
                 gcs->setTestLidarImages(dir_testdata, theta*3.141592f/180.0f, L_boom, w, xi_bf);
+                cout << user_manual;
+            }
+            else if(c == 'c'){
+                cout << "\n\n [TEST] test CAN 10 Hz signals publishing\n";
+                cout << "10 Hz (forced) CAN publisher test mode\n";
+                cout << " Press 'c' to stop... \n";
+
+
+                auto t_past = chrono::high_resolution_clock::now();
+                auto t_now = t_past;
+                while(1) {
+                    int cc = getch(); 
+                    if(cc == 'c') break;
+
+                    t_now = chrono::high_resolution_clock::now();
+                    auto gap = t_now - t_past;
+                    double dt = (double)(gap/chrono::microseconds(1))/1000.0;
+
+                    // 10 Hz publishing.
+                    if(dt > 100){
+                        gcs->testCan10hzPublisher();
+                        t_past = t_now;
+                    }
+                    ros::spinOnce();
+                }
+
+                cout << "\n\nCAN test mode stops.\n";
                 cout << user_manual;
             }
             else if(c != 0) {

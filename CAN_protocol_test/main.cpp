@@ -172,7 +172,12 @@ void callbackFromExcavator(const tutorial_rosardu_customtopic::packetsFromExcava
 
     if (flag_rate)
     {
-        Boom_Joint_Rate = 1.691 * Boom_Rate_buf[1] - 0.7327 * Boom_Rate_buf[2] + 1.04 * (Boom_Angle_buf[0] - Boom_Angle_buf[1]) + 2.09 * (Boom_Angle_buf[1] - Boom_Angle_buf[2]) + 1.04 * (Boom_Angle_buf[2] - Boom_Angle_buf[3]);
+        Boom_Joint_Rate = 
+        1.691 * Boom_Rate_buf[1] 
+        - 0.7327 * Boom_Rate_buf[2] 
+        + 1.04 * (Boom_Angle_buf[0] - Boom_Angle_buf[1]) 
+        + 2.09 * (Boom_Angle_buf[1] - Boom_Angle_buf[2]) 
+        + 1.04 * (Boom_Angle_buf[2] - Boom_Angle_buf[3]);
         Arm_Joint_Rate = 1.691 * Arm_Rate_buf[1] - 0.7327 * Arm_Rate_buf[2] + 1.04 * (Arm_Angle_buf[0] - Arm_Angle_buf[1]) + 2.09 * (Arm_Angle_buf[1] - Arm_Angle_buf[2]) + 1.04 * (Arm_Angle_buf[2] - Arm_Angle_buf[3]);
         Bkt_Joint_Rate = 1.691 * Bkt_Rate_buf[1] - 0.7327 * Bkt_Rate_buf[2] + 1.04 * (Bkt_Angle_buf[0] - Bkt_Angle_buf[1]) + 2.09 * (Bkt_Angle_buf[1] - Bkt_Angle_buf[2]) + 1.04 * (Bkt_Angle_buf[2] - Bkt_Angle_buf[3]);
         Swing_Rate = 1.691 * Swing_Rate_buf[1] - 0.7327 * Swing_Rate_buf[2] + 1.04 * (Swing_Angle_buf[0] - Swing_Angle_buf[1]) + 2.09 * (Swing_Angle_buf[1] - Swing_Angle_buf[2]) + 1.04 * (Swing_Angle_buf[2] - Swing_Angle_buf[3]);

@@ -12,6 +12,8 @@ CanCommunicator::CanCommunicator(ros::NodeHandle& nh, string tpcname_from_ardu, 
         topicname_to_arduino_, 1, &CanCommunicator::callbackFromExcavator, this);
 
     butterworth_cnt_ = 0;
+
+    this->fillPlannerOutputs_TEST(); // for CAN test
 };
 
 CanCommunicator::~CanCommunicator()
@@ -20,7 +22,9 @@ CanCommunicator::~CanCommunicator()
 };
 
 
-#define BUTTERWORTH(x) ( 1.691 * x[1] - 0.7327 * x[2] + 1.04 * (x[0] - x[1]) + 2.09 * (x[1] - x[2]) + 1.04 * (x[2] - x[3]) )
+#define BUTTERWORTH(abuf,rbuf) ( 1.691 * rbuf[1] - 0.7327 * rbuf[2] + 1.04 * (abuf[0] - abuf[1]) + 2.09 * (abuf[1] - abuf[2]) + 1.04 * (abuf[2] - abuf[3]) )
+#define SLIDE_WINDOW_RATE_BUF(arr) {arr[2] = arr[1]; arr[1] = arr[0]; } 
+#define SLIDE_WINDOW_ANGLE_BUF(arr) {arr[3] = arr[2]; arr[2] = arr[1]; arr[1] = arr[0]; }
 
 void CanCommunicator::callbackFromExcavator(const hce_autoexcavator::packetsFromExcavatorConstPtr &msg_from_ex)
 {
@@ -52,6 +56,7 @@ void CanCommunicator::callbackFromExcavator(const hce_autoexcavator::packetsFrom
     //Sensor7
     fromEx_.Swing_Angle      = angle_scale * ((float)msg_from_ex->bytes[SENSOR7_START + 2] * pow16_4 + (float)msg_from_ex->bytes[SENSOR7_START + 1] * pow16_2 + (float)msg_from_ex->bytes[SENSOR7_START + 0]) - angle_offset;
 
+    // Update new sensor angles. (fill out the 0-th element of a angle buffer.)
     fromEx_.Boom_Angle_buf[0]  = fromEx_.Boom_Joint_Angle;
     fromEx_.Arm_Angle_buf[0]   = fromEx_.Arm_Joint_Angle;
     fromEx_.Bkt_Angle_buf[0]   = fromEx_.Bkt_Joint_Angle;
@@ -60,42 +65,26 @@ void CanCommunicator::callbackFromExcavator(const hce_autoexcavator::packetsFrom
     if (butterworth_cnt_ > 3)
     {
         // Butterworth filter.
-        fromEx_.Boom_Joint_Rate = BUTTERWORTH(fromEx_.Boom_Rate_buf);
-        fromEx_.Boom_Rate_buf[2]  = fromEx_.Boom_Rate_buf[1];
-        fromEx_.Boom_Rate_buf[1]  = fromEx_.Boom_Rate_buf[0];
+        fromEx_.Boom_Joint_Rate   = BUTTERWORTH(fromEx_.Boom_Angle_buf,  fromEx_.Boom_Rate_buf);
+        SLIDE_WINDOW_RATE_BUF(fromEx_.Boom_Rate_buf);
         fromEx_.Boom_Rate_buf[0]  = fromEx_.Boom_Joint_Rate;
 
-        fromEx_.Arm_Joint_Rate  = BUTTERWORTH(fromEx_.Arm_Rate_buf);
-        fromEx_.Arm_Rate_buf[2]   = fromEx_.Arm_Rate_buf[1];
-        fromEx_.Arm_Rate_buf[1]   = fromEx_.Arm_Rate_buf[0];       
+        fromEx_.Arm_Joint_Rate    = BUTTERWORTH(fromEx_.Arm_Angle_buf,   fromEx_.Arm_Rate_buf);
+        SLIDE_WINDOW_RATE_BUF(fromEx_.Arm_Rate_buf);
         fromEx_.Arm_Rate_buf[0]   = fromEx_.Arm_Joint_Rate;
 
-        fromEx_.Bkt_Joint_Rate  = BUTTERWORTH(fromEx_.Bkt_Rate_buf);
-        fromEx_.Bkt_Rate_buf[2]   = fromEx_.Bkt_Rate_buf[1];
-        fromEx_.Bkt_Rate_buf[1]   = fromEx_.Bkt_Rate_buf[0];
+        fromEx_.Bkt_Joint_Rate    = BUTTERWORTH(fromEx_.Bkt_Angle_buf,   fromEx_.Bkt_Rate_buf);
+        SLIDE_WINDOW_RATE_BUF(fromEx_.Bkt_Rate_buf);
         fromEx_.Bkt_Rate_buf[0]   = fromEx_.Bkt_Joint_Rate;
         
-        fromEx_.Swing_Rate      = BUTTERWORTH(fromEx_.Swing_Rate_buf);
-        fromEx_.Swing_Rate_buf[2] = fromEx_.Swing_Rate_buf[1];
-        fromEx_.Swing_Rate_buf[1] = fromEx_.Swing_Rate_buf[0];
+        fromEx_.Swing_Rate        = BUTTERWORTH(fromEx_.Swing_Angle_buf, fromEx_.Swing_Rate_buf);
+        SLIDE_WINDOW_RATE_BUF(fromEx_.Swing_Rate_buf);
         fromEx_.Swing_Rate_buf[0] = fromEx_.Swing_Rate;
     }
-
-    fromEx_.Boom_Angle_buf[3]  = fromEx_.Boom_Angle_buf[2];
-    fromEx_.Boom_Angle_buf[2]  = fromEx_.Boom_Angle_buf[1];
-    fromEx_.Boom_Angle_buf[1]  = fromEx_.Boom_Angle_buf[0];
-
-    fromEx_.Arm_Angle_buf[3]   = fromEx_.Arm_Angle_buf[2];
-    fromEx_.Arm_Angle_buf[2]   = fromEx_.Arm_Angle_buf[1];
-    fromEx_.Arm_Angle_buf[1]   = fromEx_.Arm_Angle_buf[0];
-
-    fromEx_.Bkt_Angle_buf[3]   = fromEx_.Bkt_Angle_buf[2];
-    fromEx_.Bkt_Angle_buf[2]   = fromEx_.Bkt_Angle_buf[1];
-    fromEx_.Bkt_Angle_buf[1]   = fromEx_.Bkt_Angle_buf[0];
-
-    fromEx_.Swing_Angle_buf[3] = fromEx_.Swing_Angle_buf[2];
-    fromEx_.Swing_Angle_buf[2] = fromEx_.Swing_Angle_buf[1];
-    fromEx_.Swing_Angle_buf[1] = fromEx_.Swing_Angle_buf[0];
+    SLIDE_WINDOW_ANGLE_BUF(fromEx_.Boom_Angle_buf);
+    SLIDE_WINDOW_ANGLE_BUF(fromEx_.Arm_Angle_buf);
+    SLIDE_WINDOW_ANGLE_BUF(fromEx_.Bkt_Angle_buf);
+    SLIDE_WINDOW_ANGLE_BUF(fromEx_.Swing_Angle_buf);
 
     ++butterworth_cnt_;
 };
@@ -147,10 +136,53 @@ void CanCommunicator::encodeToEx(
     }
 };
 
+void CanCommunicator::fillPlannerOutputs_TEST() {
+    float psi_U = 150; //50602 --> C5AA --> AA C5 / 170 197
+    float L_B = 3;     //32680 --> 7FA8 --> A8 7F / 168(167) 127
+    float L_A = 3;     //26178 --> 6642 --> 42 66 / 66 102
+    float L_K = 2;     //16340 --> 3FD4 --> D4 3F / 212(211) 63
+
+    float psi_Udot = 1; // 43668 --> AA94 --> 94 AA / 148 170
+    float L_Bdot = -1;  // 21834 --> 554A --> 4A 55 / 74 85
+    float L_Adot = 2;   // 54585 --> D539 --> 39 D5 / 57 213
+    float L_Kdot = -2;  // 10917 --> 2AA5 --> A5 2A / 165 42
+
+    float T_U = 100000;  //58629 --> E505 --> 05 E5 / 5 229
+    float F_B = 1500000; //59306 --> E7AA --> AA E7 / 170(169) 231
+    float F_A = 1000000; //65391 --> FF6F --> 6F FF / 111 255
+    float F_K = 500000;  //48422 --> BD26 --> 26 BD / 38(37) 189
+
+    planner_outputs0_[0] =  psi_U;
+    planner_outputs0_[1] =  L_B;
+    planner_outputs0_[2] =  L_A;
+    planner_outputs0_[3] =  L_K;
+    planner_outputs0_[4] =  psi_Udot;
+    planner_outputs0_[5] =  L_Bdot;
+    planner_outputs0_[6] =  L_Adot;
+    planner_outputs0_[7] =  L_Kdot;
+    planner_outputs0_[8] =  T_U;
+    planner_outputs0_[9] =  F_B;
+    planner_outputs0_[10] =  F_A; 
+    planner_outputs0_[11] =  F_K; // 0.2 s 
+
+    for(int i = 0; i < 12; ++i){
+        planner_outputs1_[i] = planner_outputs0_[i]; // 0.5 s 
+        planner_outputs2_[i] = planner_outputs0_[i]; // 1.0 s 
+    }
+};
+
+void CanCommunicator::fillPlannerOutputs(){
+    // TODO
+};
 
 void CanCommunicator::publishToExcavator(){
+    // initialize msg.
     msg_to_ex_.n_bytes = 0;
     msg_to_ex_.bytes.clear();
+
+    // fill out ros time.
+    ++msg_to_ex_.header.seq;
+    msg_to_ex_.header.stamp = ros::Time::now();
     
     this->calWithFactor(planner_outputs0_, planner_outputs0_processed_); // 0.2 s 
     this->calWithFactor(planner_outputs1_, planner_outputs1_processed_); // 0.5 s
@@ -160,12 +192,13 @@ void CanCommunicator::publishToExcavator(){
         planner_outputs0_processed_,
         planner_outputs1_processed_,
         planner_outputs2_processed_,
-        array_to_ex);
+        array_to_ex_);
 
     for(int i = 0; i < 72; ++i){
-        msg_to_ex_.bytes.push_back(array_to_ex[i]);
+        msg_to_ex_.bytes.push_back(array_to_ex_[i]);
     }
-
     msg_to_ex_.n_bytes = msg_to_ex_.bytes.size();
+
+    // publish
     pub_to_ex_.publish(msg_to_ex_);
 };

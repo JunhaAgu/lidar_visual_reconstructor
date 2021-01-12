@@ -125,7 +125,7 @@ HCEGCS::~HCEGCS() {
     }
 };
 
-void HCEGCS::streamingMode(){
+void HCEGCS::sensorStreamingMode(){
     cout << "10 Hz (forced) streaming mode\n";
     // initialize all flags
     initAllFlags();
@@ -572,4 +572,13 @@ void HCEGCS::calcRelativeLidarPose(const float& theta, Eigen::Matrix3f& R_l0l1, 
     // final resulting pose.
     R_l0l1 = T_l0l1_.block<3,3>(0,0);
     t_l0l1 = T_l0l1_.block<3,1>(0,3);
+};
+
+
+void HCEGCS::testCan10hzPublisher(){
+    can_comm_->publishToExcavator();
+    
+    // (timeout) Wait for obtaining and transmitting all sensor data. 
+    // Considering exposure time and lidar gathering time, set 50 ms
+    ros::spinOnce();
 };

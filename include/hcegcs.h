@@ -61,9 +61,11 @@ public:
     HCEGCS(ros::NodeHandle& nh, int n_cams, int n_lidars, const string& save_dir);
     ~HCEGCS();
 
-    void streamingMode();
+    void sensorStreamingMode();
     void snapshotMode();
     void runAlgorithms();
+
+    void testCan10hzPublisher();
 
     void setTestLidarImages(string dir, float theta, float L, Eigen::Vector3f& w, Eigen::Matrix<float,6,1>& xi_bf);
 

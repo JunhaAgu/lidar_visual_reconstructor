@@ -16,8 +16,12 @@
 #include "hce_autoexcavator/packetsToExcavator.h"   // packets (bytes) to excavator (exactly, Arduino MCU)
 #include "hce_autoexcavator/packetsFromExcavator.h" // packets (bytes) from excavator (exactly, Arduino MCU)
 
-using namespace std;
+
+// Datatype redefine.
 #define BYTE unsigned char
+
+
+using namespace std;
 
 class CanCommunicator{
 public:
@@ -26,7 +30,7 @@ public:
 
 public:
     FromExcvt fromEx_;
-    ToExcvt ToEx_;
+    ToExcvt toEx_;
     int butterworth_cnt_;
 
 private:
@@ -49,15 +53,15 @@ private:
     float planner_outputs1_processed_[12];
     float planner_outputs2_processed_[12];
 
-    BYTE  array_to_ex[72]; // 12 states * 3 times * 2 bytes = 72.
-
+    BYTE  array_to_ex_[72]; // 12 states * 3 times * 2 bytes = 72.
 
     void callbackFromExcavator(const hce_autoexcavator::packetsFromExcavatorConstPtr &msg_from_ex);
 
 // message sender to excavator (Arduino)
-private:
-    void fillPlannerOutputs(); // TODO
-    void publishToExcavator(); // TODO
+public:
+    void fillPlannerOutputs_TEST(); 
+    void fillPlannerOutputs(); // TODO: planner...
+    void publishToExcavator();
 
 // Functions for processing packets
 private:
