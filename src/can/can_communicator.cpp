@@ -29,8 +29,6 @@ CanCommunicator::~CanCommunicator()
 void CanCommunicator::callbackFromExcavator(const hce_autoexcavator::packetsFromExcavatorConstPtr &msg_from_ex)
 {
     int n_bytes = msg_from_ex->n_bytes;
-    cout << "subscriber callback ... n_bytes: " << n_bytes << "\n";
-
     float pow16_2 = pow16_2;
     float pow16_4 = pow16_4;
 

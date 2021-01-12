@@ -119,8 +119,8 @@ void callbackToExcavator(const hce_autoexcavator::packetsToExcavator &msg_from_m
 
   finish = micros();
   delta = finish - start;
-  Serial.print("CAN wirte time: ");
-  Serial.println(delta);
+  //Serial.print("CAN wirte time: ");
+  //Serial.println(delta);
 }
 
 // subscriber
@@ -132,11 +132,11 @@ void setup() {
 
   //CAN
   if (!CAN.begin(500E3)) {
-    Serial.println("Starting CAN failed!");
+    //Serial.println("Starting CAN failed!");
   }
   else {
     CAN.setPins(CS_CANMODULE, PIN_CAN_INTERRUPT); // about 200 us ISR signal
-    Serial.println("CAN bus is initialized at 500 kbps");
+    //Serial.println("CAN bus is initialized at 500 kbps");
   }
   // register the receive callback
   CAN.onReceive(callbackCANReceive);
@@ -147,18 +147,18 @@ void setup() {
   // Let some time for the Ethernet Shield to be initialized
   delay(1000);
 
-  Serial.println("");
-  Serial.println("Ethernet connection info...");
-  Serial.println("IP address: ");
-  Serial.println(Ethernet.localIP());
+  //Serial.println("");
+  //Serial.println("Ethernet connection info...");
+  //Serial.println("IP address: ");
+  //Serial.println(Ethernet.localIP());
 
   // Set the connection to rosserial socket server
   nh.getHardware()->setConnection(server, serverPort);
   nh.initNode();
 
   // Another way to get IP
-  Serial.print("MY IP = ");
-  Serial.println(nh.getHardware()->getLocalIP());
+  //Serial.print("MY IP = ");
+  //Serial.println(nh.getHardware()->getLocalIP());
 
   // advertise publisher and initialize msg.
   nh.advertise(pub_msg);
@@ -213,7 +213,7 @@ void callbackCANReceive(int packetSize) {
 
   if (CAN.packetRtr()) {
     // Remote transmission request, packet contains no data
-    Serial.print("RTR ");
+    // Serial.print("RTR ");
   }
 
   if (CAN.packetRtr()) {
