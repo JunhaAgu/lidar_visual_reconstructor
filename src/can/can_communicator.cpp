@@ -14,6 +14,80 @@ CanCommunicator::CanCommunicator(ros::NodeHandle& nh, string tpcname_from_ardu, 
     butterworth_cnt_ = 0;
 
     this->fillPlannerOutputs_TEST(); // for CAN test
+
+
+    // Test?
+    this->flag_test_ = true;
+    if(this->flag_test_) {
+        // generate save folder
+        std::string folder_create_command;
+        string save_dir_ = "/home/larrkchlaptop/hce_data/";
+        folder_create_command = "mkdir " + save_dir_ + "can_test_data/";
+        system(folder_create_command.c_str());
+
+        // save association
+        this->filedir_fromex_ = save_dir_ + "can_test_data/" + "from_excavator.txt";
+        std::ofstream output_file(this->filedir_fromex_, std::ios::trunc);
+        output_file.precision(6);
+        output_file.setf(std::ios_base::fixed, std::ios_base::floatfield);
+        if(output_file.is_open()){
+            output_file << "time [ms], ";
+            output_file << "ACyl_LC, ACyl_SC, ";
+            output_file << "Swing_L, Swing_R, ";
+            output_file << "BCyl_LC, BCyl_SC, ";
+            output_file << "KCyl_LC, KCyl_SC, ";
+            output_file << "Body_Pitch_Angle, Body_Roll_Angle, ";
+            output_file << "Boom_Joint_Angle, Arm_Joint_Angle, Bkt_Joint_Angle, Swing_Angle";
+            output_file << "\n";
+        }
+
+        this->filedir_toex_ = save_dir_ + "can_test_data/" + "to_excavator.txt";
+        ofstream output_file2(this->filedir_toex_, std::ios::trunc);
+        output_file2.precision(6);
+        output_file2.setf(std::ios_base::fixed, std::ios_base::floatfield);
+        if(output_file2.is_open()){
+            output_file2 <<  "time [ms], ";
+            output_file2 <<  "in0_0, ";
+            output_file2 <<  "in1_0, ";
+            output_file2 <<  "in2_0, ";
+            output_file2 <<  "in3_0, ";
+            output_file2 <<  "in4_0, ";
+            output_file2 <<  "in5_0, ";
+            output_file2 <<  "in6_0, ";
+            output_file2 <<  "in7_0, ";
+            output_file2 <<  "in8_0, ";
+            output_file2 <<  "in9_0, ";
+            output_file2 << "in10_0, ";
+            output_file2 << "in11_0, ";
+            output_file2 <<  "in0_1, ";
+            output_file2 <<  "in1_1, ";
+            output_file2 <<  "in2_1, ";
+            output_file2 <<  "in3_1, ";
+            output_file2 <<  "in4_1, ";
+            output_file2 <<  "in5_1, ";
+            output_file2 <<  "in6_1, ";
+            output_file2 <<  "in7_1, ";
+            output_file2 <<  "in8_1, ";
+            output_file2 <<  "in9_1, ";
+            output_file2 << "in10_1, ";
+            output_file2 << "in11_1, ";
+            output_file2 <<  "in0_2, ";
+            output_file2 <<  "in1_2, ";
+            output_file2 <<  "in2_2, ";
+            output_file2 <<  "in3_2, ";
+            output_file2 <<  "in4_2, ";
+            output_file2 <<  "in5_2, ";
+            output_file2 <<  "in6_2, ";
+            output_file2 <<  "in7_2, ";
+            output_file2 <<  "in8_2, ";
+            output_file2 <<  "in9_2, ";
+            output_file2 << "in10_2, ";
+            output_file2 << "in11_2";
+            output_file2 << "\n";
+        }
+    }
+
+    
 };
 
 CanCommunicator::~CanCommunicator()
@@ -85,6 +159,21 @@ void CanCommunicator::callbackFromExcavator(const hce_autoexcavator::packetsFrom
     SLIDE_WINDOW_ANGLE_BUF(fromEx_.Swing_Angle_buf);
 
     ++butterworth_cnt_;
+
+
+    // For test. Save raw data.
+    if(flag_test_){
+        std::ofstream output_file(this->filedir_fromex_, std::ios::app);
+        output_file.precision(6);
+        output_file.setf(std::ios_base::fixed, std::ios_base::floatfield);
+        if(output_file.is_open()){
+            output_file << ros::Time::now() <<", ";
+            for(int i = 0; i < 13; ++i){
+                output_file << i <<", ";
+            }
+            output_file << 13 <<"\n";
+        }  
+    }
 };
 
 
@@ -199,4 +288,18 @@ void CanCommunicator::publishToExcavator(){
 
     // publish
     pub_to_ex_.publish(msg_to_ex_);
+
+    // For test. Save raw data.
+    if(flag_test_){
+        std::ofstream output_file(this->filedir_toex_, std::ios::app);
+        output_file.precision(6);
+        output_file.setf(std::ios_base::fixed, std::ios_base::floatfield);
+        if(output_file.is_open()){
+            output_file << ros::Time::now() <<", ";
+            for(int i = 0; i < 71; ++i){
+                output_file << (int)array_to_ex_[i] <<", ";
+            }
+            output_file << (int)array_to_ex_[71] <<"\n";
+        }  
+    }
 };

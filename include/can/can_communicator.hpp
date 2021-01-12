@@ -6,6 +6,7 @@
 #include <time.h>
 #include <string>
 #include <sstream>
+#include <fstream>
 
 #include <vector>
 #include <queue>
@@ -68,6 +69,10 @@ private:
     void calWithFactor(float *input, float *array);
     void encodeToEx(float *array0, float *array1, float *array2, BYTE *array_to_ex);
 
+private:
+    bool flag_test_; // for test...
+    string filedir_fromex_;
+    string filedir_toex_;
 };
 
 
