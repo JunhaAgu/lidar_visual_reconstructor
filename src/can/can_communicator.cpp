@@ -32,13 +32,21 @@ CanCommunicator::CanCommunicator(ros::NodeHandle& nh, string tpcname_from_ardu, 
         output_file.setf(std::ios_base::fixed, std::ios_base::floatfield);
         if(output_file.is_open()){
             output_file << "time [ms], ";
-            output_file << "ACyl_LC, ACyl_SC, ";
-            output_file << "Swing_L, Swing_R, ";
-            output_file << "BCyl_LC, BCyl_SC, ";
-            output_file << "KCyl_LC, KCyl_SC, ";
-            output_file << "Body_Pitch_Angle, Body_Roll_Angle, ";
-            output_file << "Boom_Joint_Angle, Arm_Joint_Angle, Bkt_Joint_Angle, Swing_Angle";
-            output_file << "\n";
+            output_file << "ACyl_LC[0], ACyl_LC[1], "; //all bytes
+            output_file << "ACyl_SC[0], ACyl_SC[1], ";
+            output_file << "Swing_L[0], Swing_L[1], ";
+            output_file << "Swing_R[0], Swing_R[1], ";
+            output_file << "BCyl_LC[0], BCyl_LC[1], ";
+            output_file << "BCyl_SC[0], BCyl_SC[1], ";
+            output_file << "KCyl_LC[0], KCyl_LC[1], ";
+            output_file << "KCyl_SC[0], KCyl_SC[1], ";
+            output_file << "Body_Pitch_Angle[0], Body_Pitch_Angle[1], Body_Pitch_Angle[2] ";
+            output_file << "Body_Roll_Angle[0], Body_Roll_Angle[1], Body_Roll_Angle[2] ";
+            output_file << "Boom_Joint_Angle[0], Boom_Joint_Angle[1], Boom_Joint_Angle[2] ";
+            output_file << "Arm_Joint_Angle[0], Arm_Joint_Angle[1], Arm_Joint_Angle[2] ";
+            output_file << "Bkt_Joint_Angle[0], Bkt_Joint_Angle[1], Bkt_Joint_Angle[2] ";
+            output_file << "Swing_Angle[0], Swing_Angle[1], Swing_Angle[2] ";
+            output_file << "\n";           
         }
 
         this->filedir_toex_ = save_dir_ + "can_test_data/" + "to_excavator.txt";
@@ -46,43 +54,43 @@ CanCommunicator::CanCommunicator(ros::NodeHandle& nh, string tpcname_from_ardu, 
         output_file2.precision(6);
         output_file2.setf(std::ios_base::fixed, std::ios_base::floatfield);
         if(output_file2.is_open()){
-            output_file2 <<  "time [ms], ";
-            output_file2 <<  "in0_0, ";
-            output_file2 <<  "in1_0, ";
-            output_file2 <<  "in2_0, ";
-            output_file2 <<  "in3_0, ";
-            output_file2 <<  "in4_0, ";
-            output_file2 <<  "in5_0, ";
-            output_file2 <<  "in6_0, ";
-            output_file2 <<  "in7_0, ";
-            output_file2 <<  "in8_0, ";
-            output_file2 <<  "in9_0, ";
-            output_file2 << "in10_0, ";
-            output_file2 << "in11_0, ";
-            output_file2 <<  "in0_1, ";
-            output_file2 <<  "in1_1, ";
-            output_file2 <<  "in2_1, ";
-            output_file2 <<  "in3_1, ";
-            output_file2 <<  "in4_1, ";
-            output_file2 <<  "in5_1, ";
-            output_file2 <<  "in6_1, ";
-            output_file2 <<  "in7_1, ";
-            output_file2 <<  "in8_1, ";
-            output_file2 <<  "in9_1, ";
-            output_file2 << "in10_1, ";
-            output_file2 << "in11_1, ";
-            output_file2 <<  "in0_2, ";
-            output_file2 <<  "in1_2, ";
-            output_file2 <<  "in2_2, ";
-            output_file2 <<  "in3_2, ";
-            output_file2 <<  "in4_2, ";
-            output_file2 <<  "in5_2, ";
-            output_file2 <<  "in6_2, ";
-            output_file2 <<  "in7_2, ";
-            output_file2 <<  "in8_2, ";
-            output_file2 <<  "in9_2, ";
-            output_file2 << "in10_2, ";
-            output_file2 << "in11_2";
+                        output_file2 <<  "time [ms], ";
+            output_file2 <<  "in0_2[0], in0_2[1], "; //all bytes
+            output_file2 <<  "in1_2[0], in1_2[1], ";
+            output_file2 <<  "in2_2[0], in2_2[1], ";
+            output_file2 <<  "in3_2[0], in3_2[1], ";
+            output_file2 <<  "in4_2[0], in4_2[1], ";
+            output_file2 <<  "in5_2[0], in5_2[1], ";
+            output_file2 <<  "in6_2[0], in6_2[1], ";
+            output_file2 <<  "in7_2[0], in7_2[1], ";
+            output_file2 <<  "in8_2[0], in8_2[1], ";
+            output_file2 <<  "in9_2[0], in9_2[1], ";
+            output_file2 << "in10_2[0], in10_2[1], ";
+            output_file2 << "in11_2[0], in11_2[1], ";
+            output_file2 <<  "in0_5[0], in0_5[1], ";
+            output_file2 <<  "in1_5[0], in1_5[1], ";
+            output_file2 <<  "in2_5[0], in2_5[1], ";
+            output_file2 <<  "in3_5[0], in3_5[1], ";
+            output_file2 <<  "in4_5[0], in4_5[1], ";
+            output_file2 <<  "in5_5[0], in5_5[1], ";
+            output_file2 <<  "in6_5[0], in6_5[1], ";
+            output_file2 <<  "in7_5[0], in7_5[1], ";
+            output_file2 <<  "in8_5[0], in8_5[1], ";
+            output_file2 <<  "in9_5[0], in9_5[1], ";
+            output_file2 << "in10_5[0], in10_5[1], ";
+            output_file2 << "in11_5[0], in11_5[1], ";
+            output_file2 <<  "in0_1[0], in0_1[1], ";
+            output_file2 <<  "in1_1[0], in1_1[1], ";
+            output_file2 <<  "in2_1[0], in2_1[1], ";
+            output_file2 <<  "in3_1[0], in3_1[1], ";
+            output_file2 <<  "in4_1[0], in4_1[1], ";
+            output_file2 <<  "in5_1[0], in5_1[1], ";
+            output_file2 <<  "in6_1[0], in6_1[1], ";
+            output_file2 <<  "in7_1[0], in7_1[1], ";
+            output_file2 <<  "in8_1[0], in8_1[1], ";
+            output_file2 <<  "in9_1[0], in9_1[1], ";
+            output_file2 << "in10_1[0], in10_1[1], ";
+            output_file2 << "in11_1[0], in11_1[1]";
             output_file2 << "\n";
         }
     }
@@ -102,9 +110,9 @@ CanCommunicator::~CanCommunicator()
 
 void CanCommunicator::callbackFromExcavator(const hce_autoexcavator::packetsFromExcavatorConstPtr &msg_from_ex)
 {
-    int n_bytes = msg_from_ex->n_bytes;
-    float pow16_2 = pow16_2;
-    float pow16_4 = pow16_4;
+    int n_bytes = msg_from_ex->n_bytes;    
+    float pow16_2 = (float)pow(16,2);
+    float pow16_4 = (float)pow(16,4);
 
     //Sensor1
     fromEx_.ACyl_LC = 0.1 * (float)msg_from_ex->bytes[SENSOR1_START + 1] * pow16_2 + (float)msg_from_ex->bytes[SENSOR1_START + 0];
@@ -168,10 +176,11 @@ void CanCommunicator::callbackFromExcavator(const hce_autoexcavator::packetsFrom
         output_file.setf(std::ios_base::fixed, std::ios_base::floatfield);
         if(output_file.is_open()){
             output_file << ros::Time::now() <<", ";
-            for(int i = 0; i < 13; ++i){
-                output_file << i <<", ";
+            for(int i = 0; i < 33; ++i){
+                // output_file << i <<", ";
+                output_file << (int)msg_from_ex->bytes[i] << ", ";
             }
-            output_file << 13 <<"\n";
+            output_file << (int)msg_from_ex->bytes[33] <<"\n";
         }  
     }
 };

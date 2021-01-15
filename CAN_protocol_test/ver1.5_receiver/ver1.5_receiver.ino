@@ -59,7 +59,7 @@ void callbackToExcavator(const hce_autoexcavator::packetsToExcavator &msg_from_m
   CAN.endPacket();
   //delayMicroseconds(300);
 
-  CAN.beginExtendedPacket(0x18FFC921); //0.2s Swing rate, (Velocity: Boom, Arm, Bucket)
+  CAN.beginExtendedPacket(0x18FFCA21); //0.2s Swing rate, (Velocity: Boom, Arm, Bucket)
   for (int j = 8; j < 16; ++j) {
     CAN.write(msg_from_mpc.bytes[j]);
     //Serial.println(msg_from_mpc.bytes[j]); //test_jh
@@ -67,7 +67,7 @@ void callbackToExcavator(const hce_autoexcavator::packetsToExcavator &msg_from_m
   CAN.endPacket();
   //delayMicroseconds(300);
 
-  CAN.beginExtendedPacket(0x18FFC922); //0.2s Swing Torque, (Force: Boom, Arm, Bucket)
+  CAN.beginExtendedPacket(0x18FFCB22); //0.2s Swing Torque, (Force: Boom, Arm, Bucket)
   for (int j = 16; j < 24; ++j) {
     CAN.write(msg_from_mpc.bytes[j]);
     //Serial.println(msg_from_mpc.bytes[j]);
@@ -75,42 +75,42 @@ void callbackToExcavator(const hce_autoexcavator::packetsToExcavator &msg_from_m
   CAN.endPacket();
   //delayMicroseconds(300);
 
-  CAN.beginExtendedPacket(0x18FFC950); //0.5s Swing angle, (Length: Boom, Arm, Bucket)
+  CAN.beginExtendedPacket(0x18FFCC50); //0.5s Swing angle, (Length: Boom, Arm, Bucket)
   for (int j = 24; j < 32; ++j) {
     CAN.write(msg_from_mpc.bytes[j]);
   }
   CAN.endPacket();
   //delayMicroseconds(300);
 
-  CAN.beginExtendedPacket(0x18FFC951); //0.5s Swing rate, (Velocity: Boom, Arm, Bucket)
+  CAN.beginExtendedPacket(0x18FFCD51); //0.5s Swing rate, (Velocity: Boom, Arm, Bucket)
   for (int j = 32; j < 40; ++j) {
     CAN.write(msg_from_mpc.bytes[j]);
   }
   CAN.endPacket();
   //delayMicroseconds(300);
 
-  CAN.beginExtendedPacket(0x18FFC952); //0.5s Swing Torque, (Force: Boom, Arm, Bucket)
+  CAN.beginExtendedPacket(0x18FFCE52); //0.5s Swing Torque, (Force: Boom, Arm, Bucket)
   for (int j = 40; j < 48; ++j) {
     CAN.write(msg_from_mpc.bytes[j]);
   }
   CAN.endPacket();
   //delayMicroseconds(300);
 
-  CAN.beginExtendedPacket(0x18FFC9A0); //1.0s Swing angle, (Length: Boom, Arm, Bucket)
+  CAN.beginExtendedPacket(0x18FFCFA0); //1.0s Swing angle, (Length: Boom, Arm, Bucket)
   for (int j = 48; j < 56; ++j) {
     CAN.write(msg_from_mpc.bytes[j]);
   }
   CAN.endPacket();
   //delayMicroseconds(300);
 
-  CAN.beginExtendedPacket(0x18FFC9A1); //1.0s Swing rate, (Velocity: Boom, Arm, Bucket)
+  CAN.beginExtendedPacket(0x18FFD0A1); //1.0s Swing rate, (Velocity: Boom, Arm, Bucket)
   for (int j = 56; j < 64; ++j) {
     CAN.write(msg_from_mpc.bytes[j]);
   }
   CAN.endPacket();
   //delayMicroseconds(300);
 
-  CAN.beginExtendedPacket(0x18FFC9A2); //1.0s Swing Torque, (Force: Boom, Arm, Bucket)
+  CAN.beginExtendedPacket(0x18FFD1A2); //1.0s Swing Torque, (Force: Boom, Arm, Bucket)
   for (int j = 64; j < 72; ++j) {
     CAN.write(msg_from_mpc.bytes[j]);
   }
@@ -124,22 +124,25 @@ void callbackToExcavator(const hce_autoexcavator::packetsToExcavator &msg_from_m
 }
 
 // subscriber
-ros::Subscriber<hce_autoexcavator::packetsToExcavator> sub_msg("/canpackets/FromExcavator", callbackToExcavator);
+ros::Subscriber<hce_autoexcavator::packetsToExcavator> sub_msg("/canpackets/ToExcavator", callbackToExcavator);
 
 void setup() {
+    delay(1000);
+
   // Use serial to monitor the process
   Serial.begin(115200);
-
+  Serial.println("arduino starts");
   //CAN
   if (!CAN.begin(500E3)) {
-    //Serial.println("Starting CAN failed!");
+    Serial.println("Starting CAN failed!");
   }
   else {
     CAN.setPins(CS_CANMODULE, PIN_CAN_INTERRUPT); // about 200 us ISR signal
-    //Serial.println("CAN bus is initialized at 500 kbps");
+    Serial.println("CAN bus is initialized at 500 kbps");
   }
   // register the receive callback
   CAN.onReceive(callbackCANReceive);
+  Serial.println("arduino starts2");
 
   // Connect the Ethernet
   Ethernet.begin(mac, ip);
@@ -147,18 +150,18 @@ void setup() {
   // Let some time for the Ethernet Shield to be initialized
   delay(1000);
 
-  //Serial.println("");
-  //Serial.println("Ethernet connection info...");
-  //Serial.println("IP address: ");
-  //Serial.println(Ethernet.localIP());
+  Serial.println("");
+  Serial.println("Ethernet connection info...");
+  Serial.println("IP address: ");
+  Serial.println(Ethernet.localIP());
 
   // Set the connection to rosserial socket server
   nh.getHardware()->setConnection(server, serverPort);
   nh.initNode();
 
   // Another way to get IP
-  //Serial.print("MY IP = ");
-  //Serial.println(nh.getHardware()->getLocalIP());
+  Serial.print("MY IP = ");
+  Serial.println(nh.getHardware()->getLocalIP());
 
   // advertise publisher and initialize msg.
   nh.advertise(pub_msg);
@@ -208,7 +211,7 @@ void loop() {
 void callbackCANReceive(int packetSize) {
   // received a packet
   if (CAN.packetExtended()) {
-    //Serial.print("extended ");
+    Serial.print("extended ");
   }
 
   if (CAN.packetRtr()) {
