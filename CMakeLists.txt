@@ -82,4 +82,4 @@ target_link_libraries (reconstruction_node ${catkin_LIBRARIES} ${OpenCV_LIBRARIE
 
 add_executable (gcs_node src/main_gcs.cpp ${SRC})
 target_link_libraries (gcs_node ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} ${Eigen_LIBRARIES})
-add_dependencies(gcs_node lidarImageDataStamped_gencpp)
+# add_dependencies(gcs_node lidarImageDataStamped_gencpp)
