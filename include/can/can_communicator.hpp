@@ -14,8 +14,8 @@
 #include "can/can_message.hpp" // structures for data transmissions.
 
 // Customized messages (from MCU, to MCU)
-#include "hce_autoexcavator/packetsToExcavator.h"   // packets (bytes) to excavator (exactly, Arduino MCU)
-#include "hce_autoexcavator/packetsFromExcavator.h" // packets (bytes) from excavator (exactly, Arduino MCU)
+#include "hce_msgs/packetsToExcavator.h"   // packets (bytes) to excavator (exactly, Arduino MCU)
+#include "hce_msgs/packetsFromExcavator.h" // packets (bytes) from excavator (exactly, Arduino MCU)
 
 
 // Datatype redefine.
@@ -43,8 +43,8 @@ private:
 private: 
     ros::Publisher  pub_to_ex_;
     ros::Subscriber sub_from_ex_; 
-    hce_autoexcavator::packetsToExcavator   msg_to_ex_;
-    hce_autoexcavator::packetsFromExcavator msg_from_ex_;
+    hce_msgs::packetsToExcavator   msg_to_ex_;
+    hce_msgs::packetsFromExcavator msg_from_ex_;
     
     float planner_outputs0_[12]; // inputs ? 
     float planner_outputs1_[12];
@@ -56,7 +56,7 @@ private:
 
     BYTE  array_to_ex_[72]; // 12 states * 3 times * 2 bytes = 72.
 
-    void callbackFromExcavator(const hce_autoexcavator::packetsFromExcavatorConstPtr &msg_from_ex);
+    void callbackFromExcavator(const hce_msgs::packetsFromExcavatorConstPtr &msg_from_ex);
 
 // message sender to excavator (Arduino)
 public:

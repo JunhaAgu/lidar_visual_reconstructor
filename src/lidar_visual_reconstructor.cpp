@@ -17,11 +17,11 @@ LidarVisualReconstructor::LidarVisualReconstructor(ros::NodeHandle& nh)
     for(int i = 0; i < n_cameras_; ++i) cams_.push_back(new Camera());
 
     // load camera intrinsics
-    string dir_cam_intrinsics = "/home/larrkchlaptop/catkin_ws/src/lidar_visual_reconstructor/params/camera_intrinsics.yaml";
+    string dir_cam_intrinsics = "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/params/camera_intrinsics.yaml";
     loadCameraIntrinsics(dir_cam_intrinsics);
 
     // load sensors extrinsics
-    string dir_sensor_extrinsics = "/home/larrkchlaptop/catkin_ws/src/lidar_visual_reconstructor/params/sensor_extrinsics.yaml";
+    string dir_sensor_extrinsics = "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/params/sensor_extrinsics.yaml";
     loadSensorExtrinsics(dir_sensor_extrinsics);
 
     // By using initialized camera params, calculate all camera undistortion maps
@@ -35,8 +35,8 @@ LidarVisualReconstructor::LidarVisualReconstructor(ros::NodeHandle& nh)
 
 
     // Initiate services
-    client_lidarimagedata_    = nh_.serviceClient<hce_autoexcavator::lidarImageDataStamped>("/gcs_node/srv_lidar_image_data");
-    client_relativelidarpose_ = nh_.serviceClient<hce_autoexcavator::relativeLidarPoseStamped>("/gcs_node/srv_relative_lidar_pose");
+    client_lidarimagedata_    = nh_.serviceClient<hce_msgs::lidarImageDataStamped>("/gcs_node/srv_lidar_image_data");
+    client_relativelidarpose_ = nh_.serviceClient<hce_msgs::relativeLidarPoseStamped>("/gcs_node/srv_relative_lidar_pose");
 
     // Construct Constrained DT without initialization.
     cdt_ = new ConstrainedDT(); // without initialization.
@@ -56,8 +56,8 @@ LidarVisualReconstructor::~LidarVisualReconstructor(){
     if(eklt_ != nullptr) delete eklt_;
 };
 
-bool LidarVisualReconstructor::serverCallbackProfilePoints(hce_autoexcavator::profilePointsStamped::Request &req,
-        hce_autoexcavator::profilePointsStamped::Response &res)
+bool LidarVisualReconstructor::serverCallbackProfilePoints(hce_msgs::profilePointsStamped::Request &req,
+        hce_msgs::profilePointsStamped::Response &res)
 {   
     // run algorithm.
     this->run();
@@ -287,10 +287,10 @@ bool LidarVisualReconstructor::run(){
         frames_[1]->constructFrame(cv_ptr->image);
 
         if(0) {
-            cv::imwrite("/home/larrkchlaptop/imageraw0.png", frames_[0]->imgu_raw());
-            cv::imwrite("/home/larrkchlaptop/imageraw1.png", frames_[1]->imgu_raw());
-            cv::imwrite("/home/larrkchlaptop/image0.png",    frames_[0]->imgu());
-            cv::imwrite("/home/larrkchlaptop/image1.png",    frames_[1]->imgu());
+            cv::imwrite("/home/junhakim/imageraw0.png", frames_[0]->imgu_raw());
+            cv::imwrite("/home/junhakim/imageraw1.png", frames_[1]->imgu_raw());
+            cv::imwrite("/home/junhakim/image0.png",    frames_[0]->imgu());
+            cv::imwrite("/home/junhakim/image1.png",    frames_[1]->imgu());
             cv::namedWindow("0 image", CV_WINDOW_AUTOSIZE);
             cv::namedWindow("1 image", CV_WINDOW_AUTOSIZE);
             cv::imshow("0 image", frames_[0]->imgu_raw());
@@ -308,7 +308,7 @@ bool LidarVisualReconstructor::run(){
         tri_id_image_color_ = -cv::Mat::ones(cams_[0]->rows(),cams_[0]->cols(), CV_8UC3);
 
         // fill out LidarPcl.
-        hce_autoexcavator::lidarImageDataStamped::Response& res_lidarimage = srv_lidarimagedata_.response;
+        hce_msgs::lidarImageDataStamped::Response& res_lidarimage = srv_lidarimagedata_.response;
         if(pcls_[0]->n_channels != res_lidarimage.n_channels0) throw std::runtime_error("Not matched dimension (recon node)\n");
         if(pcls_[1]->n_channels != res_lidarimage.n_channels1) throw std::runtime_error("Not matched dimension (recon node)\n");
         
@@ -1190,7 +1190,7 @@ bool LidarVisualReconstructor::run(){
         img_depth_1000.convertTo(img_depth_single, CV_16UC1);
         vector<int> static png_parameters;
 		png_parameters.push_back(CV_IMWRITE_PNG_COMPRESSION); // We save with no compression for faster processing
-	    cv::imwrite("/home/larrkchlaptop/interp_depth.png", img_depth_single, png_parameters);
+	    cv::imwrite("/home/junhakim/interp_depth.png", img_depth_single, png_parameters);
         
 
 //#ifdef _FLAG_DRAW_
@@ -1227,7 +1227,7 @@ bool LidarVisualReconstructor::run(){
         }
 //#endif
 
-        string file_name = "/home/larrkchlaptop/points.txt";
+        string file_name = "/home/junhakim/points.txt";
         std::ofstream output_file(file_name, std::ios::trunc);
         output_file.precision(4);
         output_file.setf(std::ios_base::fixed, std::ios_base::floatfield);

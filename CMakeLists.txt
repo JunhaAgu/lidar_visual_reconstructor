@@ -20,6 +20,8 @@ find_package(catkin REQUIRED COMPONENTS
   pcl_ros
   message_filters
   image_transport
+
+  hce_msgs
 )
 
 ## Generate messages in the 'msg' folder

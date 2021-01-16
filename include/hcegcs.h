@@ -38,13 +38,13 @@
 #include <pcl/point_types.h>
 
 // Custom messages and services
-#include "hce_autoexcavator/controlInputsStamped.h" // msg
+#include "hce_msgs/controlInputsStamped.h" // msg
 
-#include "hce_autoexcavator/lidarImageDataStamped.h" // service server to recon
-#include "hce_autoexcavator/relativeLidarPoseStamped.h" // service server to recon 
-#include "hce_autoexcavator/profilePointsStamped.h" // service client from recon
+#include "hce_msgs/lidarImageDataStamped.h" // service server to recon
+#include "hce_msgs/relativeLidarPoseStamped.h" // service server to recon 
+#include "hce_msgs/profilePointsStamped.h" // service client from recon
 
-#include "hce_autoexcavator/profilePolynomialStamped.h" // service (server to 'planner')
+#include "hce_msgs/profilePolynomialStamped.h" // service (server to 'planner')
 
 // custom libraries
 #include "util/sophus_lie.hpp" // Lie group & Lie algebra.
@@ -77,14 +77,14 @@ public:
 // Callback functions
 private:
     // request Profile points -> after 'planner's request, calculate and serve Profile Polynomial. 
-    bool serverCallbackProfilePolynomial(hce_autoexcavator::profilePolynomialStamped::Request &req,
-        hce_autoexcavator::profilePolynomialStamped::Response &res);
+    bool serverCallbackProfilePolynomial(hce_msgs::profilePolynomialStamped::Request &req,
+        hce_msgs::profilePolynomialStamped::Response &res);
 
     // After 'lidar_visual_reconstructor's request, acquire a snapshot and send data to the 'lidar_visual_reconstructor'
-    bool serverCallbackLidarImageData(hce_autoexcavator::lidarImageDataStamped::Request &req,
-        hce_autoexcavator::lidarImageDataStamped::Response &res); // to reconstructor.
-    bool serverCallbackRelativeLidarPose(hce_autoexcavator::relativeLidarPoseStamped::Request &req,
-        hce_autoexcavator::relativeLidarPoseStamped::Response &res); // to reconstructor.
+    bool serverCallbackLidarImageData(hce_msgs::lidarImageDataStamped::Request &req,
+        hce_msgs::lidarImageDataStamped::Response &res); // to reconstructor.
+    bool serverCallbackRelativeLidarPose(hce_msgs::relativeLidarPoseStamped::Request &req,
+        hce_msgs::relativeLidarPoseStamped::Response &res); // to reconstructor.
 
     void callbackImage(const sensor_msgs::ImageConstPtr& msg, const int& id);
     void callbackLidar(const sensor_msgs::PointCloud2ConstPtr& msg_lidar, const int& id);

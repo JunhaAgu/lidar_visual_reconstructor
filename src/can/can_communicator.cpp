@@ -6,9 +6,9 @@ CanCommunicator::CanCommunicator(ros::NodeHandle& nh, string tpcname_from_ardu, 
 :nh_(nh), topicname_from_arduino_(tpcname_from_ardu), topicname_to_arduino_(tpcname_to_ardu)
 {
     cout << "CAN communicator starts.\n";
-    pub_to_ex_   = nh_.advertise<hce_autoexcavator::packetsToExcavator>(
+    pub_to_ex_   = nh_.advertise<hce_msgs::packetsToExcavator>(
         topicname_from_arduino_, 1);
-    sub_from_ex_ = nh_.subscribe<hce_autoexcavator::packetsFromExcavator>(
+    sub_from_ex_ = nh_.subscribe<hce_msgs::packetsFromExcavator>(
         topicname_to_arduino_, 1, &CanCommunicator::callbackFromExcavator, this);
 
     butterworth_cnt_ = 0;
@@ -21,7 +21,7 @@ CanCommunicator::CanCommunicator(ros::NodeHandle& nh, string tpcname_from_ardu, 
     if(this->flag_test_) {
         // generate save folder
         std::string folder_create_command;
-        string save_dir_ = "/home/larrkchlaptop/hce_data/";
+        string save_dir_ = "/home/junhakim/hce_data/";
         folder_create_command = "mkdir " + save_dir_ + "can_test_data/";
         system(folder_create_command.c_str());
 
@@ -108,7 +108,7 @@ CanCommunicator::~CanCommunicator()
 #define SLIDE_WINDOW_RATE_BUF(arr) {arr[2] = arr[1]; arr[1] = arr[0]; } 
 #define SLIDE_WINDOW_ANGLE_BUF(arr) {arr[3] = arr[2]; arr[2] = arr[1]; arr[1] = arr[0]; }
 
-void CanCommunicator::callbackFromExcavator(const hce_autoexcavator::packetsFromExcavatorConstPtr &msg_from_ex)
+void CanCommunicator::callbackFromExcavator(const hce_msgs::packetsFromExcavatorConstPtr &msg_from_ex)
 {
     int n_bytes = msg_from_ex->n_bytes;    
     float pow16_2 = (float)pow(16,2);

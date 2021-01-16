@@ -74,7 +74,7 @@ int main(int argc, char **argv) {
             }
             else if(c == 't') {
                 cout << "\n\n Get test data...\n";
-                string dir_testdata = "/home/larrkchlaptop/catkin_ws/src/lidar_visual_reconstructor/test_data/up_20";
+                string dir_testdata = "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/test_data/up_20";
                 
                 float theta  = -(20.0f-9.9f); // 20 degrees for up 20. (ref angle: 9.9 deg)
                 float L_boom = 4.661836021f; // [m]

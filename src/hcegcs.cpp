@@ -458,8 +458,8 @@ void HCEGCS::saveAllData(){
     }
 };
 
-bool HCEGCS::serverCallbackLidarImageData(hce_autoexcavator::lidarImageDataStamped::Request &req,
-        hce_autoexcavator::lidarImageDataStamped::Response &res)
+bool HCEGCS::serverCallbackLidarImageData(hce_msgs::lidarImageDataStamped::Request &req,
+        hce_msgs::lidarImageDataStamped::Response &res)
 {
     cout << "Service server [LidarImageData] is received!! request type: " << req.request_type<< "\n";
     if(buf_lidars_npoints[0] > 0){
@@ -525,8 +525,8 @@ bool HCEGCS::serverCallbackLidarImageData(hce_autoexcavator::lidarImageDataStamp
 };
 
 
-bool HCEGCS::serverCallbackRelativeLidarPose(hce_autoexcavator::relativeLidarPoseStamped::Request &req,
-        hce_autoexcavator::relativeLidarPoseStamped::Response &res)
+bool HCEGCS::serverCallbackRelativeLidarPose(hce_msgs::relativeLidarPoseStamped::Request &req,
+        hce_msgs::relativeLidarPoseStamped::Response &res)
 {
     cout << "Service server [relativeLidarPose] is received!!\n";
     res.header.stamp = ros::Time::now();

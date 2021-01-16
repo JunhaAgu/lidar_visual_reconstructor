@@ -1,0 +1,8 @@
+prefix=/home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/devel
+
+Name: hce_autoexcavator
+Description: Description of hce_autoexcavator
+Version: 0.0.0
+Cflags: -I/home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/devel/include -I/usr/local/include/eigen3
+Libs: -L${prefix}/lib 
+Requires: message_runtime roscpp message_filters

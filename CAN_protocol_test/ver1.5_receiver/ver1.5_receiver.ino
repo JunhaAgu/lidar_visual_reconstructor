@@ -5,8 +5,8 @@
 
 #include <CAN.h>
 #include <ros.h>
-#include "hce_autoexcavator/packetsFromExcavator.h" // custom message
-#include "hce_autoexcavator/packetsToExcavator.h"   // custom message
+#include "hce_msgs/packetsFromExcavator.h" // custom message
+#include "hce_msgs/packetsToExcavator.h"   // custom message
 
 // Setup a trigger digitalOutput pin & shield settings
 #define PIN_TRIGGER 6
@@ -45,11 +45,11 @@ volatile unsigned long triggerCounter = 0;
 ros::NodeHandle nh;
 
 // publisher for timestamp
-hce_autoexcavator::packetsFromExcavator msg;
+hce_msgs::packetsFromExcavator msg;
 ros::Publisher pub_msg("/canpackets/FromExcavator", &msg);
 
 // Subribe: callback function
-void callbackToExcavator(const hce_autoexcavator::packetsToExcavator &msg_from_mpc) {
+void callbackToExcavator(const hce_msgs::packetsToExcavator &msg_from_mpc) {
   start = micros();
   CAN.beginExtendedPacket(0x18FFC920); //0.2s Swing angle, (Length: Boom, Arm, Bucket)
   for (int j = 0; j < 8; ++j) {
@@ -124,7 +124,7 @@ void callbackToExcavator(const hce_autoexcavator::packetsToExcavator &msg_from_m
 }
 
 // subscriber
-ros::Subscriber<hce_autoexcavator::packetsToExcavator> sub_msg("/canpackets/ToExcavator", callbackToExcavator);
+ros::Subscriber<hce_msgs::packetsToExcavator> sub_msg("/canpackets/ToExcavator", callbackToExcavator);
 
 void setup() {
     delay(1000);
