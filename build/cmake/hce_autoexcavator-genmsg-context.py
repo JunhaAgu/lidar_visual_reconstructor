@@ -1,6 +1,6 @@
 # generated from genmsg/cmake/pkg-genmsg.context.in
 
-messages_str = "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg/controlInputsStamped.msg;/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg/packetsFromExcavator.msg;/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg/packetsToExcavator.msg"
+messages_str = ""
 services_str = "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/srv/profilePolynomialStamped.srv;/home/junhakim/hce_ws/src/lidar_visual_reconstructor/srv/profilePointsStamped.srv;/home/junhakim/hce_ws/src/lidar_visual_reconstructor/srv/lidarImageDataStamped.srv;/home/junhakim/hce_ws/src/lidar_visual_reconstructor/srv/relativeLidarPoseStamped.srv"
 pkg_name = "hce_autoexcavator"
 dependencies_str = "std_msgs;sensor_msgs"

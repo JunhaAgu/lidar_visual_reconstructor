@@ -53,9 +53,6 @@ CMAKE_BINARY_DIR = /home/junhakim/hce_ws/src/lidar_visual_reconstructor/build
 # Include the progress variables for this target.
 include CMakeFiles/hce_autoexcavator_generate_messages_eus.dir/progress.make
 
-CMakeFiles/hce_autoexcavator_generate_messages_eus: devel/share/roseus/ros/hce_autoexcavator/msg/controlInputsStamped.l
-CMakeFiles/hce_autoexcavator_generate_messages_eus: devel/share/roseus/ros/hce_autoexcavator/msg/packetsToExcavator.l
-CMakeFiles/hce_autoexcavator_generate_messages_eus: devel/share/roseus/ros/hce_autoexcavator/msg/packetsFromExcavator.l
 CMakeFiles/hce_autoexcavator_generate_messages_eus: devel/share/roseus/ros/hce_autoexcavator/srv/profilePointsStamped.l
 CMakeFiles/hce_autoexcavator_generate_messages_eus: devel/share/roseus/ros/hce_autoexcavator/srv/profilePolynomialStamped.l
 CMakeFiles/hce_autoexcavator_generate_messages_eus: devel/share/roseus/ros/hce_autoexcavator/srv/lidarImageDataStamped.l
@@ -63,57 +60,36 @@ CMakeFiles/hce_autoexcavator_generate_messages_eus: devel/share/roseus/ros/hce_a
 CMakeFiles/hce_autoexcavator_generate_messages_eus: devel/share/roseus/ros/hce_autoexcavator/manifest.l
 
 
-devel/share/roseus/ros/hce_autoexcavator/msg/controlInputsStamped.l: /opt/ros/kinetic/lib/geneus/gen_eus.py
-devel/share/roseus/ros/hce_autoexcavator/msg/controlInputsStamped.l: ../msg/controlInputsStamped.msg
-devel/share/roseus/ros/hce_autoexcavator/msg/controlInputsStamped.l: /opt/ros/kinetic/share/std_msgs/msg/Header.msg
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Generating EusLisp code from hce_autoexcavator/controlInputsStamped.msg"
-	catkin_generated/env_cached.sh /usr/bin/python2 /opt/ros/kinetic/share/geneus/cmake/../../../lib/geneus/gen_eus.py /home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg/controlInputsStamped.msg -Ihce_autoexcavator:/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg -Istd_msgs:/opt/ros/kinetic/share/std_msgs/cmake/../msg -Isensor_msgs:/opt/ros/kinetic/share/sensor_msgs/cmake/../msg -Igeometry_msgs:/opt/ros/kinetic/share/geometry_msgs/cmake/../msg -p hce_autoexcavator -o /home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/devel/share/roseus/ros/hce_autoexcavator/msg
-
-devel/share/roseus/ros/hce_autoexcavator/msg/packetsToExcavator.l: /opt/ros/kinetic/lib/geneus/gen_eus.py
-devel/share/roseus/ros/hce_autoexcavator/msg/packetsToExcavator.l: ../msg/packetsToExcavator.msg
-devel/share/roseus/ros/hce_autoexcavator/msg/packetsToExcavator.l: /opt/ros/kinetic/share/std_msgs/msg/Header.msg
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Generating EusLisp code from hce_autoexcavator/packetsToExcavator.msg"
-	catkin_generated/env_cached.sh /usr/bin/python2 /opt/ros/kinetic/share/geneus/cmake/../../../lib/geneus/gen_eus.py /home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg/packetsToExcavator.msg -Ihce_autoexcavator:/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg -Istd_msgs:/opt/ros/kinetic/share/std_msgs/cmake/../msg -Isensor_msgs:/opt/ros/kinetic/share/sensor_msgs/cmake/../msg -Igeometry_msgs:/opt/ros/kinetic/share/geometry_msgs/cmake/../msg -p hce_autoexcavator -o /home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/devel/share/roseus/ros/hce_autoexcavator/msg
-
-devel/share/roseus/ros/hce_autoexcavator/msg/packetsFromExcavator.l: /opt/ros/kinetic/lib/geneus/gen_eus.py
-devel/share/roseus/ros/hce_autoexcavator/msg/packetsFromExcavator.l: ../msg/packetsFromExcavator.msg
-devel/share/roseus/ros/hce_autoexcavator/msg/packetsFromExcavator.l: /opt/ros/kinetic/share/std_msgs/msg/Header.msg
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Generating EusLisp code from hce_autoexcavator/packetsFromExcavator.msg"
-	catkin_generated/env_cached.sh /usr/bin/python2 /opt/ros/kinetic/share/geneus/cmake/../../../lib/geneus/gen_eus.py /home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg/packetsFromExcavator.msg -Ihce_autoexcavator:/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg -Istd_msgs:/opt/ros/kinetic/share/std_msgs/cmake/../msg -Isensor_msgs:/opt/ros/kinetic/share/sensor_msgs/cmake/../msg -Igeometry_msgs:/opt/ros/kinetic/share/geometry_msgs/cmake/../msg -p hce_autoexcavator -o /home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/devel/share/roseus/ros/hce_autoexcavator/msg
-
 devel/share/roseus/ros/hce_autoexcavator/srv/profilePointsStamped.l: /opt/ros/kinetic/lib/geneus/gen_eus.py
 devel/share/roseus/ros/hce_autoexcavator/srv/profilePointsStamped.l: ../srv/profilePointsStamped.srv
 devel/share/roseus/ros/hce_autoexcavator/srv/profilePointsStamped.l: /opt/ros/kinetic/share/std_msgs/msg/Header.msg
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Generating EusLisp code from hce_autoexcavator/profilePointsStamped.srv"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Generating EusLisp code from hce_autoexcavator/profilePointsStamped.srv"
 	catkin_generated/env_cached.sh /usr/bin/python2 /opt/ros/kinetic/share/geneus/cmake/../../../lib/geneus/gen_eus.py /home/junhakim/hce_ws/src/lidar_visual_reconstructor/srv/profilePointsStamped.srv -Ihce_autoexcavator:/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg -Istd_msgs:/opt/ros/kinetic/share/std_msgs/cmake/../msg -Isensor_msgs:/opt/ros/kinetic/share/sensor_msgs/cmake/../msg -Igeometry_msgs:/opt/ros/kinetic/share/geometry_msgs/cmake/../msg -p hce_autoexcavator -o /home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/devel/share/roseus/ros/hce_autoexcavator/srv
 
 devel/share/roseus/ros/hce_autoexcavator/srv/profilePolynomialStamped.l: /opt/ros/kinetic/lib/geneus/gen_eus.py
 devel/share/roseus/ros/hce_autoexcavator/srv/profilePolynomialStamped.l: ../srv/profilePolynomialStamped.srv
 devel/share/roseus/ros/hce_autoexcavator/srv/profilePolynomialStamped.l: /opt/ros/kinetic/share/std_msgs/msg/Header.msg
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Generating EusLisp code from hce_autoexcavator/profilePolynomialStamped.srv"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Generating EusLisp code from hce_autoexcavator/profilePolynomialStamped.srv"
 	catkin_generated/env_cached.sh /usr/bin/python2 /opt/ros/kinetic/share/geneus/cmake/../../../lib/geneus/gen_eus.py /home/junhakim/hce_ws/src/lidar_visual_reconstructor/srv/profilePolynomialStamped.srv -Ihce_autoexcavator:/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg -Istd_msgs:/opt/ros/kinetic/share/std_msgs/cmake/../msg -Isensor_msgs:/opt/ros/kinetic/share/sensor_msgs/cmake/../msg -Igeometry_msgs:/opt/ros/kinetic/share/geometry_msgs/cmake/../msg -p hce_autoexcavator -o /home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/devel/share/roseus/ros/hce_autoexcavator/srv
 
 devel/share/roseus/ros/hce_autoexcavator/srv/lidarImageDataStamped.l: /opt/ros/kinetic/lib/geneus/gen_eus.py
 devel/share/roseus/ros/hce_autoexcavator/srv/lidarImageDataStamped.l: ../srv/lidarImageDataStamped.srv
 devel/share/roseus/ros/hce_autoexcavator/srv/lidarImageDataStamped.l: /opt/ros/kinetic/share/sensor_msgs/msg/Image.msg
 devel/share/roseus/ros/hce_autoexcavator/srv/lidarImageDataStamped.l: /opt/ros/kinetic/share/std_msgs/msg/Header.msg
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Generating EusLisp code from hce_autoexcavator/lidarImageDataStamped.srv"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Generating EusLisp code from hce_autoexcavator/lidarImageDataStamped.srv"
 	catkin_generated/env_cached.sh /usr/bin/python2 /opt/ros/kinetic/share/geneus/cmake/../../../lib/geneus/gen_eus.py /home/junhakim/hce_ws/src/lidar_visual_reconstructor/srv/lidarImageDataStamped.srv -Ihce_autoexcavator:/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg -Istd_msgs:/opt/ros/kinetic/share/std_msgs/cmake/../msg -Isensor_msgs:/opt/ros/kinetic/share/sensor_msgs/cmake/../msg -Igeometry_msgs:/opt/ros/kinetic/share/geometry_msgs/cmake/../msg -p hce_autoexcavator -o /home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/devel/share/roseus/ros/hce_autoexcavator/srv
 
 devel/share/roseus/ros/hce_autoexcavator/srv/relativeLidarPoseStamped.l: /opt/ros/kinetic/lib/geneus/gen_eus.py
 devel/share/roseus/ros/hce_autoexcavator/srv/relativeLidarPoseStamped.l: ../srv/relativeLidarPoseStamped.srv
 devel/share/roseus/ros/hce_autoexcavator/srv/relativeLidarPoseStamped.l: /opt/ros/kinetic/share/std_msgs/msg/Header.msg
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Generating EusLisp code from hce_autoexcavator/relativeLidarPoseStamped.srv"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Generating EusLisp code from hce_autoexcavator/relativeLidarPoseStamped.srv"
 	catkin_generated/env_cached.sh /usr/bin/python2 /opt/ros/kinetic/share/geneus/cmake/../../../lib/geneus/gen_eus.py /home/junhakim/hce_ws/src/lidar_visual_reconstructor/srv/relativeLidarPoseStamped.srv -Ihce_autoexcavator:/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg -Istd_msgs:/opt/ros/kinetic/share/std_msgs/cmake/../msg -Isensor_msgs:/opt/ros/kinetic/share/sensor_msgs/cmake/../msg -Igeometry_msgs:/opt/ros/kinetic/share/geometry_msgs/cmake/../msg -p hce_autoexcavator -o /home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/devel/share/roseus/ros/hce_autoexcavator/srv
 
 devel/share/roseus/ros/hce_autoexcavator/manifest.l: /opt/ros/kinetic/lib/geneus/gen_eus.py
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Generating EusLisp manifest code for hce_autoexcavator"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Generating EusLisp manifest code for hce_autoexcavator"
 	catkin_generated/env_cached.sh /usr/bin/python2 /opt/ros/kinetic/share/geneus/cmake/../../../lib/geneus/gen_eus.py -m -o /home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/devel/share/roseus/ros/hce_autoexcavator hce_autoexcavator std_msgs sensor_msgs
 
 hce_autoexcavator_generate_messages_eus: CMakeFiles/hce_autoexcavator_generate_messages_eus
-hce_autoexcavator_generate_messages_eus: devel/share/roseus/ros/hce_autoexcavator/msg/controlInputsStamped.l
-hce_autoexcavator_generate_messages_eus: devel/share/roseus/ros/hce_autoexcavator/msg/packetsToExcavator.l
-hce_autoexcavator_generate_messages_eus: devel/share/roseus/ros/hce_autoexcavator/msg/packetsFromExcavator.l
 hce_autoexcavator_generate_messages_eus: devel/share/roseus/ros/hce_autoexcavator/srv/profilePointsStamped.l
 hce_autoexcavator_generate_messages_eus: devel/share/roseus/ros/hce_autoexcavator/srv/profilePolynomialStamped.l
 hce_autoexcavator_generate_messages_eus: devel/share/roseus/ros/hce_autoexcavator/srv/lidarImageDataStamped.l

@@ -1,8 +1,5 @@
 file(REMOVE_RECURSE
   "CMakeFiles/hce_autoexcavator_generate_messages_py"
-  "devel/lib/python2.7/dist-packages/hce_autoexcavator/msg/_controlInputsStamped.py"
-  "devel/lib/python2.7/dist-packages/hce_autoexcavator/msg/_packetsToExcavator.py"
-  "devel/lib/python2.7/dist-packages/hce_autoexcavator/msg/_packetsFromExcavator.py"
   "devel/lib/python2.7/dist-packages/hce_autoexcavator/srv/_profilePointsStamped.py"
   "devel/lib/python2.7/dist-packages/hce_autoexcavator/srv/_profilePolynomialStamped.py"
   "devel/lib/python2.7/dist-packages/hce_autoexcavator/srv/_lidarImageDataStamped.py"

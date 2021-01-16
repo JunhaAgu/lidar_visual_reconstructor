@@ -1,6 +1,6 @@
 # generated from genmsg/cmake/pkg-genmsg.cmake.em
 
-message(STATUS "hce_autoexcavator: 3 messages, 4 services")
+message(STATUS "hce_autoexcavator: 0 messages, 4 services")
 
 set(MSG_I_FLAGS "-Ihce_autoexcavator:/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg;-Istd_msgs:/opt/ros/kinetic/share/std_msgs/cmake/../msg;-Isensor_msgs:/opt/ros/kinetic/share/sensor_msgs/cmake/../msg;-Igeometry_msgs:/opt/ros/kinetic/share/geometry_msgs/cmake/../msg")
 
@@ -27,29 +27,14 @@ add_custom_target(_hce_autoexcavator_generate_messages_check_deps_${_filename}
   COMMAND ${CATKIN_ENV} ${PYTHON_EXECUTABLE} ${GENMSG_CHECK_DEPS_SCRIPT} "hce_autoexcavator" "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/srv/profilePolynomialStamped.srv" "std_msgs/Header"
 )
 
-get_filename_component(_filename "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/srv/relativeLidarPoseStamped.srv" NAME_WE)
-add_custom_target(_hce_autoexcavator_generate_messages_check_deps_${_filename}
-  COMMAND ${CATKIN_ENV} ${PYTHON_EXECUTABLE} ${GENMSG_CHECK_DEPS_SCRIPT} "hce_autoexcavator" "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/srv/relativeLidarPoseStamped.srv" "std_msgs/Header"
-)
-
-get_filename_component(_filename "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg/packetsToExcavator.msg" NAME_WE)
-add_custom_target(_hce_autoexcavator_generate_messages_check_deps_${_filename}
-  COMMAND ${CATKIN_ENV} ${PYTHON_EXECUTABLE} ${GENMSG_CHECK_DEPS_SCRIPT} "hce_autoexcavator" "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg/packetsToExcavator.msg" "std_msgs/Header"
-)
-
-get_filename_component(_filename "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg/controlInputsStamped.msg" NAME_WE)
-add_custom_target(_hce_autoexcavator_generate_messages_check_deps_${_filename}
-  COMMAND ${CATKIN_ENV} ${PYTHON_EXECUTABLE} ${GENMSG_CHECK_DEPS_SCRIPT} "hce_autoexcavator" "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg/controlInputsStamped.msg" "std_msgs/Header"
-)
-
 get_filename_component(_filename "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/srv/lidarImageDataStamped.srv" NAME_WE)
 add_custom_target(_hce_autoexcavator_generate_messages_check_deps_${_filename}
   COMMAND ${CATKIN_ENV} ${PYTHON_EXECUTABLE} ${GENMSG_CHECK_DEPS_SCRIPT} "hce_autoexcavator" "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/srv/lidarImageDataStamped.srv" "sensor_msgs/Image:std_msgs/Header"
 )
 
-get_filename_component(_filename "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg/packetsFromExcavator.msg" NAME_WE)
+get_filename_component(_filename "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/srv/relativeLidarPoseStamped.srv" NAME_WE)
 add_custom_target(_hce_autoexcavator_generate_messages_check_deps_${_filename}
-  COMMAND ${CATKIN_ENV} ${PYTHON_EXECUTABLE} ${GENMSG_CHECK_DEPS_SCRIPT} "hce_autoexcavator" "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg/packetsFromExcavator.msg" "std_msgs/Header"
+  COMMAND ${CATKIN_ENV} ${PYTHON_EXECUTABLE} ${GENMSG_CHECK_DEPS_SCRIPT} "hce_autoexcavator" "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/srv/relativeLidarPoseStamped.srv" "std_msgs/Header"
 )
 
 #
@@ -58,24 +43,6 @@ add_custom_target(_hce_autoexcavator_generate_messages_check_deps_${_filename}
 
 ### Section generating for lang: gencpp
 ### Generating Messages
-_generate_msg_cpp(hce_autoexcavator
-  "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg/controlInputsStamped.msg"
-  "${MSG_I_FLAGS}"
-  "/opt/ros/kinetic/share/std_msgs/cmake/../msg/Header.msg"
-  ${CATKIN_DEVEL_PREFIX}/${gencpp_INSTALL_DIR}/hce_autoexcavator
-)
-_generate_msg_cpp(hce_autoexcavator
-  "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg/packetsToExcavator.msg"
-  "${MSG_I_FLAGS}"
-  "/opt/ros/kinetic/share/std_msgs/cmake/../msg/Header.msg"
-  ${CATKIN_DEVEL_PREFIX}/${gencpp_INSTALL_DIR}/hce_autoexcavator
-)
-_generate_msg_cpp(hce_autoexcavator
-  "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg/packetsFromExcavator.msg"
-  "${MSG_I_FLAGS}"
-  "/opt/ros/kinetic/share/std_msgs/cmake/../msg/Header.msg"
-  ${CATKIN_DEVEL_PREFIX}/${gencpp_INSTALL_DIR}/hce_autoexcavator
-)
 
 ### Generating Services
 _generate_srv_cpp(hce_autoexcavator
@@ -119,15 +86,9 @@ get_filename_component(_filename "/home/junhakim/hce_ws/src/lidar_visual_reconst
 add_dependencies(hce_autoexcavator_generate_messages_cpp _hce_autoexcavator_generate_messages_check_deps_${_filename})
 get_filename_component(_filename "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/srv/profilePolynomialStamped.srv" NAME_WE)
 add_dependencies(hce_autoexcavator_generate_messages_cpp _hce_autoexcavator_generate_messages_check_deps_${_filename})
-get_filename_component(_filename "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/srv/relativeLidarPoseStamped.srv" NAME_WE)
-add_dependencies(hce_autoexcavator_generate_messages_cpp _hce_autoexcavator_generate_messages_check_deps_${_filename})
-get_filename_component(_filename "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg/packetsToExcavator.msg" NAME_WE)
-add_dependencies(hce_autoexcavator_generate_messages_cpp _hce_autoexcavator_generate_messages_check_deps_${_filename})
-get_filename_component(_filename "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg/controlInputsStamped.msg" NAME_WE)
-add_dependencies(hce_autoexcavator_generate_messages_cpp _hce_autoexcavator_generate_messages_check_deps_${_filename})
 get_filename_component(_filename "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/srv/lidarImageDataStamped.srv" NAME_WE)
 add_dependencies(hce_autoexcavator_generate_messages_cpp _hce_autoexcavator_generate_messages_check_deps_${_filename})
-get_filename_component(_filename "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg/packetsFromExcavator.msg" NAME_WE)
+get_filename_component(_filename "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/srv/relativeLidarPoseStamped.srv" NAME_WE)
 add_dependencies(hce_autoexcavator_generate_messages_cpp _hce_autoexcavator_generate_messages_check_deps_${_filename})
 
 # target for backward compatibility
@@ -139,24 +100,6 @@ list(APPEND ${PROJECT_NAME}_EXPORTED_TARGETS hce_autoexcavator_generate_messages
 
 ### Section generating for lang: geneus
 ### Generating Messages
-_generate_msg_eus(hce_autoexcavator
-  "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg/controlInputsStamped.msg"
-  "${MSG_I_FLAGS}"
-  "/opt/ros/kinetic/share/std_msgs/cmake/../msg/Header.msg"
-  ${CATKIN_DEVEL_PREFIX}/${geneus_INSTALL_DIR}/hce_autoexcavator
-)
-_generate_msg_eus(hce_autoexcavator
-  "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg/packetsToExcavator.msg"
-  "${MSG_I_FLAGS}"
-  "/opt/ros/kinetic/share/std_msgs/cmake/../msg/Header.msg"
-  ${CATKIN_DEVEL_PREFIX}/${geneus_INSTALL_DIR}/hce_autoexcavator
-)
-_generate_msg_eus(hce_autoexcavator
-  "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg/packetsFromExcavator.msg"
-  "${MSG_I_FLAGS}"
-  "/opt/ros/kinetic/share/std_msgs/cmake/../msg/Header.msg"
-  ${CATKIN_DEVEL_PREFIX}/${geneus_INSTALL_DIR}/hce_autoexcavator
-)
 
 ### Generating Services
 _generate_srv_eus(hce_autoexcavator
@@ -200,15 +143,9 @@ get_filename_component(_filename "/home/junhakim/hce_ws/src/lidar_visual_reconst
 add_dependencies(hce_autoexcavator_generate_messages_eus _hce_autoexcavator_generate_messages_check_deps_${_filename})
 get_filename_component(_filename "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/srv/profilePolynomialStamped.srv" NAME_WE)
 add_dependencies(hce_autoexcavator_generate_messages_eus _hce_autoexcavator_generate_messages_check_deps_${_filename})
-get_filename_component(_filename "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/srv/relativeLidarPoseStamped.srv" NAME_WE)
-add_dependencies(hce_autoexcavator_generate_messages_eus _hce_autoexcavator_generate_messages_check_deps_${_filename})
-get_filename_component(_filename "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg/packetsToExcavator.msg" NAME_WE)
-add_dependencies(hce_autoexcavator_generate_messages_eus _hce_autoexcavator_generate_messages_check_deps_${_filename})
-get_filename_component(_filename "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg/controlInputsStamped.msg" NAME_WE)
-add_dependencies(hce_autoexcavator_generate_messages_eus _hce_autoexcavator_generate_messages_check_deps_${_filename})
 get_filename_component(_filename "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/srv/lidarImageDataStamped.srv" NAME_WE)
 add_dependencies(hce_autoexcavator_generate_messages_eus _hce_autoexcavator_generate_messages_check_deps_${_filename})
-get_filename_component(_filename "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg/packetsFromExcavator.msg" NAME_WE)
+get_filename_component(_filename "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/srv/relativeLidarPoseStamped.srv" NAME_WE)
 add_dependencies(hce_autoexcavator_generate_messages_eus _hce_autoexcavator_generate_messages_check_deps_${_filename})
 
 # target for backward compatibility
@@ -220,24 +157,6 @@ list(APPEND ${PROJECT_NAME}_EXPORTED_TARGETS hce_autoexcavator_generate_messages
 
 ### Section generating for lang: genlisp
 ### Generating Messages
-_generate_msg_lisp(hce_autoexcavator
-  "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg/controlInputsStamped.msg"
-  "${MSG_I_FLAGS}"
-  "/opt/ros/kinetic/share/std_msgs/cmake/../msg/Header.msg"
-  ${CATKIN_DEVEL_PREFIX}/${genlisp_INSTALL_DIR}/hce_autoexcavator
-)
-_generate_msg_lisp(hce_autoexcavator
-  "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg/packetsToExcavator.msg"
-  "${MSG_I_FLAGS}"
-  "/opt/ros/kinetic/share/std_msgs/cmake/../msg/Header.msg"
-  ${CATKIN_DEVEL_PREFIX}/${genlisp_INSTALL_DIR}/hce_autoexcavator
-)
-_generate_msg_lisp(hce_autoexcavator
-  "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg/packetsFromExcavator.msg"
-  "${MSG_I_FLAGS}"
-  "/opt/ros/kinetic/share/std_msgs/cmake/../msg/Header.msg"
-  ${CATKIN_DEVEL_PREFIX}/${genlisp_INSTALL_DIR}/hce_autoexcavator
-)
 
 ### Generating Services
 _generate_srv_lisp(hce_autoexcavator
@@ -281,15 +200,9 @@ get_filename_component(_filename "/home/junhakim/hce_ws/src/lidar_visual_reconst
 add_dependencies(hce_autoexcavator_generate_messages_lisp _hce_autoexcavator_generate_messages_check_deps_${_filename})
 get_filename_component(_filename "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/srv/profilePolynomialStamped.srv" NAME_WE)
 add_dependencies(hce_autoexcavator_generate_messages_lisp _hce_autoexcavator_generate_messages_check_deps_${_filename})
-get_filename_component(_filename "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/srv/relativeLidarPoseStamped.srv" NAME_WE)
-add_dependencies(hce_autoexcavator_generate_messages_lisp _hce_autoexcavator_generate_messages_check_deps_${_filename})
-get_filename_component(_filename "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg/packetsToExcavator.msg" NAME_WE)
-add_dependencies(hce_autoexcavator_generate_messages_lisp _hce_autoexcavator_generate_messages_check_deps_${_filename})
-get_filename_component(_filename "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg/controlInputsStamped.msg" NAME_WE)
-add_dependencies(hce_autoexcavator_generate_messages_lisp _hce_autoexcavator_generate_messages_check_deps_${_filename})
 get_filename_component(_filename "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/srv/lidarImageDataStamped.srv" NAME_WE)
 add_dependencies(hce_autoexcavator_generate_messages_lisp _hce_autoexcavator_generate_messages_check_deps_${_filename})
-get_filename_component(_filename "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg/packetsFromExcavator.msg" NAME_WE)
+get_filename_component(_filename "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/srv/relativeLidarPoseStamped.srv" NAME_WE)
 add_dependencies(hce_autoexcavator_generate_messages_lisp _hce_autoexcavator_generate_messages_check_deps_${_filename})
 
 # target for backward compatibility
@@ -301,24 +214,6 @@ list(APPEND ${PROJECT_NAME}_EXPORTED_TARGETS hce_autoexcavator_generate_messages
 
 ### Section generating for lang: gennodejs
 ### Generating Messages
-_generate_msg_nodejs(hce_autoexcavator
-  "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg/controlInputsStamped.msg"
-  "${MSG_I_FLAGS}"
-  "/opt/ros/kinetic/share/std_msgs/cmake/../msg/Header.msg"
-  ${CATKIN_DEVEL_PREFIX}/${gennodejs_INSTALL_DIR}/hce_autoexcavator
-)
-_generate_msg_nodejs(hce_autoexcavator
-  "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg/packetsToExcavator.msg"
-  "${MSG_I_FLAGS}"
-  "/opt/ros/kinetic/share/std_msgs/cmake/../msg/Header.msg"
-  ${CATKIN_DEVEL_PREFIX}/${gennodejs_INSTALL_DIR}/hce_autoexcavator
-)
-_generate_msg_nodejs(hce_autoexcavator
-  "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg/packetsFromExcavator.msg"
-  "${MSG_I_FLAGS}"
-  "/opt/ros/kinetic/share/std_msgs/cmake/../msg/Header.msg"
-  ${CATKIN_DEVEL_PREFIX}/${gennodejs_INSTALL_DIR}/hce_autoexcavator
-)
 
 ### Generating Services
 _generate_srv_nodejs(hce_autoexcavator
@@ -362,15 +257,9 @@ get_filename_component(_filename "/home/junhakim/hce_ws/src/lidar_visual_reconst
 add_dependencies(hce_autoexcavator_generate_messages_nodejs _hce_autoexcavator_generate_messages_check_deps_${_filename})
 get_filename_component(_filename "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/srv/profilePolynomialStamped.srv" NAME_WE)
 add_dependencies(hce_autoexcavator_generate_messages_nodejs _hce_autoexcavator_generate_messages_check_deps_${_filename})
-get_filename_component(_filename "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/srv/relativeLidarPoseStamped.srv" NAME_WE)
-add_dependencies(hce_autoexcavator_generate_messages_nodejs _hce_autoexcavator_generate_messages_check_deps_${_filename})
-get_filename_component(_filename "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg/packetsToExcavator.msg" NAME_WE)
-add_dependencies(hce_autoexcavator_generate_messages_nodejs _hce_autoexcavator_generate_messages_check_deps_${_filename})
-get_filename_component(_filename "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg/controlInputsStamped.msg" NAME_WE)
-add_dependencies(hce_autoexcavator_generate_messages_nodejs _hce_autoexcavator_generate_messages_check_deps_${_filename})
 get_filename_component(_filename "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/srv/lidarImageDataStamped.srv" NAME_WE)
 add_dependencies(hce_autoexcavator_generate_messages_nodejs _hce_autoexcavator_generate_messages_check_deps_${_filename})
-get_filename_component(_filename "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg/packetsFromExcavator.msg" NAME_WE)
+get_filename_component(_filename "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/srv/relativeLidarPoseStamped.srv" NAME_WE)
 add_dependencies(hce_autoexcavator_generate_messages_nodejs _hce_autoexcavator_generate_messages_check_deps_${_filename})
 
 # target for backward compatibility
@@ -382,24 +271,6 @@ list(APPEND ${PROJECT_NAME}_EXPORTED_TARGETS hce_autoexcavator_generate_messages
 
 ### Section generating for lang: genpy
 ### Generating Messages
-_generate_msg_py(hce_autoexcavator
-  "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg/controlInputsStamped.msg"
-  "${MSG_I_FLAGS}"
-  "/opt/ros/kinetic/share/std_msgs/cmake/../msg/Header.msg"
-  ${CATKIN_DEVEL_PREFIX}/${genpy_INSTALL_DIR}/hce_autoexcavator
-)
-_generate_msg_py(hce_autoexcavator
-  "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg/packetsToExcavator.msg"
-  "${MSG_I_FLAGS}"
-  "/opt/ros/kinetic/share/std_msgs/cmake/../msg/Header.msg"
-  ${CATKIN_DEVEL_PREFIX}/${genpy_INSTALL_DIR}/hce_autoexcavator
-)
-_generate_msg_py(hce_autoexcavator
-  "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg/packetsFromExcavator.msg"
-  "${MSG_I_FLAGS}"
-  "/opt/ros/kinetic/share/std_msgs/cmake/../msg/Header.msg"
-  ${CATKIN_DEVEL_PREFIX}/${genpy_INSTALL_DIR}/hce_autoexcavator
-)
 
 ### Generating Services
 _generate_srv_py(hce_autoexcavator
@@ -443,15 +314,9 @@ get_filename_component(_filename "/home/junhakim/hce_ws/src/lidar_visual_reconst
 add_dependencies(hce_autoexcavator_generate_messages_py _hce_autoexcavator_generate_messages_check_deps_${_filename})
 get_filename_component(_filename "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/srv/profilePolynomialStamped.srv" NAME_WE)
 add_dependencies(hce_autoexcavator_generate_messages_py _hce_autoexcavator_generate_messages_check_deps_${_filename})
-get_filename_component(_filename "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/srv/relativeLidarPoseStamped.srv" NAME_WE)
-add_dependencies(hce_autoexcavator_generate_messages_py _hce_autoexcavator_generate_messages_check_deps_${_filename})
-get_filename_component(_filename "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg/packetsToExcavator.msg" NAME_WE)
-add_dependencies(hce_autoexcavator_generate_messages_py _hce_autoexcavator_generate_messages_check_deps_${_filename})
-get_filename_component(_filename "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg/controlInputsStamped.msg" NAME_WE)
-add_dependencies(hce_autoexcavator_generate_messages_py _hce_autoexcavator_generate_messages_check_deps_${_filename})
 get_filename_component(_filename "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/srv/lidarImageDataStamped.srv" NAME_WE)
 add_dependencies(hce_autoexcavator_generate_messages_py _hce_autoexcavator_generate_messages_check_deps_${_filename})
-get_filename_component(_filename "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg/packetsFromExcavator.msg" NAME_WE)
+get_filename_component(_filename "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/srv/relativeLidarPoseStamped.srv" NAME_WE)
 add_dependencies(hce_autoexcavator_generate_messages_py _hce_autoexcavator_generate_messages_check_deps_${_filename})
 
 # target for backward compatibility

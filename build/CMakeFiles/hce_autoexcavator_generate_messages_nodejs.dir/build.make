@@ -53,62 +53,38 @@ CMAKE_BINARY_DIR = /home/junhakim/hce_ws/src/lidar_visual_reconstructor/build
 # Include the progress variables for this target.
 include CMakeFiles/hce_autoexcavator_generate_messages_nodejs.dir/progress.make
 
-CMakeFiles/hce_autoexcavator_generate_messages_nodejs: devel/share/gennodejs/ros/hce_autoexcavator/msg/controlInputsStamped.js
-CMakeFiles/hce_autoexcavator_generate_messages_nodejs: devel/share/gennodejs/ros/hce_autoexcavator/msg/packetsToExcavator.js
-CMakeFiles/hce_autoexcavator_generate_messages_nodejs: devel/share/gennodejs/ros/hce_autoexcavator/msg/packetsFromExcavator.js
 CMakeFiles/hce_autoexcavator_generate_messages_nodejs: devel/share/gennodejs/ros/hce_autoexcavator/srv/profilePointsStamped.js
 CMakeFiles/hce_autoexcavator_generate_messages_nodejs: devel/share/gennodejs/ros/hce_autoexcavator/srv/profilePolynomialStamped.js
 CMakeFiles/hce_autoexcavator_generate_messages_nodejs: devel/share/gennodejs/ros/hce_autoexcavator/srv/lidarImageDataStamped.js
 CMakeFiles/hce_autoexcavator_generate_messages_nodejs: devel/share/gennodejs/ros/hce_autoexcavator/srv/relativeLidarPoseStamped.js
 
 
-devel/share/gennodejs/ros/hce_autoexcavator/msg/controlInputsStamped.js: /opt/ros/kinetic/lib/gennodejs/gen_nodejs.py
-devel/share/gennodejs/ros/hce_autoexcavator/msg/controlInputsStamped.js: ../msg/controlInputsStamped.msg
-devel/share/gennodejs/ros/hce_autoexcavator/msg/controlInputsStamped.js: /opt/ros/kinetic/share/std_msgs/msg/Header.msg
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Generating Javascript code from hce_autoexcavator/controlInputsStamped.msg"
-	catkin_generated/env_cached.sh /usr/bin/python2 /opt/ros/kinetic/share/gennodejs/cmake/../../../lib/gennodejs/gen_nodejs.py /home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg/controlInputsStamped.msg -Ihce_autoexcavator:/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg -Istd_msgs:/opt/ros/kinetic/share/std_msgs/cmake/../msg -Isensor_msgs:/opt/ros/kinetic/share/sensor_msgs/cmake/../msg -Igeometry_msgs:/opt/ros/kinetic/share/geometry_msgs/cmake/../msg -p hce_autoexcavator -o /home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/devel/share/gennodejs/ros/hce_autoexcavator/msg
-
-devel/share/gennodejs/ros/hce_autoexcavator/msg/packetsToExcavator.js: /opt/ros/kinetic/lib/gennodejs/gen_nodejs.py
-devel/share/gennodejs/ros/hce_autoexcavator/msg/packetsToExcavator.js: ../msg/packetsToExcavator.msg
-devel/share/gennodejs/ros/hce_autoexcavator/msg/packetsToExcavator.js: /opt/ros/kinetic/share/std_msgs/msg/Header.msg
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Generating Javascript code from hce_autoexcavator/packetsToExcavator.msg"
-	catkin_generated/env_cached.sh /usr/bin/python2 /opt/ros/kinetic/share/gennodejs/cmake/../../../lib/gennodejs/gen_nodejs.py /home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg/packetsToExcavator.msg -Ihce_autoexcavator:/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg -Istd_msgs:/opt/ros/kinetic/share/std_msgs/cmake/../msg -Isensor_msgs:/opt/ros/kinetic/share/sensor_msgs/cmake/../msg -Igeometry_msgs:/opt/ros/kinetic/share/geometry_msgs/cmake/../msg -p hce_autoexcavator -o /home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/devel/share/gennodejs/ros/hce_autoexcavator/msg
-
-devel/share/gennodejs/ros/hce_autoexcavator/msg/packetsFromExcavator.js: /opt/ros/kinetic/lib/gennodejs/gen_nodejs.py
-devel/share/gennodejs/ros/hce_autoexcavator/msg/packetsFromExcavator.js: ../msg/packetsFromExcavator.msg
-devel/share/gennodejs/ros/hce_autoexcavator/msg/packetsFromExcavator.js: /opt/ros/kinetic/share/std_msgs/msg/Header.msg
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Generating Javascript code from hce_autoexcavator/packetsFromExcavator.msg"
-	catkin_generated/env_cached.sh /usr/bin/python2 /opt/ros/kinetic/share/gennodejs/cmake/../../../lib/gennodejs/gen_nodejs.py /home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg/packetsFromExcavator.msg -Ihce_autoexcavator:/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg -Istd_msgs:/opt/ros/kinetic/share/std_msgs/cmake/../msg -Isensor_msgs:/opt/ros/kinetic/share/sensor_msgs/cmake/../msg -Igeometry_msgs:/opt/ros/kinetic/share/geometry_msgs/cmake/../msg -p hce_autoexcavator -o /home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/devel/share/gennodejs/ros/hce_autoexcavator/msg
-
 devel/share/gennodejs/ros/hce_autoexcavator/srv/profilePointsStamped.js: /opt/ros/kinetic/lib/gennodejs/gen_nodejs.py
 devel/share/gennodejs/ros/hce_autoexcavator/srv/profilePointsStamped.js: ../srv/profilePointsStamped.srv
 devel/share/gennodejs/ros/hce_autoexcavator/srv/profilePointsStamped.js: /opt/ros/kinetic/share/std_msgs/msg/Header.msg
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Generating Javascript code from hce_autoexcavator/profilePointsStamped.srv"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Generating Javascript code from hce_autoexcavator/profilePointsStamped.srv"
 	catkin_generated/env_cached.sh /usr/bin/python2 /opt/ros/kinetic/share/gennodejs/cmake/../../../lib/gennodejs/gen_nodejs.py /home/junhakim/hce_ws/src/lidar_visual_reconstructor/srv/profilePointsStamped.srv -Ihce_autoexcavator:/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg -Istd_msgs:/opt/ros/kinetic/share/std_msgs/cmake/../msg -Isensor_msgs:/opt/ros/kinetic/share/sensor_msgs/cmake/../msg -Igeometry_msgs:/opt/ros/kinetic/share/geometry_msgs/cmake/../msg -p hce_autoexcavator -o /home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/devel/share/gennodejs/ros/hce_autoexcavator/srv
 
 devel/share/gennodejs/ros/hce_autoexcavator/srv/profilePolynomialStamped.js: /opt/ros/kinetic/lib/gennodejs/gen_nodejs.py
 devel/share/gennodejs/ros/hce_autoexcavator/srv/profilePolynomialStamped.js: ../srv/profilePolynomialStamped.srv
 devel/share/gennodejs/ros/hce_autoexcavator/srv/profilePolynomialStamped.js: /opt/ros/kinetic/share/std_msgs/msg/Header.msg
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Generating Javascript code from hce_autoexcavator/profilePolynomialStamped.srv"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Generating Javascript code from hce_autoexcavator/profilePolynomialStamped.srv"
 	catkin_generated/env_cached.sh /usr/bin/python2 /opt/ros/kinetic/share/gennodejs/cmake/../../../lib/gennodejs/gen_nodejs.py /home/junhakim/hce_ws/src/lidar_visual_reconstructor/srv/profilePolynomialStamped.srv -Ihce_autoexcavator:/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg -Istd_msgs:/opt/ros/kinetic/share/std_msgs/cmake/../msg -Isensor_msgs:/opt/ros/kinetic/share/sensor_msgs/cmake/../msg -Igeometry_msgs:/opt/ros/kinetic/share/geometry_msgs/cmake/../msg -p hce_autoexcavator -o /home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/devel/share/gennodejs/ros/hce_autoexcavator/srv
 
 devel/share/gennodejs/ros/hce_autoexcavator/srv/lidarImageDataStamped.js: /opt/ros/kinetic/lib/gennodejs/gen_nodejs.py
 devel/share/gennodejs/ros/hce_autoexcavator/srv/lidarImageDataStamped.js: ../srv/lidarImageDataStamped.srv
 devel/share/gennodejs/ros/hce_autoexcavator/srv/lidarImageDataStamped.js: /opt/ros/kinetic/share/sensor_msgs/msg/Image.msg
 devel/share/gennodejs/ros/hce_autoexcavator/srv/lidarImageDataStamped.js: /opt/ros/kinetic/share/std_msgs/msg/Header.msg
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Generating Javascript code from hce_autoexcavator/lidarImageDataStamped.srv"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Generating Javascript code from hce_autoexcavator/lidarImageDataStamped.srv"
 	catkin_generated/env_cached.sh /usr/bin/python2 /opt/ros/kinetic/share/gennodejs/cmake/../../../lib/gennodejs/gen_nodejs.py /home/junhakim/hce_ws/src/lidar_visual_reconstructor/srv/lidarImageDataStamped.srv -Ihce_autoexcavator:/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg -Istd_msgs:/opt/ros/kinetic/share/std_msgs/cmake/../msg -Isensor_msgs:/opt/ros/kinetic/share/sensor_msgs/cmake/../msg -Igeometry_msgs:/opt/ros/kinetic/share/geometry_msgs/cmake/../msg -p hce_autoexcavator -o /home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/devel/share/gennodejs/ros/hce_autoexcavator/srv
 
 devel/share/gennodejs/ros/hce_autoexcavator/srv/relativeLidarPoseStamped.js: /opt/ros/kinetic/lib/gennodejs/gen_nodejs.py
 devel/share/gennodejs/ros/hce_autoexcavator/srv/relativeLidarPoseStamped.js: ../srv/relativeLidarPoseStamped.srv
 devel/share/gennodejs/ros/hce_autoexcavator/srv/relativeLidarPoseStamped.js: /opt/ros/kinetic/share/std_msgs/msg/Header.msg
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Generating Javascript code from hce_autoexcavator/relativeLidarPoseStamped.srv"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Generating Javascript code from hce_autoexcavator/relativeLidarPoseStamped.srv"
 	catkin_generated/env_cached.sh /usr/bin/python2 /opt/ros/kinetic/share/gennodejs/cmake/../../../lib/gennodejs/gen_nodejs.py /home/junhakim/hce_ws/src/lidar_visual_reconstructor/srv/relativeLidarPoseStamped.srv -Ihce_autoexcavator:/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg -Istd_msgs:/opt/ros/kinetic/share/std_msgs/cmake/../msg -Isensor_msgs:/opt/ros/kinetic/share/sensor_msgs/cmake/../msg -Igeometry_msgs:/opt/ros/kinetic/share/geometry_msgs/cmake/../msg -p hce_autoexcavator -o /home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/devel/share/gennodejs/ros/hce_autoexcavator/srv
 
 hce_autoexcavator_generate_messages_nodejs: CMakeFiles/hce_autoexcavator_generate_messages_nodejs
-hce_autoexcavator_generate_messages_nodejs: devel/share/gennodejs/ros/hce_autoexcavator/msg/controlInputsStamped.js
-hce_autoexcavator_generate_messages_nodejs: devel/share/gennodejs/ros/hce_autoexcavator/msg/packetsToExcavator.js
-hce_autoexcavator_generate_messages_nodejs: devel/share/gennodejs/ros/hce_autoexcavator/msg/packetsFromExcavator.js
 hce_autoexcavator_generate_messages_nodejs: devel/share/gennodejs/ros/hce_autoexcavator/srv/profilePointsStamped.js
 hce_autoexcavator_generate_messages_nodejs: devel/share/gennodejs/ros/hce_autoexcavator/srv/profilePolynomialStamped.js
 hce_autoexcavator_generate_messages_nodejs: devel/share/gennodejs/ros/hce_autoexcavator/srv/lidarImageDataStamped.js

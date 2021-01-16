@@ -1,8 +1,5 @@
 file(REMOVE_RECURSE
   "CMakeFiles/hce_autoexcavator_generate_messages_lisp"
-  "devel/share/common-lisp/ros/hce_autoexcavator/msg/controlInputsStamped.lisp"
-  "devel/share/common-lisp/ros/hce_autoexcavator/msg/packetsToExcavator.lisp"
-  "devel/share/common-lisp/ros/hce_autoexcavator/msg/packetsFromExcavator.lisp"
   "devel/share/common-lisp/ros/hce_autoexcavator/srv/profilePointsStamped.lisp"
   "devel/share/common-lisp/ros/hce_autoexcavator/srv/profilePolynomialStamped.lisp"
   "devel/share/common-lisp/ros/hce_autoexcavator/srv/lidarImageDataStamped.lisp"

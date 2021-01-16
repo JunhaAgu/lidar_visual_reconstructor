@@ -1,48 +1,27 @@
 <?xml version="1.0"?>
-<?xml-model
-  href="http://download.ros.org/schema/package_format3.xsd"
-  schematypens="http://www.w3.org/2001/XMLSchema"?>
-<package format="3">
-  <name>catkin</name>
-  <version>0.7.29</version>
-  <description>Low-level build system macros and infrastructure for ROS.</description>
-  <maintainer email="dthomas@osrfoundation.org">Dirk Thomas</maintainer>
-  <license>BSD</license>
+<package>
+  <name>hce_autoexcavator</name>
+  <version>0.0.0</version>
+  <description>hce_autoexcavator package</description>
 
-  <url type="website">http://wiki.ros.org/catkin</url>
-  <url type="bugtracker">https://github.com/ros/catkin/issues</url>
-  <url type="repository">https://github.com/ros/catkin</url>
+  <maintainer email="Changhyeon@gmail.com">ChanghyeonKim</maintainer>
 
-  <author>Troy Straszheim</author>
-  <author>Morten Kjaergaard</author>
-  <author>Brian Gerkey</author>
-  <author>Dirk Thomas</author>
 
-  <depend condition="$ROS_PYTHON_VERSION == 2">python-argparse</depend>
-  <depend condition="$ROS_PYTHON_VERSION == 2" version_gt="0.4.3">python-catkin-pkg</depend>
-  <depend condition="$ROS_PYTHON_VERSION == 3" version_gt="0.4.3">python3-catkin-pkg</depend>
-  <depend condition="$ROS_PYTHON_VERSION == 2">python-empy</depend>
-  <depend condition="$ROS_PYTHON_VERSION == 3">python3-empy</depend>
+  <license>TODO</license>
 
-  <buildtool_depend>cmake</buildtool_depend>
-  <buildtool_depend condition="$ROS_PYTHON_VERSION == 2">python-setuptools</buildtool_depend>
-  <buildtool_depend condition="$ROS_PYTHON_VERSION == 3">python3-setuptools</buildtool_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>cmake_modules</build_depend>
+  <run_depend>roscpp</run_depend>
+  <run_depend>cmake_modules</run_depend>
+  <buildtool_depend>catkin</buildtool_depend>
 
-  <buildtool_export_depend>cmake</buildtool_export_depend>
-  <buildtool_export_depend condition="$ROS_PYTHON_VERSION == 3">python3-setuptools</buildtool_export_depend>
-
-  <build_export_depend>google-mock</build_export_depend>
-  <build_export_depend>gtest</build_export_depend>
-  <build_export_depend condition="$ROS_PYTHON_VERSION == 2">python-nose</build_export_depend>
-  <build_export_depend condition="$ROS_PYTHON_VERSION == 3">python3-nose</build_export_depend>
-
-  <test_depend condition="$ROS_PYTHON_VERSION == 2">python-mock</test_depend>
-  <test_depend condition="$ROS_PYTHON_VERSION == 3">python3-mock</test_depend>
-  <test_depend condition="$ROS_PYTHON_VERSION == 2">python-nose</test_depend>
-  <test_depend condition="$ROS_PYTHON_VERSION == 3">python3-nose</test_depend>
-
+  <build_depend>message_generation</build_depend>
+  <run_depend>message_runtime</run_depend>
+<build_depend>message_filters</build_depend><!-- New -->
+<run_depend>message_filters</run_depend><!-- New -->
+  <!-- The export tag contains other, unspecified, tags -->
   <export>
-    <rosdoc config="rosdoc.yaml"/>
-    <architecture_independent/>
+    <!-- Other tools can request additional information be placed here -->
+
   </export>
 </package>

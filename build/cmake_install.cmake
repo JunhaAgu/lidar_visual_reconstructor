@@ -124,56 +124,7 @@ file(INSTALL DESTINATION "/usr/local" TYPE FILE FILES "/home/junhakim/hce_ws/src
 endif()
 
 if(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/share/hce_autoexcavator/msg" TYPE FILE FILES
-    "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg/controlInputsStamped.msg"
-    "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg/packetsFromExcavator.msg"
-    "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg/packetsToExcavator.msg"
-    )
-endif()
-
-if(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/share/hce_autoexcavator/srv" TYPE FILE FILES
-    "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/srv/profilePolynomialStamped.srv"
-    "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/srv/profilePointsStamped.srv"
-    "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/srv/lidarImageDataStamped.srv"
-    "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/srv/relativeLidarPoseStamped.srv"
-    )
-endif()
-
-if(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/share/hce_autoexcavator/cmake" TYPE FILE FILES "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/catkin_generated/installspace/hce_autoexcavator-msg-paths.cmake")
-endif()
-
-if(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/include" TYPE DIRECTORY FILES "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/devel/include/hce_autoexcavator")
-endif()
-
-if(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/share/roseus/ros" TYPE DIRECTORY FILES "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/devel/share/roseus/ros/hce_autoexcavator")
-endif()
-
-if(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/share/common-lisp/ros" TYPE DIRECTORY FILES "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/devel/share/common-lisp/ros/hce_autoexcavator")
-endif()
-
-if(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/share/gennodejs/ros" TYPE DIRECTORY FILES "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/devel/share/gennodejs/ros/hce_autoexcavator")
-endif()
-
-if(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
-  execute_process(COMMAND "/usr/bin/python2" -m compileall "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/devel/lib/python2.7/dist-packages/hce_autoexcavator")
-endif()
-
-if(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/python2.7/dist-packages" TYPE DIRECTORY FILES "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/devel/lib/python2.7/dist-packages/hce_autoexcavator")
-endif()
-
-if(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
   file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/pkgconfig" TYPE FILE FILES "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/catkin_generated/installspace/hce_autoexcavator.pc")
-endif()
-
-if(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/share/hce_autoexcavator/cmake" TYPE FILE FILES "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/catkin_generated/installspace/hce_autoexcavator-msg-extras.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")

@@ -53,42 +53,18 @@ CMAKE_BINARY_DIR = /home/junhakim/hce_ws/src/lidar_visual_reconstructor/build
 # Include the progress variables for this target.
 include CMakeFiles/hce_autoexcavator_generate_messages_cpp.dir/progress.make
 
-CMakeFiles/hce_autoexcavator_generate_messages_cpp: devel/include/hce_autoexcavator/controlInputsStamped.h
-CMakeFiles/hce_autoexcavator_generate_messages_cpp: devel/include/hce_autoexcavator/packetsToExcavator.h
-CMakeFiles/hce_autoexcavator_generate_messages_cpp: devel/include/hce_autoexcavator/packetsFromExcavator.h
 CMakeFiles/hce_autoexcavator_generate_messages_cpp: devel/include/hce_autoexcavator/profilePointsStamped.h
 CMakeFiles/hce_autoexcavator_generate_messages_cpp: devel/include/hce_autoexcavator/profilePolynomialStamped.h
 CMakeFiles/hce_autoexcavator_generate_messages_cpp: devel/include/hce_autoexcavator/lidarImageDataStamped.h
 CMakeFiles/hce_autoexcavator_generate_messages_cpp: devel/include/hce_autoexcavator/relativeLidarPoseStamped.h
 
 
-devel/include/hce_autoexcavator/controlInputsStamped.h: /opt/ros/kinetic/lib/gencpp/gen_cpp.py
-devel/include/hce_autoexcavator/controlInputsStamped.h: ../msg/controlInputsStamped.msg
-devel/include/hce_autoexcavator/controlInputsStamped.h: /opt/ros/kinetic/share/std_msgs/msg/Header.msg
-devel/include/hce_autoexcavator/controlInputsStamped.h: /opt/ros/kinetic/share/gencpp/msg.h.template
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Generating C++ code from hce_autoexcavator/controlInputsStamped.msg"
-	cd /home/junhakim/hce_ws/src/lidar_visual_reconstructor && /home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/catkin_generated/env_cached.sh /usr/bin/python2 /opt/ros/kinetic/share/gencpp/cmake/../../../lib/gencpp/gen_cpp.py /home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg/controlInputsStamped.msg -Ihce_autoexcavator:/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg -Istd_msgs:/opt/ros/kinetic/share/std_msgs/cmake/../msg -Isensor_msgs:/opt/ros/kinetic/share/sensor_msgs/cmake/../msg -Igeometry_msgs:/opt/ros/kinetic/share/geometry_msgs/cmake/../msg -p hce_autoexcavator -o /home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/devel/include/hce_autoexcavator -e /opt/ros/kinetic/share/gencpp/cmake/..
-
-devel/include/hce_autoexcavator/packetsToExcavator.h: /opt/ros/kinetic/lib/gencpp/gen_cpp.py
-devel/include/hce_autoexcavator/packetsToExcavator.h: ../msg/packetsToExcavator.msg
-devel/include/hce_autoexcavator/packetsToExcavator.h: /opt/ros/kinetic/share/std_msgs/msg/Header.msg
-devel/include/hce_autoexcavator/packetsToExcavator.h: /opt/ros/kinetic/share/gencpp/msg.h.template
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Generating C++ code from hce_autoexcavator/packetsToExcavator.msg"
-	cd /home/junhakim/hce_ws/src/lidar_visual_reconstructor && /home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/catkin_generated/env_cached.sh /usr/bin/python2 /opt/ros/kinetic/share/gencpp/cmake/../../../lib/gencpp/gen_cpp.py /home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg/packetsToExcavator.msg -Ihce_autoexcavator:/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg -Istd_msgs:/opt/ros/kinetic/share/std_msgs/cmake/../msg -Isensor_msgs:/opt/ros/kinetic/share/sensor_msgs/cmake/../msg -Igeometry_msgs:/opt/ros/kinetic/share/geometry_msgs/cmake/../msg -p hce_autoexcavator -o /home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/devel/include/hce_autoexcavator -e /opt/ros/kinetic/share/gencpp/cmake/..
-
-devel/include/hce_autoexcavator/packetsFromExcavator.h: /opt/ros/kinetic/lib/gencpp/gen_cpp.py
-devel/include/hce_autoexcavator/packetsFromExcavator.h: ../msg/packetsFromExcavator.msg
-devel/include/hce_autoexcavator/packetsFromExcavator.h: /opt/ros/kinetic/share/std_msgs/msg/Header.msg
-devel/include/hce_autoexcavator/packetsFromExcavator.h: /opt/ros/kinetic/share/gencpp/msg.h.template
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Generating C++ code from hce_autoexcavator/packetsFromExcavator.msg"
-	cd /home/junhakim/hce_ws/src/lidar_visual_reconstructor && /home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/catkin_generated/env_cached.sh /usr/bin/python2 /opt/ros/kinetic/share/gencpp/cmake/../../../lib/gencpp/gen_cpp.py /home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg/packetsFromExcavator.msg -Ihce_autoexcavator:/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg -Istd_msgs:/opt/ros/kinetic/share/std_msgs/cmake/../msg -Isensor_msgs:/opt/ros/kinetic/share/sensor_msgs/cmake/../msg -Igeometry_msgs:/opt/ros/kinetic/share/geometry_msgs/cmake/../msg -p hce_autoexcavator -o /home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/devel/include/hce_autoexcavator -e /opt/ros/kinetic/share/gencpp/cmake/..
-
 devel/include/hce_autoexcavator/profilePointsStamped.h: /opt/ros/kinetic/lib/gencpp/gen_cpp.py
 devel/include/hce_autoexcavator/profilePointsStamped.h: ../srv/profilePointsStamped.srv
 devel/include/hce_autoexcavator/profilePointsStamped.h: /opt/ros/kinetic/share/std_msgs/msg/Header.msg
 devel/include/hce_autoexcavator/profilePointsStamped.h: /opt/ros/kinetic/share/gencpp/msg.h.template
 devel/include/hce_autoexcavator/profilePointsStamped.h: /opt/ros/kinetic/share/gencpp/srv.h.template
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Generating C++ code from hce_autoexcavator/profilePointsStamped.srv"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Generating C++ code from hce_autoexcavator/profilePointsStamped.srv"
 	cd /home/junhakim/hce_ws/src/lidar_visual_reconstructor && /home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/catkin_generated/env_cached.sh /usr/bin/python2 /opt/ros/kinetic/share/gencpp/cmake/../../../lib/gencpp/gen_cpp.py /home/junhakim/hce_ws/src/lidar_visual_reconstructor/srv/profilePointsStamped.srv -Ihce_autoexcavator:/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg -Istd_msgs:/opt/ros/kinetic/share/std_msgs/cmake/../msg -Isensor_msgs:/opt/ros/kinetic/share/sensor_msgs/cmake/../msg -Igeometry_msgs:/opt/ros/kinetic/share/geometry_msgs/cmake/../msg -p hce_autoexcavator -o /home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/devel/include/hce_autoexcavator -e /opt/ros/kinetic/share/gencpp/cmake/..
 
 devel/include/hce_autoexcavator/profilePolynomialStamped.h: /opt/ros/kinetic/lib/gencpp/gen_cpp.py
@@ -96,7 +72,7 @@ devel/include/hce_autoexcavator/profilePolynomialStamped.h: ../srv/profilePolyno
 devel/include/hce_autoexcavator/profilePolynomialStamped.h: /opt/ros/kinetic/share/std_msgs/msg/Header.msg
 devel/include/hce_autoexcavator/profilePolynomialStamped.h: /opt/ros/kinetic/share/gencpp/msg.h.template
 devel/include/hce_autoexcavator/profilePolynomialStamped.h: /opt/ros/kinetic/share/gencpp/srv.h.template
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Generating C++ code from hce_autoexcavator/profilePolynomialStamped.srv"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Generating C++ code from hce_autoexcavator/profilePolynomialStamped.srv"
 	cd /home/junhakim/hce_ws/src/lidar_visual_reconstructor && /home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/catkin_generated/env_cached.sh /usr/bin/python2 /opt/ros/kinetic/share/gencpp/cmake/../../../lib/gencpp/gen_cpp.py /home/junhakim/hce_ws/src/lidar_visual_reconstructor/srv/profilePolynomialStamped.srv -Ihce_autoexcavator:/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg -Istd_msgs:/opt/ros/kinetic/share/std_msgs/cmake/../msg -Isensor_msgs:/opt/ros/kinetic/share/sensor_msgs/cmake/../msg -Igeometry_msgs:/opt/ros/kinetic/share/geometry_msgs/cmake/../msg -p hce_autoexcavator -o /home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/devel/include/hce_autoexcavator -e /opt/ros/kinetic/share/gencpp/cmake/..
 
 devel/include/hce_autoexcavator/lidarImageDataStamped.h: /opt/ros/kinetic/lib/gencpp/gen_cpp.py
@@ -105,7 +81,7 @@ devel/include/hce_autoexcavator/lidarImageDataStamped.h: /opt/ros/kinetic/share/
 devel/include/hce_autoexcavator/lidarImageDataStamped.h: /opt/ros/kinetic/share/std_msgs/msg/Header.msg
 devel/include/hce_autoexcavator/lidarImageDataStamped.h: /opt/ros/kinetic/share/gencpp/msg.h.template
 devel/include/hce_autoexcavator/lidarImageDataStamped.h: /opt/ros/kinetic/share/gencpp/srv.h.template
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Generating C++ code from hce_autoexcavator/lidarImageDataStamped.srv"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Generating C++ code from hce_autoexcavator/lidarImageDataStamped.srv"
 	cd /home/junhakim/hce_ws/src/lidar_visual_reconstructor && /home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/catkin_generated/env_cached.sh /usr/bin/python2 /opt/ros/kinetic/share/gencpp/cmake/../../../lib/gencpp/gen_cpp.py /home/junhakim/hce_ws/src/lidar_visual_reconstructor/srv/lidarImageDataStamped.srv -Ihce_autoexcavator:/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg -Istd_msgs:/opt/ros/kinetic/share/std_msgs/cmake/../msg -Isensor_msgs:/opt/ros/kinetic/share/sensor_msgs/cmake/../msg -Igeometry_msgs:/opt/ros/kinetic/share/geometry_msgs/cmake/../msg -p hce_autoexcavator -o /home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/devel/include/hce_autoexcavator -e /opt/ros/kinetic/share/gencpp/cmake/..
 
 devel/include/hce_autoexcavator/relativeLidarPoseStamped.h: /opt/ros/kinetic/lib/gencpp/gen_cpp.py
@@ -113,13 +89,10 @@ devel/include/hce_autoexcavator/relativeLidarPoseStamped.h: ../srv/relativeLidar
 devel/include/hce_autoexcavator/relativeLidarPoseStamped.h: /opt/ros/kinetic/share/std_msgs/msg/Header.msg
 devel/include/hce_autoexcavator/relativeLidarPoseStamped.h: /opt/ros/kinetic/share/gencpp/msg.h.template
 devel/include/hce_autoexcavator/relativeLidarPoseStamped.h: /opt/ros/kinetic/share/gencpp/srv.h.template
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Generating C++ code from hce_autoexcavator/relativeLidarPoseStamped.srv"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Generating C++ code from hce_autoexcavator/relativeLidarPoseStamped.srv"
 	cd /home/junhakim/hce_ws/src/lidar_visual_reconstructor && /home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/catkin_generated/env_cached.sh /usr/bin/python2 /opt/ros/kinetic/share/gencpp/cmake/../../../lib/gencpp/gen_cpp.py /home/junhakim/hce_ws/src/lidar_visual_reconstructor/srv/relativeLidarPoseStamped.srv -Ihce_autoexcavator:/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg -Istd_msgs:/opt/ros/kinetic/share/std_msgs/cmake/../msg -Isensor_msgs:/opt/ros/kinetic/share/sensor_msgs/cmake/../msg -Igeometry_msgs:/opt/ros/kinetic/share/geometry_msgs/cmake/../msg -p hce_autoexcavator -o /home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/devel/include/hce_autoexcavator -e /opt/ros/kinetic/share/gencpp/cmake/..
 
 hce_autoexcavator_generate_messages_cpp: CMakeFiles/hce_autoexcavator_generate_messages_cpp
-hce_autoexcavator_generate_messages_cpp: devel/include/hce_autoexcavator/controlInputsStamped.h
-hce_autoexcavator_generate_messages_cpp: devel/include/hce_autoexcavator/packetsToExcavator.h
-hce_autoexcavator_generate_messages_cpp: devel/include/hce_autoexcavator/packetsFromExcavator.h
 hce_autoexcavator_generate_messages_cpp: devel/include/hce_autoexcavator/profilePointsStamped.h
 hce_autoexcavator_generate_messages_cpp: devel/include/hce_autoexcavator/profilePolynomialStamped.h
 hce_autoexcavator_generate_messages_cpp: devel/include/hce_autoexcavator/lidarImageDataStamped.h

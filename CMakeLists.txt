@@ -5,7 +5,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -std=c++14 -pg -O3 -m64 
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -pg -O3 -m64 -Ofast -flto -msse -msse2 -msse3 -march=native -mfpmath=sse")
 
 find_package(catkin REQUIRED cmake_modules)
-find_package(Eigen REQUIRED)
+find_package(Eigen3 REQUIRED)
 find_package(OpenCV REQUIRED)
 
 find_package(catkin REQUIRED COMPONENTS
@@ -25,26 +25,26 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 ## Generate messages in the 'msg' folder
-add_message_files(
-  FILES
-  controlInputsStamped.msg
-  packetsFromExcavator.msg
-  packetsToExcavator.msg
-)
+# add_message_files(
+#   FILES
+#   controlInputsStamped.msg
+#   packetsFromExcavator.msg
+#   packetsToExcavator.msg
+# )
 
-add_service_files(
-  FILES
-  profilePolynomialStamped.srv
-  profilePointsStamped.srv
-  lidarImageDataStamped.srv
-  relativeLidarPoseStamped.srv
-)
+# add_service_files(
+#   FILES
+#   profilePolynomialStamped.srv
+#   profilePointsStamped.srv
+#   lidarImageDataStamped.srv
+#   relativeLidarPoseStamped.srv
+# )
 
-generate_messages(
-  DEPENDENCIES
-  std_msgs
-  sensor_msgs
-)
+# generate_messages(
+#   DEPENDENCIES
+#   std_msgs
+#   sensor_msgs
+# )
 
 catkin_package(
 	DEPENDS Eigen

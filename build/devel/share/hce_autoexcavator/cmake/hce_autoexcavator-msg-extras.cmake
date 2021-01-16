@@ -1,2 +1,2 @@
-set(hce_autoexcavator_MESSAGE_FILES "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg/controlInputsStamped.msg;/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg/packetsFromExcavator.msg;/home/junhakim/hce_ws/src/lidar_visual_reconstructor/msg/packetsToExcavator.msg")
+set(hce_autoexcavator_MESSAGE_FILES "")
 set(hce_autoexcavator_SERVICE_FILES "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/srv/profilePolynomialStamped.srv;/home/junhakim/hce_ws/src/lidar_visual_reconstructor/srv/profilePointsStamped.srv;/home/junhakim/hce_ws/src/lidar_visual_reconstructor/srv/lidarImageDataStamped.srv;/home/junhakim/hce_ws/src/lidar_visual_reconstructor/srv/relativeLidarPoseStamped.srv")

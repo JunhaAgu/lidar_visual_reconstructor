@@ -91,9 +91,9 @@ endif()
 # flag project as catkin-based to distinguish if a find_package()-ed project is a catkin project
 set(hce_autoexcavator_FOUND_CATKIN_PROJECT TRUE)
 
-if(NOT "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/devel/include;/usr/local/include/eigen3 " STREQUAL " ")
+if(NOT " " STREQUAL " ")
   set(hce_autoexcavator_INCLUDE_DIRS "")
-  set(_include_dirs "/home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/devel/include;/usr/local/include/eigen3")
+  set(_include_dirs "")
   if(NOT " " STREQUAL " ")
     set(_report "Check the issue tracker '' and consider creating a ticket if the problem has not been reported yet.")
   elseif(NOT " " STREQUAL " ")
@@ -154,7 +154,7 @@ foreach(library ${libraries})
     set(lib_path "")
     set(lib "${library}-NOTFOUND")
     # since the path where the library is found is returned we have to iterate over the paths manually
-    foreach(path /home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/devel/lib;/home/junhakim/msgs_ws/devel/lib;/home/junhakim/calibration_ws/devel/lib;/home/junhakim/catkin_ws/devel/lib;/opt/ros/kinetic/lib)
+    foreach(path /home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/devel/lib;/home/junhakim/hce_ws/devel/lib;/home/junhakim/msgs_ws/devel/lib;/home/junhakim/calibration_ws/devel/lib;/home/junhakim/catkin_ws/devel/lib;/opt/ros/kinetic/lib)
       find_library(lib ${library}
         PATHS ${path}
         NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH)
@@ -177,7 +177,7 @@ foreach(library ${libraries})
   endif()
 endforeach()
 
-set(hce_autoexcavator_EXPORTED_TARGETS "hce_autoexcavator_generate_messages_cpp;hce_autoexcavator_generate_messages_eus;hce_autoexcavator_generate_messages_lisp;hce_autoexcavator_generate_messages_nodejs;hce_autoexcavator_generate_messages_py")
+set(hce_autoexcavator_EXPORTED_TARGETS "")
 # create dummy targets for exported code generation targets to make life of users easier
 foreach(t ${hce_autoexcavator_EXPORTED_TARGETS})
   if(NOT TARGET ${t})
@@ -214,7 +214,7 @@ foreach(depend ${depends})
   list(APPEND hce_autoexcavator_EXPORTED_TARGETS ${${hce_autoexcavator_dep}_EXPORTED_TARGETS})
 endforeach()
 
-set(pkg_cfg_extras "hce_autoexcavator-msg-extras.cmake")
+set(pkg_cfg_extras "")
 foreach(extra ${pkg_cfg_extras})
   if(NOT IS_ABSOLUTE ${extra})
     set(extra ${hce_autoexcavator_DIR}/${extra})
