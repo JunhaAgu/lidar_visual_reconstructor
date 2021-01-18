@@ -70,7 +70,7 @@ private:
     hce_msgs::ExMeasureStamped  msg_to_local_;
     hce_msgs::Predictions       msg_from_local_;
 
-    void callbackFromLocalplanner(const hce_msgs::ExMeasureStampedConstPtr &msg_from_local)
+    void callbackFromLocalplanner(const hce_msgs::PredictionsConstPtr &msg_from_local);
 
 // message sender to localplanner
 public:

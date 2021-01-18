@@ -9,7 +9,8 @@
 # modified environment variables
 export CMAKE_PREFIX_PATH="/home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/devel:$CMAKE_PREFIX_PATH"
 export LD_LIBRARY_PATH="/home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/devel/lib:$LD_LIBRARY_PATH"
+export PATH="/opt/ros/kinetic/bin:$PATH"
 export PKG_CONFIG_PATH="/home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/devel/lib/pkgconfig:$PKG_CONFIG_PATH"
 export PYTHONPATH="/home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/devel/lib/python2.7/dist-packages:$PYTHONPATH"
 export ROSLISP_PACKAGE_DIRECTORIES="/home/junhakim/hce_ws/src/lidar_visual_reconstructor/build/devel/share/common-lisp:$ROSLISP_PACKAGE_DIRECTORIES"
-export ROS_PACKAGE_PATH="/home/junhakim/hce_ws/src/lidar_visual_reconstructor:/home/junhakim/hce_ws/src/lidar_visual_reconstructor:$ROS_PACKAGE_PATH"
+export ROS_PACKAGE_PATH="/home/junhakim/hce_ws/src/lidar_visual_reconstructor:$ROS_PACKAGE_PATH"

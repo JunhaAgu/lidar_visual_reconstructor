@@ -13,9 +13,9 @@ CanCommunicator::CanCommunicator(ros::NodeHandle& nh, string tpcname_from_ardu, 
         topicname_to_arduino_, 1, &CanCommunicator::callbackFromExcavator, this);
 
     pub_to_local_   = nh_.advertise<hce_msgs::ExMeasureStamped>(
-        '/to_local_planning', 1);
+        "/to_local_planning", 1);
     sub_from_local_ = nh_.subscribe<hce_msgs::Predictions>(
-        '/local_planning_setpoints', 1, &CanCommunicator::callbackFromLocalplanner, this);
+        "/local_planning_setpoints", 1, &CanCommunicator::callbackFromLocalplanner, this);
 
     butterworth_cnt_ = 0;
 
@@ -371,18 +371,18 @@ void CanCommunicator::publishToLocalplanner(){
     pub_to_local_.publish(msg_to_local_);
 };
 
-void CanCommunicator::callbackFromLocalplanner(const hce_msgs::ExMeasureStampedConstPtr &msg_from_local)
+void CanCommunicator::callbackFromLocalplanner(const hce_msgs::PredictionsConstPtr &msg_from_local)
 {
     // predictions.state = [psi_U, L_B, L_A, L_K, psi_Udot, L_Bdot, L_Adot, L_Kdot, T_U, F_B, F_A, F_K]
     // predictions.input = [T_U, F_B, F_A, F_K]
     for(int i=0; i< 8; ++i){
-        planner_outputs0_[i] = (double)->predictions[0].state[i] // 0.2s
-        planner_outputs1_[i] = (double)->predictions[1].state[i] // 0.5s
-        planner_outputs2_[i] = (double)->predictions[2].state[i] // 1.0s
+        planner_outputs0_[i] = (double)msg_from_local->predictions[0].state[i]; // 0.2s
+        planner_outputs1_[i] = (double)msg_from_local->predictions[1].state[i]; // 0.5s
+        planner_outputs2_[i] = (double)msg_from_local->predictions[2].state[i]; // 1.0s
     }
     for(int i=0; i< 4; ++i){
-        planner_outputs0_[8+i] = (double)->predictions[0].input[8+i] // 0.2s
-        planner_outputs1_[8+i] = (double)->predictions[1].input[8+i] // 0.5s
-        planner_outputs2_[8+i] = (double)->predictions[2].input[8+i] // 1.0s
+        planner_outputs0_[8+i] = (double)msg_from_local->predictions[0].input[8+i]; // 0.2s
+        planner_outputs1_[8+i] = (double)msg_from_local->predictions[1].input[8+i]; // 0.5s
+        planner_outputs2_[8+i] = (double)msg_from_local->predictions[2].input[8+i]; // 1.0s
     }
 };
