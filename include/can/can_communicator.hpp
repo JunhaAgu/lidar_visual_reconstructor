@@ -16,7 +16,13 @@
 // Customized messages (from MCU, to MCU)
 #include "hce_msgs/packetsToExcavator.h"   // packets (bytes) to excavator (exactly, Arduino MCU)
 #include "hce_msgs/packetsFromExcavator.h" // packets (bytes) from excavator (exactly, Arduino MCU)
-
+#include "hce_msgs/ExMeasureStamped.h"
+#include "hce_msgs/ExMeasure.h"
+#include "hce_msgs/ExPressure.h"
+#include "hce_msgs/ExAngle.h"
+#include "hce_msgs/ExVelocity.h"
+#include "hce_msgs/Predictions.h"
+#include "hce_msgs/StateInput.h"
 
 // Datatype redefine.
 #define BYTE unsigned char
@@ -57,6 +63,19 @@ private:
     BYTE  array_to_ex_[72]; // 12 states * 3 times * 2 bytes = 72.
 
     void callbackFromExcavator(const hce_msgs::packetsFromExcavatorConstPtr &msg_from_ex);
+
+    //------added------//
+    ros::Publisher  pub_to_local_;
+    ros::Subscriber sub_from_local_;
+    hce_msgs::ExMeasureStamped  msg_to_local_;
+    hce_msgs::Predictions       msg_from_local_;
+
+    void callbackFromLocalplanner(const hce_msgs::ExMeasureStampedConstPtr &msg_from_local)
+
+// message sender to localplanner
+public:
+    void publishToLocalplanner();
+    //------added------//
 
 // message sender to excavator (Arduino)
 public:

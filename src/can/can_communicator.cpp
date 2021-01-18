@@ -1,6 +1,7 @@
 #include "can/can_communicator.hpp"
 
 using namespace constants;
+#define PI 3.14159265
 
 CanCommunicator::CanCommunicator(ros::NodeHandle& nh, string tpcname_from_ardu, string tpcname_to_ardu)
 :nh_(nh), topicname_from_arduino_(tpcname_from_ardu), topicname_to_arduino_(tpcname_to_ardu)
@@ -10,6 +11,11 @@ CanCommunicator::CanCommunicator(ros::NodeHandle& nh, string tpcname_from_ardu, 
         topicname_from_arduino_, 1);
     sub_from_ex_ = nh_.subscribe<hce_msgs::packetsFromExcavator>(
         topicname_to_arduino_, 1, &CanCommunicator::callbackFromExcavator, this);
+
+    pub_to_local_   = nh_.advertise<hce_msgs::ExMeasureStamped>(
+        '/to_local_planning', 1);
+    sub_from_local_ = nh_.subscribe<hce_msgs::Predictions>(
+        '/local_planning_setpoints', 1, &CanCommunicator::callbackFromLocalplanner, this);
 
     butterworth_cnt_ = 0;
 
@@ -125,16 +131,16 @@ void CanCommunicator::callbackFromExcavator(const hce_msgs::packetsFromExcavator
     fromEx_.KCyl_LC = 0.1 * (float)msg_from_ex->bytes[SENSOR2_START + 5] * pow16_2 + (float)msg_from_ex->bytes[SENSOR2_START + 6];
     fromEx_.KCyl_SC = 0.1 * (float)msg_from_ex->bytes[SENSOR2_START + 7] * pow16_2 + (float)msg_from_ex->bytes[SENSOR2_START + 8];
     //Sensor3
-    fromEx_.Body_Pitch_Angle = angle_scale * ((float)msg_from_ex->bytes[SENSOR3_START + 2] * pow16_4 + (float)msg_from_ex->bytes[SENSOR3_START + 1] * pow16_2 + (float)msg_from_ex->bytes[SENSOR3_START + 0]) - angle_offset;
-    fromEx_.Body_Roll_Angle  = angle_scale * ((float)msg_from_ex->bytes[SENSOR3_START + 5] * pow16_4 + (float)msg_from_ex->bytes[SENSOR3_START + 4] * pow16_2 + (float)msg_from_ex->bytes[SENSOR3_START + 3]) - angle_offset;
+    fromEx_.Body_Pitch_Angle = PI/180*angle_scale * ((float)msg_from_ex->bytes[SENSOR3_START + 2] * pow16_4 + (float)msg_from_ex->bytes[SENSOR3_START + 1] * pow16_2 + (float)msg_from_ex->bytes[SENSOR3_START + 0]) - angle_offset;
+    fromEx_.Body_Roll_Angle  = PI/180*angle_scale * ((float)msg_from_ex->bytes[SENSOR3_START + 5] * pow16_4 + (float)msg_from_ex->bytes[SENSOR3_START + 4] * pow16_2 + (float)msg_from_ex->bytes[SENSOR3_START + 3]) - angle_offset;
     //Sensor4
-    fromEx_.Boom_Joint_Angle = angle_scale * ((float)msg_from_ex->bytes[SENSOR4_START + 2] * pow16_4 + (float)msg_from_ex->bytes[SENSOR4_START + 1] * pow16_2 + (float)msg_from_ex->bytes[SENSOR4_START + 0]) - angle_offset;
+    fromEx_.Boom_Joint_Angle = PI/180*angle_scale * ((float)msg_from_ex->bytes[SENSOR4_START + 2] * pow16_4 + (float)msg_from_ex->bytes[SENSOR4_START + 1] * pow16_2 + (float)msg_from_ex->bytes[SENSOR4_START + 0]) - angle_offset;
     //Sensor5
-    fromEx_.Arm_Joint_Angle  = angle_scale * ((float)msg_from_ex->bytes[SENSOR5_START + 2] * pow16_4 + (float)msg_from_ex->bytes[SENSOR5_START + 1] * pow16_2 + (float)msg_from_ex->bytes[SENSOR5_START + 0]) - angle_offset;
+    fromEx_.Arm_Joint_Angle  = PI/180*angle_scale * ((float)msg_from_ex->bytes[SENSOR5_START + 2] * pow16_4 + (float)msg_from_ex->bytes[SENSOR5_START + 1] * pow16_2 + (float)msg_from_ex->bytes[SENSOR5_START + 0]) - angle_offset;
     //Sensor6
-    fromEx_.Bkt_Joint_Angle  = angle_scale * ((float)msg_from_ex->bytes[SENSOR6_START + 2] * pow16_4 + (float)msg_from_ex->bytes[SENSOR6_START + 1] * pow16_2 + (float)msg_from_ex->bytes[SENSOR6_START + 0]) - angle_offset;
+    fromEx_.Bkt_Joint_Angle  = PI/180*angle_scale * ((float)msg_from_ex->bytes[SENSOR6_START + 2] * pow16_4 + (float)msg_from_ex->bytes[SENSOR6_START + 1] * pow16_2 + (float)msg_from_ex->bytes[SENSOR6_START + 0]) - angle_offset;
     //Sensor7
-    fromEx_.Swing_Angle      = angle_scale * ((float)msg_from_ex->bytes[SENSOR7_START + 2] * pow16_4 + (float)msg_from_ex->bytes[SENSOR7_START + 1] * pow16_2 + (float)msg_from_ex->bytes[SENSOR7_START + 0]) - angle_offset;
+    fromEx_.Swing_Angle      = PI/180*angle_scale * ((float)msg_from_ex->bytes[SENSOR7_START + 2] * pow16_4 + (float)msg_from_ex->bytes[SENSOR7_START + 1] * pow16_2 + (float)msg_from_ex->bytes[SENSOR7_START + 0]) - angle_offset;
 
     // Update new sensor angles. (fill out the 0-th element of a angle buffer.)
     fromEx_.Boom_Angle_buf[0]  = fromEx_.Boom_Joint_Angle;
@@ -310,5 +316,73 @@ void CanCommunicator::publishToExcavator(){
             }
             output_file << (int)array_to_ex_[71] <<"\n";
         }  
+    }
+};
+
+void CanCommunicator::publishToLocalplanner(){
+    // initialize msg.
+    msg_to_local_.measure.pressure.ACyl_LC = 0;
+    msg_to_local_.measure.pressure.ACyl_SC = 0;
+    msg_to_local_.measure.pressure.Swing_L = 0;
+    msg_to_local_.measure.pressure.Swing_R = 0;
+    msg_to_local_.measure.pressure.BCyl_LC = 0;
+    msg_to_local_.measure.pressure.BCyl_SC = 0;
+    msg_to_local_.measure.pressure.KCyl_LC = 0;
+    msg_to_local_.measure.pressure.KCyl_SC = 0;
+    
+    msg_to_local_.measure.angle.psi_U = 0;
+    msg_to_local_.measure.angle.theta_B = 0;
+    msg_to_local_.measure.angle.theta_A = 0;
+    msg_to_local_.measure.angle.theta_K = 0;
+    msg_to_local_.measure.angle.theta_body = 0;
+    msg_to_local_.measure.angle.phi_body = 0;
+
+    msg_to_local_.measure.velocity.psi_U_dot = 0;
+    msg_to_local_.measure.velocity.theta_B_dot = 0;
+    msg_to_local_.measure.velocity.theta_A_dot = 0;
+    msg_to_local_.measure.velocity.theta_K_dot = 0;
+
+    // fill out ros time.
+    ++msg_to_local_.header.seq;
+    msg_to_local_.header.stamp = ros::Time::now();
+    
+    msg_to_local_.measure.pressure.ACyl_LC = fromEx_.ACyl_LC; // arm cylinder pressure (large chamber) [bar]
+    msg_to_local_.measure.pressure.ACyl_SC = fromEx_.ACyl_SC; // arm cylinder pressure (small chamber) [bar]
+    msg_to_local_.measure.pressure.Swing_L = fromEx_.Swing_L; // swing pressure (left) [bar]
+    msg_to_local_.measure.pressure.Swing_R = fromEx_.Swing_R; // swing pressure (right) [bar]
+    msg_to_local_.measure.pressure.BCyl_LC = fromEx_.BCyl_LC; // boom cylinder pressure   (large chamber) [bar]
+    msg_to_local_.measure.pressure.BCyl_SC = fromEx_.Swing_R; // boom cylinder pressure   (small chamber) [bar]
+    msg_to_local_.measure.pressure.KCyl_LC = fromEx_.KCyl_LC; // bucket cylinder pressure (large chamber) [bar]
+    msg_to_local_.measure.pressure.KCyl_SC = fromEx_.KCyl_SC; // bucket cylinder pressure (small chamber) [bar]
+    
+    msg_to_local_.measure.angle.psi_U = fromEx_.Swing_Angle; // swing angle [rad]
+    msg_to_local_.measure.angle.theta_B = fromEx_.Boom_Joint_Angle; // boom joint angle (joint: boom-body) [rad]
+    msg_to_local_.measure.angle.theta_A = fromEx_.Arm_Joint_Angle;  // arm  joint angle (joint: arm-boom) [rad]
+    msg_to_local_.measure.angle.theta_K = fromEx_.Bkt_Joint_Angle;  // bucket joint angle (joint: bucket-arm) [rad]
+    msg_to_local_.measure.angle.theta_body = fromEx_.Body_Pitch_Angle; // body pitch angle [rad]
+    msg_to_local_.measure.angle.phi_body = fromEx_.Body_Roll_Angle;  // body roll  angle  [rad]
+
+    msg_to_local_.measure.velocity.psi_U_dot = fromEx_.Swing_Rate; // [rad/s]
+    msg_to_local_.measure.velocity.theta_B_dot = fromEx_.Boom_Joint_Rate; // [rad/s]
+    msg_to_local_.measure.velocity.theta_A_dot = fromEx_.Arm_Joint_Rate; // [rad/s]
+    msg_to_local_.measure.velocity.theta_K_dot = fromEx_.Bkt_Joint_Rate; // [rad/s]
+
+    // publish
+    pub_to_local_.publish(msg_to_local_);
+};
+
+void CanCommunicator::callbackFromLocalplanner(const hce_msgs::ExMeasureStampedConstPtr &msg_from_local)
+{
+    // predictions.state = [psi_U, L_B, L_A, L_K, psi_Udot, L_Bdot, L_Adot, L_Kdot, T_U, F_B, F_A, F_K]
+    // predictions.input = [T_U, F_B, F_A, F_K]
+    for(int i=0; i< 8; ++i){
+        planner_outputs0_[i] = (double)->predictions[0].state[i] // 0.2s
+        planner_outputs1_[i] = (double)->predictions[1].state[i] // 0.5s
+        planner_outputs2_[i] = (double)->predictions[2].state[i] // 1.0s
+    }
+    for(int i=0; i< 4; ++i){
+        planner_outputs0_[8+i] = (double)->predictions[0].input[8+i] // 0.2s
+        planner_outputs1_[8+i] = (double)->predictions[1].input[8+i] // 0.5s
+        planner_outputs2_[8+i] = (double)->predictions[2].input[8+i] // 1.0s
     }
 };
